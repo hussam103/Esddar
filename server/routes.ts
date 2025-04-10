@@ -5,6 +5,12 @@ import { storage } from "./storage";
 import { insertTenderSchema, insertApplicationSchema, insertSavedTenderSchema } from "@shared/schema";
 import { z } from "zod";
 
+// Schema for subscription
+const subscriptionSchema = z.object({
+  plan: z.enum(["basic", "professional", "enterprise"]),
+  price: z.number().positive()
+});
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Sets up authentication routes
   setupAuth(app);
@@ -223,6 +229,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(profile);
     } catch (error) {
       res.status(500).json({ error: "Failed to update user profile" });
+    }
+  });
+
+  // Subscription
+  app.post("/api/subscribe", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      const data = subscriptionSchema.parse(req.body);
+      
+      // Update user with subscription details
+      const user = await storage.updateUser(req.user.id, {
+        subscriptionPlan: data.plan,
+        subscriptionPrice: data.price,
+        subscriptionStatus: 'active',
+        subscriptionStartDate: new Date(),
+        subscriptionEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      });
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      res.status(201).json({
+        success: true,
+        subscription: {
+          plan: user.subscriptionPlan,
+          status: user.subscriptionStatus,
+          startDate: user.subscriptionStartDate,
+          endDate: user.subscriptionEndDate
+        }
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create subscription" });
+    }
+  });
+
+  // Get current subscription details
+  app.get("/api/subscription", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      const user = await storage.getUser(req.user.id);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      if (!user.subscriptionPlan) {
+        return res.json({ hasSubscription: false });
+      }
+      
+      res.json({
+        hasSubscription: true,
+        subscription: {
+          plan: user.subscriptionPlan,
+          price: user.subscriptionPrice,
+          status: user.subscriptionStatus,
+          startDate: user.subscriptionStartDate,
+          endDate: user.subscriptionEndDate
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch subscription details" });
+    }
+  });
+
+  // Cancel subscription
+  app.post("/api/subscription/cancel", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      const user = await storage.getUser(req.user.id);
+      
+      if (!user || !user.subscriptionPlan) {
+        return res.status(404).json({ error: "No active subscription found" });
+      }
+      
+      const updatedUser = await storage.updateUser(req.user.id, {
+        subscriptionStatus: 'cancelled'
+      });
+      
+      res.json({
+        success: true,
+        message: "Subscription cancelled successfully"
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to cancel subscription" });
     }
   });
 

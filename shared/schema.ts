@@ -12,6 +12,12 @@ export const users = pgTable("users", {
   description: text("description"),
   services: text("services").array(),
   profileCompleteness: integer("profile_completeness").default(0),
+  // Subscription fields
+  subscriptionPlan: text("subscription_plan"),
+  subscriptionPrice: numeric("subscription_price"),
+  subscriptionStatus: text("subscription_status"),
+  subscriptionStartDate: timestamp("subscription_start_date"),
+  subscriptionEndDate: timestamp("subscription_end_date"),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({

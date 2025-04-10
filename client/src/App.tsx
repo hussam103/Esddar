@@ -11,20 +11,24 @@ import SavedTendersPage from "@/pages/saved-tenders";
 import ProposalsPage from "@/pages/proposals";
 import AnalyticsPage from "@/pages/analytics";
 import SettingsPage from "@/pages/settings";
+import LandingPage from "@/pages/landing-page";
+import SubscriptionPage from "@/pages/subscription-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 
 function Router() {
   return (
     <Switch>
+      <Route path="/" component={LandingPage} />
       <Route path="/auth" component={AuthPage} />
-      <ProtectedRoute path="/" component={Dashboard}/>
+      <ProtectedRoute path="/dashboard" component={Dashboard}/>
       <ProtectedRoute path="/tenders" component={TendersPage}/>
       <ProtectedRoute path="/tenders/:id" component={TenderDetailsPage}/>
       <ProtectedRoute path="/saved" component={SavedTendersPage}/>
       <ProtectedRoute path="/proposals" component={ProposalsPage}/>
       <ProtectedRoute path="/analytics" component={AnalyticsPage}/>
       <ProtectedRoute path="/settings" component={SettingsPage}/>
+      <ProtectedRoute path="/subscribe/:plan" component={SubscriptionPage}/>
       <Route component={NotFound} />
     </Switch>
   );

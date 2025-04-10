@@ -27,7 +27,7 @@ export default function Sidebar({ mobileMenuOpen, closeMobileMenu, activePage = 
   const [location] = useLocation();
 
   const navItems = [
-    { path: "/", label: "Dashboard", icon: Home },
+    { path: "/dashboard", label: "Dashboard", icon: Home },
     { path: "/tenders", label: "Tenders", icon: ListFilter },
     { path: "/saved", label: "Saved", icon: Bookmark },
     { path: "/proposals", label: "Proposals", icon: FileText },

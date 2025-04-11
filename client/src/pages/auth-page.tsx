@@ -14,16 +14,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 // Login schema
 const loginSchema = z.object({
-  username: z.string().min(3, { message: "Username must be at least 3 characters" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  username: z.string().min(3, { message: "اسم المستخدم يجب أن يتكون من 3 أحرف على الأقل" }),
+  password: z.string().min(6, { message: "كلمة المرور يجب أن تتكون من 6 أحرف على الأقل" }),
 });
 
 // Register schema based on insertUserSchema
 const registerSchema = insertUserSchema.extend({
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  password: z.string().min(6, { message: "كلمة المرور يجب أن تتكون من 6 أحرف على الأقل" }),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
+  message: "كلمات المرور غير متطابقة",
   path: ["confirmPassword"],
 });
 
@@ -76,37 +76,37 @@ export default function AuthPage() {
       <div className="flex-1 p-8 flex items-center justify-center">
         <div className="w-full max-w-md">
           <div className="mb-8 flex items-center space-x-2">
-            <div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center">
-              <span className="text-white font-bold text-xl">E</span>
+            <div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center ml-2">
+              <span className="text-white font-bold text-xl">إ</span>
             </div>
-            <span className="text-2xl font-bold text-gray-900">Esddar</span>
+            <span className="text-2xl font-bold text-gray-900">إصدار</span>
           </div>
 
-          <Tabs defaultValue="login" className="w-full">
+          <Tabs defaultValue="login" className="w-full" dir="rtl">
             <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="register">Register</TabsTrigger>
+              <TabsTrigger value="login">تسجيل الدخول</TabsTrigger>
+              <TabsTrigger value="register">إنشاء حساب</TabsTrigger>
             </TabsList>
 
             <TabsContent value="login">
               <Card>
                 <CardHeader>
-                  <CardTitle>Login to Your Account</CardTitle>
+                  <CardTitle>تسجيل الدخول إلى حسابك</CardTitle>
                   <CardDescription>
-                    Sign in to access your tender dashboard
+                    قم بتسجيل الدخول للوصول إلى لوحة مناقصاتك
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Form {...loginForm}>
-                    <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                    <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4" dir="rtl">
                       <FormField
                         control={loginForm.control}
                         name="username"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Username</FormLabel>
+                            <FormLabel>اسم المستخدم</FormLabel>
                             <FormControl>
-                              <Input placeholder="Enter your username" {...field} />
+                              <Input placeholder="أدخل اسم المستخدم" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -117,9 +117,9 @@ export default function AuthPage() {
                         name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Password</FormLabel>
+                            <FormLabel>كلمة المرور</FormLabel>
                             <FormControl>
-                              <Input type="password" placeholder="Enter your password" {...field} />
+                              <Input type="password" placeholder="أدخل كلمة المرور" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -130,7 +130,7 @@ export default function AuthPage() {
                         className="w-full" 
                         disabled={loginMutation.isPending}
                       >
-                        {loginMutation.isPending ? "Signing in..." : "Sign In"}
+                        {loginMutation.isPending ? "جاري التسجيل..." : "تسجيل الدخول"}
                       </Button>
                     </form>
                   </Form>
@@ -141,22 +141,22 @@ export default function AuthPage() {
             <TabsContent value="register">
               <Card>
                 <CardHeader>
-                  <CardTitle>Create an Account</CardTitle>
+                  <CardTitle>إنشاء حساب جديد</CardTitle>
                   <CardDescription>
-                    Register your company to start finding relevant tenders
+                    سجل شركتك للبدء في العثور على المناقصات ذات الصلة
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Form {...registerForm}>
-                    <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                    <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4" dir="rtl">
                       <FormField
                         control={registerForm.control}
                         name="username"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Username</FormLabel>
+                            <FormLabel>اسم المستخدم</FormLabel>
                             <FormControl>
-                              <Input placeholder="Choose a username" {...field} />
+                              <Input placeholder="اختر اسم مستخدم" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -167,9 +167,9 @@ export default function AuthPage() {
                         name="companyName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Company Name</FormLabel>
+                            <FormLabel>اسم الشركة</FormLabel>
                             <FormControl>
-                              <Input placeholder="Enter your company name" {...field} />
+                              <Input placeholder="أدخل اسم شركتك" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -180,23 +180,23 @@ export default function AuthPage() {
                         name="industry"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Industry</FormLabel>
+                            <FormLabel>المجال</FormLabel>
                             <Select 
                               onValueChange={field.onChange} 
                               defaultValue={field.value as string | undefined}
                             >
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select your industry" />
+                                  <SelectValue placeholder="اختر مجال عملك" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="IT Services">IT Services</SelectItem>
-                                <SelectItem value="Construction">Construction</SelectItem>
-                                <SelectItem value="Healthcare">Healthcare</SelectItem>
-                                <SelectItem value="Education">Education</SelectItem>
-                                <SelectItem value="Consulting">Consulting</SelectItem>
-                                <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                                <SelectItem value="IT Services">خدمات تكنولوجيا المعلومات</SelectItem>
+                                <SelectItem value="Construction">البناء والإنشاءات</SelectItem>
+                                <SelectItem value="Healthcare">الرعاية الصحية</SelectItem>
+                                <SelectItem value="Education">التعليم</SelectItem>
+                                <SelectItem value="Consulting">الاستشارات</SelectItem>
+                                <SelectItem value="Manufacturing">التصنيع</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -208,9 +208,9 @@ export default function AuthPage() {
                         name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Password</FormLabel>
+                            <FormLabel>كلمة المرور</FormLabel>
                             <FormControl>
-                              <Input type="password" placeholder="Create a password" {...field} />
+                              <Input type="password" placeholder="أنشئ كلمة مرور" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -221,9 +221,9 @@ export default function AuthPage() {
                         name="confirmPassword"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Confirm Password</FormLabel>
+                            <FormLabel>تأكيد كلمة المرور</FormLabel>
                             <FormControl>
-                              <Input type="password" placeholder="Confirm your password" {...field} />
+                              <Input type="password" placeholder="أكد كلمة المرور" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -234,7 +234,7 @@ export default function AuthPage() {
                         className="w-full" 
                         disabled={registerMutation.isPending}
                       >
-                        {registerMutation.isPending ? "Creating Account..." : "Create Account"}
+                        {registerMutation.isPending ? "جاري إنشاء الحساب..." : "إنشاء حساب"}
                       </Button>
                     </form>
                   </Form>
@@ -246,45 +246,45 @@ export default function AuthPage() {
       </div>
 
       {/* Right column with hero content */}
-      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-primary-600 to-primary-800 text-white p-12 flex-col justify-center">
+      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-primary-600 to-primary-800 text-white p-12 flex-col justify-center" dir="rtl">
         <div className="max-w-lg">
-          <h1 className="text-4xl font-bold mb-4">Find the Perfect Government Tenders for Your Business</h1>
-          <p className="text-xl mb-6">Esddar matches your company profile with relevant government contracts using AI-powered recommendations.</p>
+          <h1 className="text-4xl font-bold mb-4">ابحث عن المناقصات الحكومية المثالية لشركتك</h1>
+          <p className="text-xl mb-6">تقوم منصة إصدار بمطابقة ملف شركتك مع العقود الحكومية ذات الصلة باستخدام توصيات مدعومة بالذكاء الاصطناعي.</p>
           
           <div className="space-y-4">
             <div className="flex items-start">
-              <div className="bg-white/20 p-2 rounded-full mr-4">
+              <div className="bg-white/20 p-2 rounded-full ml-4">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div>
-                <h3 className="font-semibold text-lg">Smart Matching</h3>
-                <p>Our AI analyzes your company profile to find the most relevant tender opportunities.</p>
+                <h3 className="font-semibold text-lg">مطابقة ذكية</h3>
+                <p>يقوم الذكاء الاصطناعي لدينا بتحليل ملف شركتك للعثور على فرص المناقصات الأكثر صلة.</p>
               </div>
             </div>
             
             <div className="flex items-start">
-              <div className="bg-white/20 p-2 rounded-full mr-4">
+              <div className="bg-white/20 p-2 rounded-full ml-4">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div>
-                <h3 className="font-semibold text-lg">Save Time</h3>
-                <p>No more manual searching. Get personalized tender recommendations delivered to your dashboard.</p>
+                <h3 className="font-semibold text-lg">توفير الوقت</h3>
+                <p>لا مزيد من البحث اليدوي. احصل على توصيات مناقصات مخصصة يتم تسليمها إلى لوحة المعلومات الخاصة بك.</p>
               </div>
             </div>
             
             <div className="flex items-start">
-              <div className="bg-white/20 p-2 rounded-full mr-4">
+              <div className="bg-white/20 p-2 rounded-full ml-4">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
               <div>
-                <h3 className="font-semibold text-lg">Increase Success Rate</h3>
-                <p>Apply with confidence using our proposal templates and AI-powered suggestions.</p>
+                <h3 className="font-semibold text-lg">زيادة معدل النجاح</h3>
+                <p>تقدم بثقة باستخدام قوالب المقترحات واقتراحات مدعومة بالذكاء الاصطناعي.</p>
               </div>
             </div>
           </div>

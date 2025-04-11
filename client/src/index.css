@@ -6,6 +6,16 @@ html, body, #root {
   background-color: #f9fafb !important; /* bg-gray-50 */
   min-height: 100%;
   color: #1f2937; /* text-gray-800 */
+  font-family: 'Tajawal', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Add global support for RTL */
+.rtl, [dir="rtl"] {
+  text-align: right;
+}
+
+.ltr, [dir="ltr"] {
+  text-align: left;
 }
 
 .hero-banner {

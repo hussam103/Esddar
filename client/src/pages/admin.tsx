@@ -7,10 +7,12 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { AlertTriangle, AlertCircle, ExternalLink, Loader2, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/hooks/use-language";
 import { useLocation } from "wouter";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
 export default function AdminPage() {
   const { user, logoutMutation } = useAuth();

@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/hooks/use-language";
 import { cn } from "@/lib/utils";
 
 import { 
@@ -16,6 +17,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
 type SidebarProps = {
   mobileMenuOpen: boolean;
@@ -25,22 +27,23 @@ type SidebarProps = {
 
 export default function Sidebar({ mobileMenuOpen, closeMobileMenu, activePage = "/" }: SidebarProps) {
   const { user, logoutMutation } = useAuth();
+  const { t } = useLanguage();
   const [location] = useLocation();
   const isAdmin = user?.role === 'admin';
 
   const navItems = [
-    { path: "/dashboard", label: "لوحة التحكم", icon: Home },
-    { path: "/tenders", label: "المناقصات", icon: ListFilter },
-    { path: "/saved", label: "المحفوظة", icon: Bookmark },
-    { path: "/proposals", label: "المقترحات", icon: FileText },
-    { path: "/analytics", label: "التحليلات", icon: BarChart2 },
+    { path: "/dashboard", label: t("nav.dashboard"), icon: Home },
+    { path: "/tenders", label: t("nav.tenders"), icon: ListFilter },
+    { path: "/saved", label: t("nav.saved"), icon: Bookmark },
+    { path: "/proposals", label: t("nav.applications"), icon: FileText },
+    { path: "/analytics", label: t("dashboard.activeTenders"), icon: BarChart2 },
     { path: "/notifications", label: "الإشعارات", icon: Bell },
-    { path: "/settings", label: "الإعدادات", icon: Settings },
+    { path: "/settings", label: t("nav.settings"), icon: Settings },
   ];
   
   // Add admin menu item only for admin user
   if (isAdmin) {
-    navItems.push({ path: "/admin", label: "لوحة الإدارة", icon: ShieldAlert });
+    navItems.push({ path: "/admin", label: t("nav.admin"), icon: ShieldAlert });
   }
 
   // Function to get company initials
@@ -65,16 +68,19 @@ export default function Sidebar({ mobileMenuOpen, closeMobileMenu, activePage = 
 
   return (
     <aside className={sidebarClassName} dir="rtl">
-      <div className="p-4 flex justify-between items-center md:justify-start md:flex-col md:items-start">
+      <div className="p-4 flex justify-between items-center">
         <div className="flex items-center space-x-2 space-x-reverse">
           <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
             <span className="text-white font-bold text-lg">إ</span>
           </div>
-          <span className="text-xl font-bold text-gray-900">إصدار</span>
+          <span className="text-xl font-bold text-gray-900">{t("app.name")}</span>
         </div>
-        <button className="md:hidden" onClick={closeMobileMenu}>
-          <X className="h-6 w-6 text-gray-600" />
-        </button>
+        <div className="flex items-center">
+          <LanguageSwitcher />
+          <button className="md:hidden ml-2" onClick={closeMobileMenu}>
+            <X className="h-6 w-6 text-gray-600" />
+          </button>
+        </div>
       </div>
       
       <nav className="p-4">
@@ -106,14 +112,14 @@ export default function Sidebar({ mobileMenuOpen, closeMobileMenu, activePage = 
         {user && (
           <div className="mt-8 pt-6 border-t border-gray-200">
             <div className="px-3 py-2">
-              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">الشركة</div>
+              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t("auth.companyName")}</div>
               <div className="mt-2 flex items-center">
                 <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-medium">
                   {getCompanyInitials(user.companyName)}
                 </div>
                 <div className="mr-2">
                   <div className="text-sm font-medium">{user.companyName}</div>
-                  <div className="text-xs text-gray-500">{user.industry || "لم يتم تحديد الصناعة"}</div>
+                  <div className="text-xs text-gray-500">{user.industry || t("settings.profile")}</div>
                 </div>
               </div>
               
@@ -123,7 +129,9 @@ export default function Sidebar({ mobileMenuOpen, closeMobileMenu, activePage = 
                 onClick={handleLogout}
                 disabled={logoutMutation.isPending}
               >
-                {logoutMutation.isPending ? "جاري تسجيل الخروج..." : "تسجيل الخروج"}
+                {logoutMutation.isPending 
+                  ? `${t("auth.logout")}...` 
+                  : t("auth.logout")}
               </Button>
             </div>
           </div>

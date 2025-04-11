@@ -18,6 +18,7 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import { ProtectedRoute, AdminRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 import { NotificationsProvider } from "./hooks/use-notifications";
+import { LanguageProvider } from "./hooks/use-language";
 
 function Router() {
   return (
@@ -42,12 +43,14 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <NotificationsProvider>
-          <Router />
-          <Toaster />
-        </NotificationsProvider>
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <NotificationsProvider>
+            <Router />
+            <Toaster />
+          </NotificationsProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }

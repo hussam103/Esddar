@@ -26,7 +26,7 @@ type SidebarProps = {
 export default function Sidebar({ mobileMenuOpen, closeMobileMenu, activePage = "/" }: SidebarProps) {
   const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
-  const isAdmin = user?.id === 1;
+  const isAdmin = user?.role === 'admin';
 
   const navItems = [
     { path: "/dashboard", label: "لوحة التحكم", icon: Home },

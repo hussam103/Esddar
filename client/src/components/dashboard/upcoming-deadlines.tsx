@@ -1,9 +1,23 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { Tender, Application } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/hooks/use-language";
+import { 
+  ChevronLeft, 
+  ChevronRight,
+  Calendar,
+  CalendarCheck,
+  CalendarDays,
+  CalendarClock
+} from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type UpcomingDeadlinesProps = {
   loading: boolean;
@@ -11,10 +25,15 @@ type UpcomingDeadlinesProps = {
   tenders: Tender[];
 };
 
+type CalendarType = "gregorian" | "hijri";
+
 export default function UpcomingDeadlines({ loading, applications, tenders }: UpcomingDeadlinesProps) {
   const [, setLocation] = useLocation();
-  const [currentMonth] = useState(new Date());
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [calendarType, setCalendarType] = useState<CalendarType>("gregorian");
+  const [popupVisible, setPopupVisible] = useState<number | null>(null);
   const { language } = useLanguage();
+  const popupRef = useRef<HTMLDivElement>(null);
 
   // Get the number of days in the current month
   const getDaysInMonth = (date: Date): number => {
@@ -28,10 +47,58 @@ export default function UpcomingDeadlines({ loading, applications, tenders }: Up
 
   // Format month name
   const formatMonth = (date: Date): string => {
-    return date.toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', { 
-      month: 'long', 
-      year: 'numeric' 
+    if (calendarType === "hijri" && language === "ar") {
+      // Use Arabic localization with Islamic calendar
+      return date.toLocaleDateString('ar-SA-islamic', { 
+        month: 'long', 
+        year: 'numeric',
+        calendar: 'islamic' 
+      });
+    } else {
+      // Use standard localization
+      return date.toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', { 
+        month: 'long', 
+        year: 'numeric' 
+      });
+    }
+  };
+  
+  // Convert date to Hijri
+  const getHijriDate = (date: Date): string => {
+    try {
+      return date.toLocaleDateString('ar-SA-islamic', {
+        day: 'numeric',
+        calendar: 'islamic'
+      });
+    } catch (error) {
+      return date.getDate().toString();
+    }
+  };
+  
+  // Get tenders for a specific day
+  const getTendersForDay = (day: number): Tender[] => {
+    return tenders.filter(tender => {
+      const deadlineDate = new Date(tender.deadline);
+      return deadlineDate.getDate() === day && 
+             deadlineDate.getMonth() === currentMonth.getMonth() &&
+             deadlineDate.getFullYear() === currentMonth.getFullYear();
     });
+  };
+  
+  // Handle month navigation
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    const newMonth = new Date(currentMonth);
+    if (direction === 'prev') {
+      newMonth.setMonth(newMonth.getMonth() - 1);
+    } else {
+      newMonth.setMonth(newMonth.getMonth() + 1);
+    }
+    setCurrentMonth(newMonth);
+  };
+  
+  // Toggle calendar type
+  const toggleCalendarType = () => {
+    setCalendarType(calendarType === "gregorian" ? "hijri" : "gregorian");
   };
 
   // Find tenders with upcoming deadlines
@@ -159,77 +226,164 @@ export default function UpcomingDeadlines({ loading, applications, tenders }: Up
   return (
     <section className="mt-8 mb-8">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">
-          {language === "ar" ? "المواعيد النهائية القادمة" : "Upcoming Deadlines"}
-        </h2>
-        <button className="text-sm text-primary-600 font-medium hover:text-primary-700">
-          {language === "ar" ? "عرض التقويم" : "View Calendar"}
+        <div className="flex items-center">
+          <CalendarClock className="h-5 w-5 text-primary-600 mr-2" />
+          <h2 className="text-lg font-semibold text-gray-900">
+            {language === "ar" ? "المواعيد النهائية القادمة" : "Upcoming Deadlines"}
+          </h2>
+        </div>
+        <button 
+          className="text-sm text-primary-600 font-medium hover:text-primary-700 flex items-center"
+          onClick={() => setLocation('/calendar')}
+        >
+          <CalendarDays className="h-4 w-4 mr-1" />
+          {language === "ar" ? "عرض التقويم الكامل" : "View Full Calendar"}
         </button>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Left Column: Calendar Preview */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="text-center font-medium text-gray-800 mb-4">{formatMonth(currentMonth)}</div>
+        <div className="bg-white border border-gray-200 rounded-lg p-4 relative">
+          {/* Calendar Header with Navigation and Type Toggle */}
+          <div className="flex items-center justify-between mb-4">
+            <button 
+              className="text-gray-500 hover:text-gray-700 focus:outline-none"
+              onClick={() => navigateMonth('prev')}
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            
+            <div className="flex flex-col items-center">
+              <h3 className="font-medium text-gray-800">{formatMonth(currentMonth)}</h3>
+              <button 
+                onClick={toggleCalendarType}
+                className="mt-1 text-xs text-primary-600 hover:text-primary-700 font-medium"
+              >
+                {language === "ar" 
+                  ? (calendarType === "hijri" ? "التقويم الميلادي" : "التقويم الهجري") 
+                  : (calendarType === "hijri" ? "Gregorian Calendar" : "Hijri Calendar")
+                }
+              </button>
+            </div>
+            
+            <button 
+              className="text-gray-500 hover:text-gray-700 focus:outline-none"
+              onClick={() => navigateMonth('next')}
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </div>
+          
+          {/* Calendar Grid */}
           <div className="grid grid-cols-7 gap-1">
-            <div className="text-center text-xs text-gray-500 py-1">
-              {language === "ar" ? "أحد" : "Sun"}
-            </div>
-            <div className="text-center text-xs text-gray-500 py-1">
-              {language === "ar" ? "إثن" : "Mon"}
-            </div>
-            <div className="text-center text-xs text-gray-500 py-1">
-              {language === "ar" ? "ثلا" : "Tue"}
-            </div>
-            <div className="text-center text-xs text-gray-500 py-1">
-              {language === "ar" ? "أرب" : "Wed"}
-            </div>
-            <div className="text-center text-xs text-gray-500 py-1">
-              {language === "ar" ? "خمي" : "Thu"}
-            </div>
-            <div className="text-center text-xs text-gray-500 py-1">
-              {language === "ar" ? "جمع" : "Fri"}
-            </div>
-            <div className="text-center text-xs text-gray-500 py-1">
-              {language === "ar" ? "سبت" : "Sat"}
-            </div>
+            {/* Weekday Headers */}
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
+              <div key={day} className="text-center text-xs text-gray-500 py-1">
+                {language === "ar" 
+                  ? ['أحد', 'إثن', 'ثلا', 'أرب', 'خمي', 'جمع', 'سبت'][index]
+                  : day
+                }
+              </div>
+            ))}
             
             {/* Previous month days */}
             {calendar.prevMonthDays.map((day, index) => (
-              <div key={`prev-${index}`} className="text-center py-1 text-gray-400 text-sm">{day}</div>
-            ))}
-            
-            {/* Current month days */}
-            {calendar.currentMonthDays.map((day) => (
               <div 
-                key={`current-${day}`} 
-                className={`text-center py-1 text-sm ${
-                  calendar.isToday(day) 
-                    ? "bg-gray-100 rounded" 
-                    : calendar.hasDeadline(day) 
-                      ? "bg-red-100 text-red-800 font-medium rounded" 
-                      : ""
-                }`}
+                key={`prev-${index}`} 
+                className="text-center py-1 text-gray-400 text-sm"
               >
                 {day}
               </div>
             ))}
             
+            {/* Current month days */}
+            {calendar.currentMonthDays.map((day) => {
+              const dayTenders = getTendersForDay(day);
+              const hasDeadlines = dayTenders.length > 0;
+              
+              return (
+                <TooltipProvider key={`current-${day}`}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div 
+                        className={`text-center py-2 text-sm relative cursor-pointer hover:bg-gray-50 
+                          ${calendar.isToday(day) ? "bg-gray-100 rounded" : ""} 
+                          ${hasDeadlines ? "bg-red-100 text-red-800 font-medium rounded" : ""}
+                        `}
+                        onClick={() => hasDeadlines && setPopupVisible(hasDeadlines ? day : null)}
+                      >
+                        <div className="flex flex-col items-center">
+                          <span>{day}</span>
+                          {calendarType === "hijri" && (
+                            <span className="text-xs text-gray-500 mt-0.5">
+                              {getHijriDate(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day))}
+                            </span>
+                          )}
+                        </div>
+                        {hasDeadlines && (
+                          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                        )}
+                      </div>
+                    </TooltipTrigger>
+                    {hasDeadlines && (
+                      <TooltipContent side="right" className="p-0 w-64">
+                        <div className="bg-white rounded shadow-lg border border-gray-200 overflow-hidden">
+                          <div className="p-2 bg-primary-50 border-b border-gray-200 font-medium text-sm">
+                            {language === "ar" 
+                              ? `المناقصات ليوم ${day} ${formatMonth(currentMonth)}` 
+                              : `Tenders for ${day} ${formatMonth(currentMonth)}`
+                            }
+                          </div>
+                          <div className="max-h-48 overflow-y-auto">
+                            {dayTenders.map(tender => (
+                              <div 
+                                key={tender.id} 
+                                className="p-2 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                                onClick={() => setLocation(`/tenders/${tender.id}`)}
+                              >
+                                <div className="font-medium text-sm line-clamp-1">{tender.title}</div>
+                                <div className="text-xs text-gray-500">{tender.agency}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
+              );
+            })}
+            
             {/* Next month days */}
             {calendar.nextMonthDays.map((day, index) => (
-              <div key={`next-${index}`} className="text-center py-1 text-gray-400 text-sm">{day}</div>
+              <div 
+                key={`next-${index}`} 
+                className="text-center py-1 text-gray-400 text-sm"
+              >
+                {day}
+              </div>
             ))}
           </div>
           
-          <div className={`mt-4 text-xs flex space-x-4 ${language === "ar" ? "space-x-reverse" : ""}`}>
-            <div className={`flex items-center ${language === "ar" ? "" : "flex-row-reverse space-x-1 space-x-reverse"}`}>
-              <div className={`w-3 h-3 bg-red-100 rounded ${language === "ar" ? "ml-1" : "mr-1"}`}></div>
-              <span>{language === "ar" ? "الموعد النهائي" : "Deadline"}</span>
+          {/* Calendar Legend */}
+          <div className={`mt-4 text-xs flex items-center justify-between`}>
+            <div className={`flex space-x-3 ${language === "ar" ? "space-x-reverse" : ""}`}>
+              <div className="flex items-center">
+                <div className={`w-3 h-3 bg-red-100 rounded ${language === "ar" ? "ml-1" : "mr-1"}`}></div>
+                <span>{language === "ar" ? "الموعد النهائي" : "Deadline"}</span>
+              </div>
+              <div className="flex items-center">
+                <div className={`w-3 h-3 bg-gray-100 rounded ${language === "ar" ? "ml-1" : "mr-1"}`}></div>
+                <span>{language === "ar" ? "اليوم" : "Today"}</span>
+              </div>
             </div>
-            <div className={`flex items-center ${language === "ar" ? "" : "flex-row-reverse space-x-1 space-x-reverse"}`}>
-              <div className={`w-3 h-3 bg-gray-100 rounded ${language === "ar" ? "ml-1" : "mr-1"}`}></div>
-              <span>{language === "ar" ? "اليوم" : "Today"}</span>
-            </div>
+            <button
+              className="text-primary-600 hover:text-primary-700 text-xs flex items-center"
+              onClick={() => setLocation('/calendar')}
+            >
+              <Calendar className="h-3 w-3 mr-1" />
+              {language === "ar" ? "عرض الكل" : "View All"}
+            </button>
           </div>
         </div>
         

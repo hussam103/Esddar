@@ -151,7 +151,7 @@ export async function processDocumentWithOCR(documentId: string): Promise<void> 
         {
           headers: {
             ...form.getHeaders(),
-            'Authorization': `Bearer ${process.env.UNSTRACT_API_KEY}`
+            'unstract-key': process.env.UNSTRACT_API_KEY
           },
           timeout: 180000 // 3 minutes timeout
         }

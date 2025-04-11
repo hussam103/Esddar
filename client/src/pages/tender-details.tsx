@@ -252,16 +252,16 @@ export default function TenderDetailsPage() {
                 ) : savedStatus?.isSaved ? (
                   <span className="flex items-center">
                     <CheckCircle className="h-4 w-4 mr-2 text-primary" />
-                    Saved
+                    {t("tenderDetails.saveTender")}
                   </span>
                 ) : (
                   <span className="flex items-center">
                     <FileText className="h-4 w-4 mr-2" />
-                    Save Tender
+                    {t("tenderDetails.saveTender")}
                   </span>
                 )}
               </Button>
-              <Button onClick={() => form.setValue("status", "submitted")}>Apply Now</Button>
+              <Button onClick={() => form.setValue("status", "submitted")}>{t("tenderDetails.applyNow")}</Button>
             </div>
           </div>
 
@@ -344,7 +344,7 @@ export default function TenderDetailsPage() {
                       
                       {tender.source === 'etimad' && (
                         <Badge className="bg-blue-50 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300 border-blue-200 dark:border-blue-800">
-                          منصة اعتماد
+                          {t("tenders.etimadPlatform")}
                         </Badge>
                       )}
                     </div>

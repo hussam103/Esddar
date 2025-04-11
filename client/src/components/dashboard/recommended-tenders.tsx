@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { Tender } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/hooks/use-language";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Bookmark, Clock, MapPin, Tag } from "lucide-react";
@@ -15,6 +16,7 @@ type RecommendedTendersProps = {
 export default function RecommendedTenders({ loading, tenders }: RecommendedTendersProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { t, language } = useLanguage();
 
   // Get days remaining until deadline
   const getDaysRemaining = (deadline: Date): number => {
@@ -92,15 +94,29 @@ export default function RecommendedTenders({ loading, tenders }: RecommendedTend
   return (
     <section className="mb-8">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">المناقصات الموصى بها</h2>
-        <div className="flex items-center space-x-2 space-x-reverse">
+        <h2 className="text-lg font-semibold text-gray-900">
+          {language === "ar" ? "المناقصات الموصى بها" : "Recommended Tenders"}
+        </h2>
+        <div className={`flex items-center ${language === "ar" ? "space-x-2 space-x-reverse" : "space-x-2"}`}>
           <div className="relative">
-            <select className="pr-3 pl-8 py-1.5 bg-white border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 appearance-none">
-              <option>جميع الفئات</option>
-              <option>خدمات تكنولوجيا المعلومات</option>
-              <option>البناء والإنشاءات</option>
-              <option>الاستشارات</option>
-              <option>الرعاية الصحية</option>
+            <select className={`${language === "ar" ? "pr-3 pl-8" : "pl-3 pr-8"} py-1.5 bg-white border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 appearance-none`}>
+              {language === "ar" ? (
+                <>
+                  <option>جميع الفئات</option>
+                  <option>خدمات تكنولوجيا المعلومات</option>
+                  <option>البناء والإنشاءات</option>
+                  <option>الاستشارات</option>
+                  <option>الرعاية الصحية</option>
+                </>
+              ) : (
+                <>
+                  <option>All Categories</option>
+                  <option>IT Services</option>
+                  <option>Construction</option>
+                  <option>Consulting</option>
+                  <option>Healthcare</option>
+                </>
+              )}
             </select>
             <div className="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
               <svg className="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -109,11 +125,22 @@ export default function RecommendedTenders({ loading, tenders }: RecommendedTend
             </div>
           </div>
           <div className="relative">
-            <select className="pr-3 pl-8 py-1.5 bg-white border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 appearance-none">
-              <option>ترتيب حسب: نسبة التطابق</option>
-              <option>الموعد النهائي (الأقرب)</option>
-              <option>القيمة (الأعلى)</option>
-              <option>المضافة حديثًا</option>
+            <select className={`${language === "ar" ? "pr-3 pl-8" : "pl-3 pr-8"} py-1.5 bg-white border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 appearance-none`}>
+              {language === "ar" ? (
+                <>
+                  <option>ترتيب حسب: نسبة التطابق</option>
+                  <option>الموعد النهائي (الأقرب)</option>
+                  <option>القيمة (الأعلى)</option>
+                  <option>المضافة حديثًا</option>
+                </>
+              ) : (
+                <>
+                  <option>Sort by: Match Rate</option>
+                  <option>Deadline (Closest)</option>
+                  <option>Value (Highest)</option>
+                  <option>Recently Added</option>
+                </>
+              )}
             </select>
             <div className="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
               <svg className="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -134,7 +161,7 @@ export default function RecommendedTenders({ loading, tenders }: RecommendedTend
             <div key={tender.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200">
               <div className="relative">
                 <div className="absolute top-0 left-0 bg-primary-600 text-white text-xs font-bold px-2 py-1 rounded-br-md">
-                  تطابق {matchScore}%
+                  {language === "ar" ? `تطابق ${matchScore}%` : `Match ${matchScore}%`}
                 </div>
                 <div className="p-4">
                   <div className="flex justify-between items-start">
@@ -164,7 +191,9 @@ export default function RecommendedTenders({ loading, tenders }: RecommendedTend
                 <div className="px-4 pb-2">
                   <div className="flex items-center justify-between text-sm">
                     <div>
-                      <span className="font-medium text-gray-700">القيمة:</span>
+                      <span className="font-medium text-gray-700">
+                        {language === "ar" ? "القيمة:" : "Value:"}
+                      </span>
                       <span className="text-gray-900">${Number(tender.valueMin).toLocaleString()} - ${Number(tender.valueMax).toLocaleString()}</span>
                     </div>
                   </div>
@@ -172,12 +201,20 @@ export default function RecommendedTenders({ loading, tenders }: RecommendedTend
                 <div className="px-4 pb-3">
                   <div className="flex items-center justify-between text-sm">
                     <div className={`flex items-center ${deadlineClass}`}>
-                      <Clock className="h-3 w-3 ml-1" />
-                      <span>الموعد النهائي: متبقي {daysRemaining} يوم</span>
+                      <Clock className={`h-3 w-3 ${language === "ar" ? "ml-1" : "mr-1"}`} />
+                      <span>
+                        {language === "ar" 
+                          ? `الموعد النهائي: متبقي ${daysRemaining} يوم`
+                          : `Deadline: ${daysRemaining} days remaining`}
+                      </span>
                     </div>
                     <div>
                       <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                        {tender.status === 'open' ? 'مفتوح' : tender.status === 'closed' ? 'مغلق' : tender.status}
+                        {tender.status === 'open' 
+                          ? (language === "ar" ? 'مفتوح' : 'Open')
+                          : tender.status === 'closed' 
+                            ? (language === "ar" ? 'مغلق' : 'Closed')
+                            : tender.status}
                       </span>
                     </div>
                   </div>
@@ -187,13 +224,13 @@ export default function RecommendedTenders({ loading, tenders }: RecommendedTend
                     className="text-sm text-primary-600 font-medium hover:text-primary-700"
                     onClick={() => setLocation(`/tenders/${tender.id}`)}
                   >
-                    عرض التفاصيل
+                    {language === "ar" ? "عرض التفاصيل" : "View Details"}
                   </button>
                   <button 
                     className="px-3 py-1 bg-primary-600 text-white text-sm rounded hover:bg-primary-700 transition-colors duration-150"
                     onClick={() => setLocation(`/tenders/${tender.id}`)}
                   >
-                    تقديم طلب
+                    {language === "ar" ? "تقديم طلب" : "Apply"}
                   </button>
                 </div>
               </div>
@@ -207,7 +244,7 @@ export default function RecommendedTenders({ loading, tenders }: RecommendedTend
           variant="outline"
           onClick={() => setLocation("/tenders")}
         >
-          عرض كل المناقصات الموصى بها
+          {language === "ar" ? "عرض كل المناقصات الموصى بها" : "View All Recommended Tenders"}
         </Button>
       </div>
     </section>

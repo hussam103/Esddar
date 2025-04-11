@@ -70,34 +70,46 @@ export default function MatchingScore({ loading, userProfile, profileCompletenes
       
       <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-          <div className="text-sm text-gray-600">دقة المطابقة</div>
+          <div className="text-sm text-gray-600">
+            {language === "ar" ? "دقة المطابقة" : "Matching Accuracy"}
+          </div>
           <div className="mt-1 flex items-baseline">
             <span className="text-2xl font-bold text-gray-900">{userProfile?.matchAccuracy || 0}%</span>
-            <span className="mr-1 text-xs text-green-600 flex items-center">
+            <span className={`${language === "ar" ? "mr-1" : "ml-1"} text-xs text-green-600 flex items-center`}>
               <ArrowUp className="h-3 w-3" />
               5%
             </span>
           </div>
         </div>
         <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-          <div className="text-sm text-gray-600">المناقصات المكتشفة</div>
+          <div className="text-sm text-gray-600">
+            {language === "ar" ? "المناقصات المكتشفة" : "Tenders Discovered"}
+          </div>
           <div className="mt-1 flex items-baseline">
             <span className="text-2xl font-bold text-gray-900">{userProfile?.tendersFound || 0}</span>
-            <span className="mr-1 text-xs text-gray-500">هذا الأسبوع</span>
+            <span className={`${language === "ar" ? "mr-1" : "ml-1"} text-xs text-gray-500`}>
+              {language === "ar" ? "هذا الأسبوع" : "This week"}
+            </span>
           </div>
         </div>
         <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-          <div className="text-sm text-gray-600">العروض المقدمة</div>
+          <div className="text-sm text-gray-600">
+            {language === "ar" ? "العروض المقدمة" : "Proposals Submitted"}
+          </div>
           <div className="mt-1 flex items-baseline">
             <span className="text-2xl font-bold text-gray-900">{userProfile?.proposalsSubmitted || 0}</span>
-            <span className="mr-1 text-xs text-gray-500">هذا الشهر</span>
+            <span className={`${language === "ar" ? "mr-1" : "ml-1"} text-xs text-gray-500`}>
+              {language === "ar" ? "هذا الشهر" : "This month"}
+            </span>
           </div>
         </div>
         <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-          <div className="text-sm text-gray-600">معدل النجاح</div>
+          <div className="text-sm text-gray-600">
+            {language === "ar" ? "معدل النجاح" : "Success Rate"}
+          </div>
           <div className="mt-1 flex items-baseline">
             <span className="text-2xl font-bold text-gray-900">{userProfile?.successRate || 0}%</span>
-            <span className="mr-1 text-xs text-green-600 flex items-center">
+            <span className={`${language === "ar" ? "mr-1" : "ml-1"} text-xs text-green-600 flex items-center`}>
               <ArrowUp className="h-3 w-3" />
               8%
             </span>

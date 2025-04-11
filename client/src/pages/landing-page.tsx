@@ -8,19 +8,19 @@ export default function LandingPage() {
   const [, setLocation] = useLocation();
   
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col" dir="rtl">
       {/* Hero Section */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
-              <span className="text-white font-bold text-lg">E</span>
+            <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center ml-2">
+              <span className="text-white font-bold text-lg">إ</span>
             </div>
-            <span className="text-xl font-bold text-gray-900">Esddar</span>
+            <span className="text-xl font-bold text-gray-900">إصدار</span>
           </div>
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" onClick={() => setLocation("/auth")}>Login</Button>
-            <Button onClick={() => setLocation("/auth")}>Sign Up</Button>
+            <Button variant="ghost" onClick={() => setLocation("/auth")}>تسجيل الدخول</Button>
+            <Button onClick={() => setLocation("/auth")}>إنشاء حساب</Button>
           </div>
         </div>
       </header>
@@ -33,10 +33,10 @@ export default function LandingPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
               <div>
                 <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
-                  Find the perfect government contracts for your business
+                  ابحث عن العقود الحكومية المثالية لشركتك
                 </h1>
                 <p className="text-lg md:text-xl mb-8 text-gray-100">
-                  Our AI-powered platform matches your business profile with relevant government tenders, increasing your success rate.
+                  منصتنا المدعومة بالذكاء الاصطناعي تطابق ملف شركتك مع المناقصات الحكومية ذات الصلة، مما يزيد من معدل نجاحك.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Button
@@ -44,7 +44,7 @@ export default function LandingPage() {
                     className="bg-white text-primary-900 hover:bg-gray-100"
                     onClick={() => setLocation("/auth")}
                   >
-                    Get Started Free
+                    ابدأ مجاناً
                   </Button>
                   <Button
                     size="lg"
@@ -52,36 +52,36 @@ export default function LandingPage() {
                     className="border-white text-white hover:bg-white/10"
                     onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
                   >
-                    See Pricing
+                    شاهد الأسعار
                   </Button>
                 </div>
               </div>
               <div className="hidden md:block">
                 <div className="relative h-96 bg-white/10 rounded-lg p-6 backdrop-blur-sm">
-                  <div className="absolute top-0 right-0 bg-primary-600 text-white text-xs font-bold px-2 py-1 rounded-bl-md">
-                    98% Match
+                  <div className="absolute top-0 right-0 bg-primary-600 text-white text-xs font-bold px-2 py-1 rounded-br-md">
+                    نسبة التطابق 98%
                   </div>
                   <div className="mb-4">
-                    <h3 className="text-xl font-semibold">IT Infrastructure Upgrade</h3>
-                    <p className="text-sm opacity-80">Department of Digital Services</p>
+                    <h3 className="text-xl font-semibold">تطوير البنية التحتية لتكنولوجيا المعلومات</h3>
+                    <p className="text-sm opacity-80">وزارة الخدمات الرقمية</p>
                   </div>
                   <div className="space-y-3">
                     <div className="bg-white/20 p-3 rounded-md">
-                      <div className="text-sm font-medium">Value Range</div>
-                      <div className="text-lg">$250,000 - $500,000</div>
+                      <div className="text-sm font-medium">نطاق القيمة</div>
+                      <div className="text-lg">250,000 - 500,000 دولار</div>
                     </div>
                     <div className="bg-white/20 p-3 rounded-md">
-                      <div className="text-sm font-medium">Deadline</div>
-                      <div className="text-lg">15 days remaining</div>
+                      <div className="text-sm font-medium">الموعد النهائي</div>
+                      <div className="text-lg">متبقي 15 يوم</div>
                     </div>
                     <div className="bg-white/20 p-3 rounded-md">
-                      <div className="text-sm font-medium">Location</div>
-                      <div className="text-lg">National</div>
+                      <div className="text-sm font-medium">الموقع</div>
+                      <div className="text-lg">وطني</div>
                     </div>
                   </div>
-                  <div className="absolute bottom-6 right-6">
+                  <div className="absolute bottom-6 left-6">
                     <Button className="bg-white text-primary-900 hover:bg-gray-100">
-                      Apply Now
+                      تقديم طلب
                     </Button>
                   </div>
                 </div>
@@ -94,9 +94,9 @@ export default function LandingPage() {
         <section className="py-16 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Why Choose Our Platform</h2>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">لماذا تختار منصتنا</h2>
               <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-                Our AI-powered tender matching platform helps businesses of all sizes find and win more government contracts.
+                منصتنا المدعومة بالذكاء الاصطناعي لمطابقة المناقصات تساعد الشركات من جميع الأحجام في العثور على المزيد من العقود الحكومية والفوز بها.
               </p>
             </div>
 
@@ -107,9 +107,9 @@ export default function LandingPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">AI-Matching</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">مطابقة الذكاء الاصطناعي</h3>
                 <p className="text-gray-600">
-                  Our advanced algorithm matches your business profile with relevant government tenders for higher success rates.
+                  تقوم خوارزميتنا المتقدمة بمطابقة ملف شركتك مع مناقصات حكومية ذات صلة لتحقيق معدلات نجاح أعلى.
                 </p>
               </div>
 
@@ -119,9 +119,9 @@ export default function LandingPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Time Saving</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">توفير الوقت</h3>
                 <p className="text-gray-600">
-                  Stop spending hours searching for tenders. Get instant, personalized recommendations.
+                  توقف عن قضاء ساعات في البحث عن المناقصات. احصل على توصيات فورية مخصصة لاحتياجاتك.
                 </p>
               </div>
 
@@ -131,9 +131,9 @@ export default function LandingPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Analytics & Insights</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">تحليلات ورؤى</h3>
                 <p className="text-gray-600">
-                  Track performance, analyze trends, and get actionable insights to improve success rates.
+                  تتبع الأداء، وتحليل الاتجاهات، والحصول على رؤى قابلة للتنفيذ لتحسين معدلات النجاح.
                 </p>
               </div>
 
@@ -143,9 +143,9 @@ export default function LandingPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Timely Alerts</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">تنبيهات في الوقت المناسب</h3>
                 <p className="text-gray-600">
-                  Never miss a deadline with email and in-app notifications for new opportunities.
+                  لا تفوت أي موعد نهائي مع إشعارات البريد الإلكتروني والتطبيق للفرص الجديدة.
                 </p>
               </div>
 
@@ -155,9 +155,9 @@ export default function LandingPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Collaborative Tools</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">أدوات تعاونية</h3>
                 <p className="text-gray-600">
-                  Work with your team to create, review, and submit high-quality proposals.
+                  اعمل مع فريقك لإنشاء ومراجعة وتقديم مقترحات عالية الجودة.
                 </p>
               </div>
 
@@ -167,9 +167,9 @@ export default function LandingPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Proposal Templates</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">قوالب العروض</h3>
                 <p className="text-gray-600">
-                  Access industry-specific templates and examples to craft winning proposals.
+                  الوصول إلى قوالب وأمثلة خاصة بالصناعة لصياغة عروض فائزة.
                 </p>
               </div>
             </div>
@@ -180,9 +180,9 @@ export default function LandingPage() {
         <section id="pricing" className="py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Flexible Pricing Plans</h2>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">خطط أسعار مرنة</h2>
               <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-                Choose the plan that fits your business needs. All plans include access to our AI matching technology.
+                اختر الخطة التي تناسب احتياجات عملك. تتضمن جميع الخطط الوصول إلى تقنية مطابقة الذكاء الاصطناعي.
               </p>
             </div>
 
@@ -190,30 +190,30 @@ export default function LandingPage() {
               {/* Basic Plan */}
               <Card className="border-2 border-gray-200">
                 <CardHeader>
-                  <CardTitle>Basic</CardTitle>
-                  <CardDescription>For small businesses just getting started</CardDescription>
+                  <CardTitle>الباقة الأساسية</CardTitle>
+                  <CardDescription>للشركات الصغيرة التي تبدأ للتو</CardDescription>
                   <div className="mt-4">
-                    <span className="text-4xl font-bold">$29</span>
-                    <span className="text-gray-600 ml-2">/month</span>
+                    <span className="text-4xl font-bold">29$</span>
+                    <span className="text-gray-600 mr-2">/شهرياً</span>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3">
                     <li className="flex items-center">
-                      <Check className="h-5 w-5 text-green-500 mr-2" />
-                      <span>Up to 20 tender recommendations/month</span>
+                      <Check className="h-5 w-5 text-green-500 ml-2" />
+                      <span>حتى 20 توصية مناقصة شهرياً</span>
                     </li>
                     <li className="flex items-center">
-                      <Check className="h-5 w-5 text-green-500 mr-2" />
-                      <span>Basic AI matching</span>
+                      <Check className="h-5 w-5 text-green-500 ml-2" />
+                      <span>مطابقة ذكاء اصطناعي أساسية</span>
                     </li>
                     <li className="flex items-center">
-                      <Check className="h-5 w-5 text-green-500 mr-2" />
-                      <span>3 saved tenders</span>
+                      <Check className="h-5 w-5 text-green-500 ml-2" />
+                      <span>3 مناقصات محفوظة</span>
                     </li>
                     <li className="flex items-center">
-                      <Check className="h-5 w-5 text-green-500 mr-2" />
-                      <span>Email notifications</span>
+                      <Check className="h-5 w-5 text-green-500 ml-2" />
+                      <span>إشعارات البريد الإلكتروني</span>
                     </li>
                   </ul>
                 </CardContent>
@@ -222,45 +222,45 @@ export default function LandingPage() {
                     className="w-full" 
                     onClick={() => setLocation("/subscribe/basic")}
                   >
-                    Get Started
+                    ابدأ الآن
                   </Button>
                 </CardFooter>
               </Card>
 
               {/* Pro Plan - Highlighted as recommended */}
               <Card className="border-2 border-primary relative">
-                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full">
-                  RECOMMENDED
+                <div className="absolute top-0 right-1/2 transform translate-x-1/2 -translate-y-1/2 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full">
+                  موصى به
                 </div>
                 <CardHeader>
-                  <CardTitle>Professional</CardTitle>
-                  <CardDescription>Perfect for growing businesses</CardDescription>
+                  <CardTitle>الباقة الاحترافية</CardTitle>
+                  <CardDescription>مثالية للشركات النامية</CardDescription>
                   <div className="mt-4">
-                    <span className="text-4xl font-bold">$79</span>
-                    <span className="text-gray-600 ml-2">/month</span>
+                    <span className="text-4xl font-bold">79$</span>
+                    <span className="text-gray-600 mr-2">/شهرياً</span>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3">
                     <li className="flex items-center">
-                      <Check className="h-5 w-5 text-green-500 mr-2" />
-                      <span>Unlimited tender recommendations</span>
+                      <Check className="h-5 w-5 text-green-500 ml-2" />
+                      <span>توصيات مناقصات غير محدودة</span>
                     </li>
                     <li className="flex items-center">
-                      <Check className="h-5 w-5 text-green-500 mr-2" />
-                      <span>Advanced AI matching</span>
+                      <Check className="h-5 w-5 text-green-500 ml-2" />
+                      <span>مطابقة ذكاء اصطناعي متقدمة</span>
                     </li>
                     <li className="flex items-center">
-                      <Check className="h-5 w-5 text-green-500 mr-2" />
-                      <span>20 saved tenders</span>
+                      <Check className="h-5 w-5 text-green-500 ml-2" />
+                      <span>20 مناقصة محفوظة</span>
                     </li>
                     <li className="flex items-center">
-                      <Check className="h-5 w-5 text-green-500 mr-2" />
-                      <span>Proposal templates</span>
+                      <Check className="h-5 w-5 text-green-500 ml-2" />
+                      <span>قوالب للعروض</span>
                     </li>
                     <li className="flex items-center">
-                      <Check className="h-5 w-5 text-green-500 mr-2" />
-                      <span>Basic analytics</span>
+                      <Check className="h-5 w-5 text-green-500 ml-2" />
+                      <span>تحليلات أساسية</span>
                     </li>
                   </ul>
                 </CardContent>
@@ -269,7 +269,7 @@ export default function LandingPage() {
                     className="w-full" 
                     onClick={() => setLocation("/subscribe/professional")}
                   >
-                    Get Started
+                    ابدأ الآن
                   </Button>
                 </CardFooter>
               </Card>
@@ -277,38 +277,38 @@ export default function LandingPage() {
               {/* Enterprise Plan */}
               <Card className="border-2 border-gray-200">
                 <CardHeader>
-                  <CardTitle>Enterprise</CardTitle>
-                  <CardDescription>For large organizations with complex needs</CardDescription>
+                  <CardTitle>باقة المؤسسات</CardTitle>
+                  <CardDescription>للمؤسسات الكبيرة ذات الاحتياجات المعقدة</CardDescription>
                   <div className="mt-4">
-                    <span className="text-4xl font-bold">$199</span>
-                    <span className="text-gray-600 ml-2">/month</span>
+                    <span className="text-4xl font-bold">199$</span>
+                    <span className="text-gray-600 mr-2">/شهرياً</span>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3">
                     <li className="flex items-center">
-                      <Check className="h-5 w-5 text-green-500 mr-2" />
-                      <span>Everything in Professional plan</span>
+                      <Check className="h-5 w-5 text-green-500 ml-2" />
+                      <span>كل ما في الباقة الاحترافية</span>
                     </li>
                     <li className="flex items-center">
-                      <Check className="h-5 w-5 text-green-500 mr-2" />
-                      <span>Premium AI matching</span>
+                      <Check className="h-5 w-5 text-green-500 ml-2" />
+                      <span>مطابقة ذكاء اصطناعي متميزة</span>
                     </li>
                     <li className="flex items-center">
-                      <Check className="h-5 w-5 text-green-500 mr-2" />
-                      <span>Unlimited saved tenders</span>
+                      <Check className="h-5 w-5 text-green-500 ml-2" />
+                      <span>مناقصات محفوظة غير محدودة</span>
                     </li>
                     <li className="flex items-center">
-                      <Check className="h-5 w-5 text-green-500 mr-2" />
-                      <span>Advanced analytics and reporting</span>
+                      <Check className="h-5 w-5 text-green-500 ml-2" />
+                      <span>تحليلات وتقارير متقدمة</span>
                     </li>
                     <li className="flex items-center">
-                      <Check className="h-5 w-5 text-green-500 mr-2" />
-                      <span>API access</span>
+                      <Check className="h-5 w-5 text-green-500 ml-2" />
+                      <span>وصول API</span>
                     </li>
                     <li className="flex items-center">
-                      <Check className="h-5 w-5 text-green-500 mr-2" />
-                      <span>Dedicated account manager</span>
+                      <Check className="h-5 w-5 text-green-500 ml-2" />
+                      <span>مدير حساب مخصص</span>
                     </li>
                   </ul>
                 </CardContent>
@@ -317,7 +317,7 @@ export default function LandingPage() {
                     className="w-full" 
                     onClick={() => setLocation("/subscribe/enterprise")}
                   >
-                    Contact Sales
+                    تواصل مع المبيعات
                   </Button>
                 </CardFooter>
               </Card>
@@ -329,9 +329,9 @@ export default function LandingPage() {
         <section className="py-16 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">What Our Customers Say</h2>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">ماذا يقول عملاؤنا</h2>
               <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-                Don't just take our word for it - hear from businesses that have found success with our platform.
+                لا تأخذ كلمتنا فقط - اسمع من الشركات التي حققت النجاح مع منصتنا.
               </p>
             </div>
 
@@ -341,13 +341,13 @@ export default function LandingPage() {
                   <div className="h-10 w-10 rounded-full bg-primary-600 flex items-center justify-center text-white font-medium">
                     AC
                   </div>
-                  <div className="ml-3">
-                    <h4 className="font-medium">Alpha Computing</h4>
-                    <p className="text-sm text-gray-600">IT Services</p>
+                  <div className="mr-3">
+                    <h4 className="font-medium">ألفا للحوسبة</h4>
+                    <p className="text-sm text-gray-600">خدمات تكنولوجيا المعلومات</p>
                   </div>
                 </div>
                 <p className="text-gray-600 mb-4">
-                  "Since using Esddar, we've increased our tender success rate by 45%. The AI matching is incredibly accurate and has saved us countless hours."
+                  "منذ استخدام إصدار، زادت نسبة نجاحنا في المناقصات بنسبة 45٪. مطابقة الذكاء الاصطناعي دقيقة بشكل لا يصدق ووفرت لنا ساعات لا تعد ولا تحصى."
                 </p>
                 <div className="flex text-yellow-400">
                   {[...Array(5)].map((_, i) => (
@@ -363,13 +363,13 @@ export default function LandingPage() {
                   <div className="h-10 w-10 rounded-full bg-primary-600 flex items-center justify-center text-white font-medium">
                     BC
                   </div>
-                  <div className="ml-3">
-                    <h4 className="font-medium">BuildCo Construction</h4>
-                    <p className="text-sm text-gray-600">Construction</p>
+                  <div className="mr-3">
+                    <h4 className="font-medium">شركة بناء للإنشاءات</h4>
+                    <p className="text-sm text-gray-600">البناء والإنشاءات</p>
                   </div>
                 </div>
                 <p className="text-gray-600 mb-4">
-                  "We've secured over $2M in government contracts thanks to Esddar's platform. The proposal templates and deadline reminders are game-changers."
+                  "لقد حصلنا على أكثر من 2 مليون دولار في العقود الحكومية بفضل منصة إصدار. قوالب المقترحات وتذكيرات المواعيد النهائية هي التي غيرت قواعد اللعبة."
                 </p>
                 <div className="flex text-yellow-400">
                   {[...Array(5)].map((_, i) => (
@@ -385,13 +385,13 @@ export default function LandingPage() {
                   <div className="h-10 w-10 rounded-full bg-primary-600 flex items-center justify-center text-white font-medium">
                     MC
                   </div>
-                  <div className="ml-3">
-                    <h4 className="font-medium">MediCare Solutions</h4>
-                    <p className="text-sm text-gray-600">Healthcare</p>
+                  <div className="mr-3">
+                    <h4 className="font-medium">ميديكير للحلول الصحية</h4>
+                    <p className="text-sm text-gray-600">الرعاية الصحية</p>
                   </div>
                 </div>
                 <p className="text-gray-600 mb-4">
-                  "As a small healthcare provider, we never had the resources to compete for government contracts until we found Esddar. Now we're growing rapidly thanks to new opportunities."
+                  "كمزود رعاية صحية صغير، لم تكن لدينا الموارد للتنافس على العقود الحكومية حتى وجدنا إصدار. الآن نحن ننمو بسرعة بفضل الفرص الجديدة."
                 </p>
                 <div className="flex text-yellow-400">
                   {[...Array(5)].map((_, i) => (
@@ -408,9 +408,9 @@ export default function LandingPage() {
         {/* CTA Section */}
         <section className="py-16 bg-primary-900 text-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-3xl font-bold mb-6">Ready to find and win more government contracts?</h2>
+            <h2 className="text-3xl font-bold mb-6">هل أنت مستعد للعثور على المزيد من العقود الحكومية والفوز بها؟</h2>
             <p className="text-xl mb-8 max-w-3xl mx-auto">
-              Join thousands of businesses that use our platform to find relevant tenders and grow their success rate.
+              انضم إلى آلاف الشركات التي تستخدم منصتنا للعثور على المناقصات ذات الصلة وزيادة معدل نجاحها.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
@@ -418,7 +418,7 @@ export default function LandingPage() {
                 className="bg-white text-primary-900 hover:bg-gray-100"
                 onClick={() => setLocation("/auth")}
               >
-                Get Started For Free
+                ابدأ مجاناً
               </Button>
               <Button
                 size="lg"
@@ -426,7 +426,7 @@ export default function LandingPage() {
                 className="border-white text-white hover:bg-white/10"
                 onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
               >
-                View Pricing Plans
+                عرض خطط الأسعار
               </Button>
             </div>
           </div>
@@ -439,48 +439,48 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">E</span>
+                <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center ml-2">
+                  <span className="text-white font-bold text-lg">إ</span>
                 </div>
-                <span className="text-xl font-bold text-white">Esddar</span>
+                <span className="text-xl font-bold text-white">إصدار</span>
               </div>
               <p className="text-sm">
-                AI-powered tender matching platform helping businesses find and win government contracts.
+                منصة مطابقة المناقصات المدعومة بالذكاء الاصطناعي لمساعدة الشركات في العثور على العقود الحكومية والفوز بها.
               </p>
             </div>
             
             <div>
-              <h3 className="text-white font-medium mb-4">Product</h3>
+              <h3 className="text-white font-medium mb-4">المنتج</h3>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white">Features</a></li>
-                <li><a href="#" className="hover:text-white">Pricing</a></li>
-                <li><a href="#" className="hover:text-white">Testimonials</a></li>
-                <li><a href="#" className="hover:text-white">FAQ</a></li>
+                <li><a href="#" className="hover:text-white">المميزات</a></li>
+                <li><a href="#" className="hover:text-white">الأسعار</a></li>
+                <li><a href="#" className="hover:text-white">التوصيات</a></li>
+                <li><a href="#" className="hover:text-white">الأسئلة الشائعة</a></li>
               </ul>
             </div>
             
             <div>
-              <h3 className="text-white font-medium mb-4">Company</h3>
+              <h3 className="text-white font-medium mb-4">الشركة</h3>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white">About Us</a></li>
-                <li><a href="#" className="hover:text-white">Careers</a></li>
-                <li><a href="#" className="hover:text-white">Blog</a></li>
-                <li><a href="#" className="hover:text-white">Contact</a></li>
+                <li><a href="#" className="hover:text-white">من نحن</a></li>
+                <li><a href="#" className="hover:text-white">الوظائف</a></li>
+                <li><a href="#" className="hover:text-white">المدونة</a></li>
+                <li><a href="#" className="hover:text-white">تواصل معنا</a></li>
               </ul>
             </div>
             
             <div>
-              <h3 className="text-white font-medium mb-4">Legal</h3>
+              <h3 className="text-white font-medium mb-4">القانونية</h3>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-white">Cookie Policy</a></li>
+                <li><a href="#" className="hover:text-white">سياسة الخصوصية</a></li>
+                <li><a href="#" className="hover:text-white">شروط الخدمة</a></li>
+                <li><a href="#" className="hover:text-white">سياسة ملفات تعريف الارتباط</a></li>
               </ul>
             </div>
           </div>
           
           <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-sm">© 2025 Esddar. All rights reserved.</p>
+            <p className="text-sm">© 2025 إصدار. جميع الحقوق محفوظة.</p>
             <div className="flex space-x-6 mt-4 md:mt-0">
               <a href="#" className="text-gray-400 hover:text-white">
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">

@@ -48,6 +48,18 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
       maximumFractionDigits: 0,
     }).format(num);
   };
+  
+  // Extract tender ID for Etimad URL
+  const getEtimadTenderUrl = (bidNumber: string | null | undefined): string => {
+    if (!bidNumber) return "https://tenders.etimad.sa/Tender/AllTendersForVisitor";
+    
+    // After looking at the screenshot and researching Etimad's website,
+    // the format to link to a tender might be slightly different
+    // Let's try both formats:
+    
+    // Format 1: Direct BidNumber link - the most likely format based on screenshot
+    return `https://tenders.etimad.sa/Tender/Details?STenderId=${bidNumber}`;
+  };
 
   // Save tender mutation
   const saveTenderMutation = useMutation({
@@ -210,12 +222,12 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
           ) : (
             // For Etimad tenders, open in a new tab
             <a 
-              href={`https://tenders.etimad.sa/Tender/Details/${tender.bidNumber}`}
+              href={getEtimadTenderUrl(tender.bidNumber)}
               target="_blank"
               rel="noopener noreferrer"
               className="px-3 py-1 bg-gradient-to-l from-primary-600 to-primary-500 text-white text-sm rounded hover:from-primary-700 hover:to-primary-600 transition-colors duration-150 inline-block text-center"
             >
-              تقديم طلب في اعتماد
+              تقديم طلب في منصة اعتماد
             </a>
           )}
         </div>

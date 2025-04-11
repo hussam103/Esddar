@@ -106,11 +106,14 @@ export default function AdminPage() {
     }
   };
 
+  const { t, language } = useLanguage();
+  
   return (
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">لوحة الإدارة</h1>
-        <div className="flex space-x-3 space-x-reverse">
+        <h1 className="text-3xl font-bold">{t("admin.title")}</h1>
+        <div className="flex space-x-3 space-x-reverse items-center">
+          <LanguageSwitcher />
           <Button 
             variant="destructive" 
             onClick={() => {
@@ -120,14 +123,14 @@ export default function AdminPage() {
             className="flex items-center space-x-2 space-x-reverse"
             disabled={logoutMutation.isPending}
           >
-            {logoutMutation.isPending ? "جاري تسجيل الخروج..." : "تسجيل الخروج"}
+            {logoutMutation.isPending ? `${t("auth.logout")}...` : t("auth.logout")}
           </Button>
           <Button 
             variant="outline" 
             onClick={() => setLocation("/admin/dashboard")}
             className="flex items-center space-x-2 space-x-reverse"
           >
-            <span>لوحة تحكم متقدمة</span>
+            <span>{t("admin.advancedDashboard")}</span>
             <ExternalLink className="h-4 w-4" />
           </Button>
         </div>

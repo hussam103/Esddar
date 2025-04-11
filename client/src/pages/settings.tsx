@@ -90,17 +90,17 @@ export default function SettingsPage() {
         <div className="p-4 md:p-6 max-w-7xl mx-auto">
           <Tabs defaultValue="profile" className="space-y-4">
             <TabsList>
-              <TabsTrigger value="profile">Company Profile</TabsTrigger>
-              <TabsTrigger value="notifications">Notifications</TabsTrigger>
-              <TabsTrigger value="account">Account</TabsTrigger>
+              <TabsTrigger value="profile">ملف الشركة</TabsTrigger>
+              <TabsTrigger value="notifications">الإشعارات</TabsTrigger>
+              <TabsTrigger value="account">الحساب</TabsTrigger>
             </TabsList>
             
             <TabsContent value="profile">
               <Card>
                 <CardHeader>
-                  <CardTitle>Company Profile</CardTitle>
+                  <CardTitle>ملف الشركة</CardTitle>
                   <CardDescription>
-                    Update your company information to improve tender matching
+                    تحديث معلومات شركتك لتحسين مطابقة المناقصات
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -111,7 +111,7 @@ export default function SettingsPage() {
                         name="companyName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Company Name</FormLabel>
+                            <FormLabel>اسم الشركة</FormLabel>
                             <FormControl>
                               <Input {...field} />
                             </FormControl>
@@ -125,31 +125,31 @@ export default function SettingsPage() {
                         name="industry"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Industry</FormLabel>
+                            <FormLabel>الصناعة</FormLabel>
                             <Select 
                               onValueChange={field.onChange} 
                               defaultValue={field.value}
                             >
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select your industry" />
+                                  <SelectValue placeholder="اختر مجال عملك" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="IT Services">IT Services</SelectItem>
-                                <SelectItem value="Construction">Construction</SelectItem>
-                                <SelectItem value="Healthcare">Healthcare</SelectItem>
-                                <SelectItem value="Education">Education</SelectItem>
-                                <SelectItem value="Consulting">Consulting</SelectItem>
-                                <SelectItem value="Manufacturing">Manufacturing</SelectItem>
-                                <SelectItem value="Finance">Finance</SelectItem>
-                                <SelectItem value="Retail">Retail</SelectItem>
-                                <SelectItem value="Transportation">Transportation</SelectItem>
-                                <SelectItem value="Energy">Energy</SelectItem>
+                                <SelectItem value="IT Services">خدمات تكنولوجيا المعلومات</SelectItem>
+                                <SelectItem value="Construction">البناء والإنشاءات</SelectItem>
+                                <SelectItem value="Healthcare">الرعاية الصحية</SelectItem>
+                                <SelectItem value="Education">التعليم</SelectItem>
+                                <SelectItem value="Consulting">الاستشارات</SelectItem>
+                                <SelectItem value="Manufacturing">التصنيع</SelectItem>
+                                <SelectItem value="Finance">التمويل والمالية</SelectItem>
+                                <SelectItem value="Retail">تجارة التجزئة</SelectItem>
+                                <SelectItem value="Transportation">النقل والمواصلات</SelectItem>
+                                <SelectItem value="Energy">الطاقة</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormDescription>
-                              This helps us match you with relevant tenders
+                              هذا يساعدنا على مطابقتك مع المناقصات ذات الصلة
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
@@ -161,16 +161,16 @@ export default function SettingsPage() {
                         name="description"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Company Description</FormLabel>
+                            <FormLabel>وصف الشركة</FormLabel>
                             <FormControl>
                               <Textarea 
-                                placeholder="Briefly describe your company and its capabilities" 
+                                placeholder="صف شركتك وقدراتها بإيجاز" 
                                 className="min-h-[120px]"
                                 {...field} 
                               />
                             </FormControl>
                             <FormDescription>
-                              This information will be used to improve AI matching
+                              سيتم استخدام هذه المعلومات لتحسين المطابقة بالذكاء الاصطناعي
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
@@ -178,7 +178,7 @@ export default function SettingsPage() {
                       />
 
                       <div>
-                        <h3 className="text-sm font-medium mb-3">Profile Completeness</h3>
+                        <h3 className="text-sm font-medium mb-3">اكتمال الملف الشخصي</h3>
                         <div className="w-full h-2 bg-gray-200 rounded-full">
                           <div 
                             className="h-2 bg-primary rounded-full" 
@@ -186,7 +186,7 @@ export default function SettingsPage() {
                           ></div>
                         </div>
                         <p className="text-sm text-gray-500 mt-2">
-                          {user?.profileCompleteness || 0}% complete - Fill in more details to improve tender matching
+                          {user?.profileCompleteness || 0}% مكتمل - املأ المزيد من التفاصيل لتحسين مطابقة المناقصات
                         </p>
                       </div>
 
@@ -198,7 +198,7 @@ export default function SettingsPage() {
                         {updateProfileMutation.isPending ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Updating...
+                            جاري التحديث...
                           </>
                         ) : (
                           <>

@@ -89,6 +89,7 @@ import {
 } from "recharts";
 import {
   AlertTriangle,
+  AlertCircle,
   CheckCircle,
   CircleX,
   Database,
@@ -1112,7 +1113,7 @@ export default function AdminDashboard() {
                         fill="#8884d8"
                         dataKey="value"
                       >
-                        {matchingStats.map((entry, index) => (
+                        {matchingStats.map((entry: any, index: number) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
@@ -1366,7 +1367,7 @@ export default function AdminDashboard() {
                         fill="#8884d8"
                         dataKey="value"
                       >
-                        {tenderStatusStats.map((entry, index) => (
+                        {tenderStatusStats.map((entry: any, index: number) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>

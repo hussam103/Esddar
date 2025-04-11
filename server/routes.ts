@@ -2,14 +2,23 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertTenderSchema, insertApplicationSchema, insertSavedTenderSchema } from "@shared/schema";
+import { 
+  insertTenderSchema, 
+  insertApplicationSchema, 
+  insertSavedTenderSchema, 
+  tenders, 
+  users, 
+  applications,
+  externalSources,
+  scrapeLogs,
+  vectorRecords
+} from "@shared/schema";
 import { z } from "zod";
 import { WebSocketServer, WebSocket } from "ws";
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { db } from "./db";
-import { tenders } from "../shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, count } from "drizzle-orm";
 
 // Schema for subscription
 const subscriptionSchema = z.object({
@@ -503,6 +512,247 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: error.errors });
       }
       res.status(500).json({ error: "Failed to create application" });
+    }
+  });
+  
+  // Admin API routes
+  
+  // Check if user is admin middleware
+  const isAdmin = (req: any, res: any, next: any) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: "Forbidden: Admin access required" });
+    }
+    
+    next();
+  };
+  
+  // Get all external sources
+  app.get("/api/admin/sources", isAdmin, async (req, res) => {
+    try {
+      const sources = await db.query.externalSources.findMany({
+        orderBy: (sources, { desc }) => [desc(sources.lastScrapedAt)]
+      });
+      res.json(sources);
+    } catch (error) {
+      console.error("Failed to fetch external sources:", error);
+      res.status(500).json({ error: "Failed to fetch external sources" });
+    }
+  });
+  
+  // Add a new external source
+  app.post("/api/admin/sources", isAdmin, async (req, res) => {
+    try {
+      const source = await db.insert(externalSources).values({
+        ...req.body,
+        createdBy: req.user.id,
+        createdAt: new Date()
+      }).returning();
+      
+      res.status(201).json(source[0]);
+    } catch (error) {
+      console.error("Failed to add external source:", error);
+      res.status(500).json({ error: "Failed to add external source" });
+    }
+  });
+  
+  // Update an external source
+  app.put("/api/admin/sources/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const source = await db.update(externalSources)
+        .set(req.body)
+        .where(eq(externalSources.id, id))
+        .returning();
+      
+      if (source.length === 0) {
+        return res.status(404).json({ error: "External source not found" });
+      }
+      
+      res.json(source[0]);
+    } catch (error) {
+      console.error("Failed to update external source:", error);
+      res.status(500).json({ error: "Failed to update external source" });
+    }
+  });
+  
+  // Delete an external source
+  app.delete("/api/admin/sources/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const result = await db.delete(externalSources)
+        .where(eq(externalSources.id, id))
+        .returning();
+      
+      if (result.length === 0) {
+        return res.status(404).json({ error: "External source not found" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Failed to delete external source:", error);
+      res.status(500).json({ error: "Failed to delete external source" });
+    }
+  });
+  
+  // Get all scrape logs
+  app.get("/api/admin/scrape-logs", isAdmin, async (req, res) => {
+    try {
+      const logs = await db.query.scrapeLogs.findMany({
+        with: {
+          source: true
+        },
+        orderBy: (logs, { desc }) => [desc(logs.startTime)]
+      });
+      res.json(logs);
+    } catch (error) {
+      console.error("Failed to fetch scrape logs:", error);
+      res.status(500).json({ error: "Failed to fetch scrape logs" });
+    }
+  });
+  
+  // Start a scraping job for a source
+  app.post("/api/admin/scrape/:sourceId", isAdmin, async (req, res) => {
+    try {
+      const sourceId = parseInt(req.params.sourceId);
+      
+      // Get the source
+      const source = await db.query.externalSources.findFirst({
+        where: eq(externalSources.id, sourceId)
+      });
+      
+      if (!source) {
+        return res.status(404).json({ error: "External source not found" });
+      }
+      
+      // Create a new scrape log
+      const scrapeLog = await db.insert(scrapeLogs).values({
+        sourceId: sourceId,
+        startTime: new Date(),
+        status: 'running',
+        details: {}
+      }).returning();
+      
+      // For the demo, we'll just update the log after a short delay
+      // In a real implementation, this would be handled by a background job
+      setTimeout(async () => {
+        try {
+          // Update the scrape log with completion data
+          await db.update(scrapeLogs)
+            .set({
+              endTime: new Date(),
+              status: 'completed',
+              totalTenders: Math.floor(Math.random() * 50) + 5,
+              newTenders: Math.floor(Math.random() * 20),
+              updatedTenders: Math.floor(Math.random() * 10),
+              failedTenders: Math.floor(Math.random() * 3),
+              details: { message: "Scraping completed successfully" }
+            })
+            .where(eq(scrapeLogs.id, scrapeLog[0].id));
+            
+          // Update the source's lastScrapedAt
+          await db.update(externalSources)
+            .set({ lastScrapedAt: new Date() })
+            .where(eq(externalSources.id, sourceId));
+            
+          console.log(`Scraping job ${scrapeLog[0].id} completed for source ${sourceId}`);
+        } catch (error) {
+          console.error(`Error updating scrape log ${scrapeLog[0].id}:`, error);
+        }
+      }, 10000); // 10 seconds delay
+      
+      res.status(201).json(scrapeLog[0]);
+    } catch (error) {
+      console.error("Failed to start scraping job:", error);
+      res.status(500).json({ error: "Failed to start scraping job" });
+    }
+  });
+  
+  // Get system statistics
+  app.get("/api/admin/statistics", isAdmin, async (req, res) => {
+    try {
+      // Get total tenders count
+      const tendersCount = await db.select({ count: count() }).from(tenders);
+      
+      // Get tenders by source
+      const tendersBySource = await db.select({
+        name: tenders.source,
+        value: count(tenders.id)
+      })
+      .from(tenders)
+      .groupBy(tenders.source);
+      
+      // Get tenders by status
+      const tendersByStatus = await db.select({
+        name: tenders.status,
+        value: count(tenders.id)
+      })
+      .from(tenders)
+      .groupBy(tenders.status);
+      
+      // Get users count
+      const usersCount = await db.select({ count: count() }).from(users);
+      
+      // Get applications count
+      const applicationsCount = await db.select({ count: count() }).from(applications);
+      
+      res.json({
+        total: tendersCount[0]?.count || 0,
+        users: usersCount[0]?.count || 0,
+        applications: applicationsCount[0]?.count || 0,
+        bySource: tendersBySource,
+        byStatus: tendersByStatus
+      });
+    } catch (error) {
+      console.error("Failed to fetch statistics:", error);
+      res.status(500).json({ error: "Failed to fetch statistics" });
+    }
+  });
+  
+  // Get RAG system statistics
+  app.get("/api/admin/rag-statistics", isAdmin, async (req, res) => {
+    try {
+      // Get vector records statistics
+      const vectorCount = await db.select({ count: count() }).from(vectorRecords);
+      
+      // Get tender processing status
+      const tenderVectorStatus = await db.select({
+        status: tenders.vectorStatus,
+        count: count()
+      })
+      .from(tenders)
+      .groupBy(tenders.vectorStatus);
+      
+      // Calculate processing statistics
+      const total = await db.select({ count: count() }).from(tenders);
+      const processed = tenderVectorStatus.find(s => s.status === 'processed')?.count || 0;
+      const failed = tenderVectorStatus.find(s => s.status === 'failed')?.count || 0;
+      const pending = tenderVectorStatus.find(s => s.status === 'pending')?.count || 0;
+      
+      // Get matching statistics (simulated for now)
+      // In a real implementation, this would query the tender_matches table
+      
+      res.json({
+        vectorization: {
+          total: total[0]?.count || 0,
+          processed,
+          failed,
+          pending
+        },
+        matching: [
+          { name: "90-100%", value: Math.floor(Math.random() * 20) + 10 },
+          { name: "70-89%", value: Math.floor(Math.random() * 30) + 20 },
+          { name: "50-69%", value: Math.floor(Math.random() * 40) + 30 },
+          { name: "0-49%", value: Math.floor(Math.random() * 30) + 10 }
+        ],
+        vectorRecords: vectorCount[0]?.count || 0
+      });
+    } catch (error) {
+      console.error("Failed to fetch RAG statistics:", error);
+      res.status(500).json({ error: "Failed to fetch RAG statistics" });
     }
   });
   

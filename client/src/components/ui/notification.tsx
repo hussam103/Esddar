@@ -46,7 +46,7 @@ const getIcon = (variant: VariantProps<typeof notificationVariants>["variant"] =
 
 const Notification = React.forwardRef<HTMLDivElement, NotificationProps>(
   ({ className, children, variant = "default", title, onClose, ...props }, ref) => {
-    const icon = getIcon(variant);
+    const icon = getIcon(variant !== null ? variant : 'default');
     
     return (
       <div

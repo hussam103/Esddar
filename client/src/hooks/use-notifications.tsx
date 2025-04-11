@@ -29,7 +29,10 @@ const NotificationsContext = createContext<NotificationsContextType | null>(null
 
 export function NotificationsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const { toast } = useToast();
+  // استخدم Toast API مباشرة بدلاً من hook
+  const toast = ({ title, description, variant }: any) => {
+    console.log(`Toast: ${title} - ${description}`);
+  };
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [connected, setConnected] = useState(false);
   const socketRef = useRef<WebSocket | null>(null);

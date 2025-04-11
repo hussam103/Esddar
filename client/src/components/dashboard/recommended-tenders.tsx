@@ -199,7 +199,7 @@ export default function RecommendedTenders({ loading, tenders }: RecommendedTend
                         {language === "ar" ? "القيمة:" : "Value:"}
                       </span>
                       <span className="text-gray-900 ml-1">
-                        {formatSAR(Number(tender.valueMin), false, language === 'ar' ? 'ar-SA' : 'en-US')} - {formatSAR(Number(tender.valueMax), false, language === 'ar' ? 'ar-SA' : 'en-US')}
+                        {formatSAR(Number(tender.valueMin), language)} - {formatSAR(Number(tender.valueMax), language)}
                       </span>
                     </div>
                   </div>

@@ -48,7 +48,7 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
     if (num === 0) return notAvailableText;
     
     // Use our shared currency formatter
-    return formatSAR(num, false, language === 'ar' ? 'ar-SA' : 'en-US');
+    return formatSAR(num, language);
   };
   
   // Get the URL for external tenders
@@ -144,29 +144,29 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
   const iconMargin = isRTL ? "ml-1" : "mr-1";
 
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200">
-      <div className="relative">
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col h-full">
+      <div className="relative flex-1 flex flex-col">
         {/* Match Score Badge */}
-        <div className={`absolute top-0 ${isRTL ? 'right-0 rounded-bl-md' : 'left-0 rounded-br-md'} bg-gradient-to-l from-primary-700 to-primary-500 text-white text-xs font-bold px-2 py-1`}>
+        <div className={`absolute top-0 ${isRTL ? 'right-0 rounded-bl-md' : 'left-0 rounded-br-md'} bg-gradient-to-l from-primary-700 to-primary-500 text-white text-xs font-bold px-2 py-1 z-10`}>
           {matchScore}% {t("tenders.matchRate")}
         </div>
         
-        {/* Tender Header */}
-        <div className="p-4">
+        {/* Tender Header - Fixed height for title */}
+        <div className="p-4 pb-2 flex-shrink-0">
           <div className="flex justify-between items-start">
             <div className="w-5/6">
-              <h3 className="font-medium text-gray-900 dark:text-gray-100 text-md line-clamp-2" title={tender.title}>
+              <h3 className="font-medium text-gray-900 dark:text-gray-100 text-md line-clamp-2 h-12" title={tender.title}>
                 {tender.title}
               </h3>
               <div className="flex items-center mt-1">
-                <Building className={`h-3 w-3 text-gray-500 dark:text-gray-400 ${iconMargin}`} />
+                <Building className={`h-3 w-3 text-gray-500 dark:text-gray-400 ${iconMargin} flex-shrink-0`} />
                 <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-1" title={tender.agency}>
                   {tender.agency}
                 </p>
               </div>
             </div>
             <button 
-              className={`${isSaved ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'} hover:text-primary-600 dark:hover:text-primary-400`}
+              className={`${isSaved ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'} hover:text-primary-600 dark:hover:text-primary-400 flex-shrink-0`}
               onClick={handleSaveTender}
               disabled={saveTenderMutation.isPending || unsaveTenderMutation.isPending}
               aria-label={isSaved ? t("tenders.removeFromSaved") : t("tenders.saveTender")}
@@ -174,43 +174,45 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
               <Bookmark className={`h-5 w-5 ${isSaved ? 'fill-current' : ''}`} />
             </button>
           </div>
-          
-          {/* Tender Metadata */}
-          <div className={`mt-3 flex flex-wrap items-center text-xs text-gray-500 dark:text-gray-400 gap-2 ${directionClass}`}>
+        </div>
+        
+        {/* Tender Metadata - Fixed height for metadata */}
+        <div className={`px-4 flex-shrink-0 h-10`}>
+          <div className={`flex flex-wrap items-center text-xs text-gray-500 dark:text-gray-400 gap-2 ${directionClass}`}>
             <div className="flex items-center">
-              <Hash className={`h-3 w-3 ${iconMargin}`} />
+              <Hash className={`h-3 w-3 ${iconMargin} flex-shrink-0`} />
               <span>{t("tenders.bidNumber")}: {tender.bidNumber}</span>
             </div>
             <div className="flex items-center">
-              <MapPin className={`h-3 w-3 ${iconMargin}`} />
+              <MapPin className={`h-3 w-3 ${iconMargin} flex-shrink-0`} />
               <span>{tender.location}</span>
             </div>
             <div className="flex items-center">
-              <Tag className={`h-3 w-3 ${iconMargin}`} />
+              <Tag className={`h-3 w-3 ${iconMargin} flex-shrink-0`} />
               <span>{tender.category}</span>
             </div>
           </div>
         </div>
         
-        {/* Tender Value */}
-        <div className="px-4 pb-2">
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center">
-              <SARIcon className={`h-4 w-4 text-primary ${iconMargin}`} />
+        {/* Tender Value - Fixed layout for value section */}
+        <div className="px-4 py-2 flex-shrink-0">
+          <div className="flex items-center text-sm">
+            <div className="flex items-center w-full">
+              <SARIcon className={`h-4 w-4 text-primary ${iconMargin} flex-shrink-0`} />
               <span className={`font-medium text-gray-700 dark:text-gray-300 ${iconMargin}`}>{t("tenders.value")}:</span>
-              <span className="text-gray-900 dark:text-gray-100">{formatCurrency(tender.valueMin)} - {formatCurrency(tender.valueMax)}</span>
+              <span className="text-gray-900 dark:text-gray-100 truncate">{formatCurrency(tender.valueMin)} - {formatCurrency(tender.valueMax)}</span>
             </div>
           </div>
         </div>
         
-        {/* Deadline & Status */}
-        <div className="px-4 pb-3">
+        {/* Deadline & Status - Fixed layout */}
+        <div className="px-4 py-2 flex-shrink-0">
           <div className="flex items-center justify-between text-sm">
             <div className={`flex items-center ${deadlineClass}`}>
-              <Clock className={`h-3 w-3 ${iconMargin}`} />
+              <Clock className={`h-3 w-3 ${iconMargin} flex-shrink-0`} />
               <span>{t("tenders.deadline")}: {daysRemaining} {t("tenders.daysRemaining")}</span>
             </div>
-            <div className={`flex ${isRTL ? 'space-x-2 space-x-reverse' : 'space-x-2'}`}>
+            <div className={`flex ${isRTL ? 'space-x-2 space-x-reverse' : 'space-x-2'} flex-shrink-0`}>
               {/* Badge for tender source */}
               {tender.source === 'etimad' ? (
                 <Badge className="bg-blue-50 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300 border-blue-200 dark:border-blue-800">
@@ -226,8 +228,11 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
           </div>
         </div>
         
-        {/* Action Buttons */}
-        <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3 flex justify-between">
+        {/* Spacer to push footer to bottom */}
+        <div className="flex-grow"></div>
+        
+        {/* Action Buttons - Fixed at bottom */}
+        <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3 flex justify-between items-center mt-auto flex-shrink-0">
           <button 
             className="text-sm text-primary-600 dark:text-primary-400 font-medium hover:text-primary-700 dark:hover:text-primary-300"
             onClick={() => setLocation(`/tenders/${tender.id}`)}

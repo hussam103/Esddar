@@ -225,7 +225,7 @@ export default function AnalyticsPage() {
                         <div>
                           <h3 className="font-medium">Highest Value Contract</h3>
                           <p className="text-sm text-gray-500">
-                            Your largest awarded contract was {formatSAR(250000, false, language === 'ar' ? 'ar-SA' : 'en-US')} for IT Infrastructure.
+                            Your largest awarded contract was {formatSAR(250000, language)} for IT Infrastructure.
                           </p>
                         </div>
                       </div>
@@ -273,7 +273,7 @@ export default function AnalyticsPage() {
                             <td className="px-4 py-3 text-gray-600">
                               <div className="flex items-center">
                                 <SARIcon className="h-3 w-3 text-gray-600 mr-1" />
-                                {formatSAR(Number(app.tender?.valueMin || 0), false, language === 'ar' ? 'ar-SA' : 'en-US')} - {formatSAR(Number(app.tender?.valueMax || 0), false, language === 'ar' ? 'ar-SA' : 'en-US')}
+                                {formatSAR(Number(app.tender?.valueMin || 0), language)} - {formatSAR(Number(app.tender?.valueMax || 0), language)}
                               </div>
                             </td>
                             <td className="px-4 py-3 text-gray-600">

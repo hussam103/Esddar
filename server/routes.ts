@@ -385,14 +385,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "/api/upload-company-document", 
     (req, res, next) => {
       if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
+      console.log("Authentication check passed");
       next();
     },
     upload.single('file'),
     async (req, res) => {
       try {
+        console.log("Upload endpoint called", { 
+          hasFile: !!req.file, 
+          contentType: req.headers['content-type'],
+          bodyKeys: Object.keys(req.body || {})
+        });
+        
         if (!req.file) {
           return res.status(400).json({ error: "No file uploaded" });
         }
+        
+        console.log("File uploaded:", {
+          originalname: req.file.originalname,
+          size: req.file.size,
+          mimetype: req.file.mimetype
+        });
         
         const documentId = await saveUploadedFile(req.file, req.user.id);
         

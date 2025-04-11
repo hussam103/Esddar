@@ -11,6 +11,7 @@ import SavedTendersPage from "@/pages/saved-tenders";
 import ProposalsPage from "@/pages/proposals";
 import AnalyticsPage from "@/pages/analytics";
 import SettingsPage from "@/pages/settings";
+import ProfilePage from "@/pages/profile-page";
 import LandingPage from "@/pages/landing-page";
 import SubscriptionPage from "@/pages/subscription-page";
 import AdminPage from "@/pages/admin";
@@ -32,6 +33,7 @@ function Router() {
       <ProtectedRoute path="/proposals" component={ProposalsPage}/>
       <ProtectedRoute path="/analytics" component={AnalyticsPage}/>
       <ProtectedRoute path="/settings" component={SettingsPage}/>
+      <ProtectedRoute path="/profile" component={ProfilePage}/>
       <ProtectedRoute path="/subscribe/:plan" component={SubscriptionPage}/>
       <AdminRoute path="/admin" component={AdminPage}/>
       <AdminRoute path="/admin/dashboard" component={AdminDashboard}/>

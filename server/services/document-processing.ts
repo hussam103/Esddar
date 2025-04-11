@@ -6,6 +6,7 @@ import { storage } from '../storage';
 import axios from 'axios';
 import FormData from 'form-data';
 import OpenAI from "openai";
+import { type Json } from 'drizzle-orm';
 
 // Initialize OpenAI client
 const openai = new OpenAI({

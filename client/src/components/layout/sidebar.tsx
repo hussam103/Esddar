@@ -58,17 +58,17 @@ export default function Sidebar({ mobileMenuOpen, closeMobileMenu, activePage = 
   };
 
   const sidebarClassName = cn(
-    "w-full md:w-64 bg-white border-l border-gray-200 md:h-screen md:sticky md:top-0",
+    "w-full md:w-64 bg-white border-r border-gray-200 md:h-screen md:sticky md:top-0",
     "transition-transform duration-300 ease-in-out",
     mobileMenuOpen ? "absolute inset-0 z-50" : "hidden md:block"
   );
 
   return (
-    <aside className={sidebarClassName} dir="rtl">
+    <aside className={sidebarClassName} dir="ltr">
       <div className="p-4 flex justify-between items-center">
-        <div className="flex items-center space-x-2 space-x-reverse">
+        <div className="flex items-center space-x-2">
           <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
-            <span className="text-white font-bold text-lg">إ</span>
+            <span className="text-white font-bold text-lg">E</span>
           </div>
           <span className="text-xl font-bold text-gray-900">{t("app.name")}</span>
         </div>
@@ -91,7 +91,7 @@ export default function Sidebar({ mobileMenuOpen, closeMobileMenu, activePage = 
                 <Link href={item.path}>
                   <a
                     className={cn(
-                      "flex items-center space-x-3 space-x-reverse px-3 py-2 rounded-md transition-colors duration-150",
+                      "flex items-center space-x-3 px-3 py-2 rounded-md transition-colors duration-150",
                       isActive
                         ? "bg-primary-50 text-primary-700 font-medium"
                         : "text-gray-600 hover:bg-gray-100"
@@ -114,7 +114,7 @@ export default function Sidebar({ mobileMenuOpen, closeMobileMenu, activePage = 
                 <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-medium">
                   {getCompanyInitials(user.companyName)}
                 </div>
-                <div className="mr-2">
+                <div className="ml-2">
                   <div className="text-sm font-medium">{user.companyName}</div>
                   <div className="text-xs text-gray-500">{user.industry || t("settings.profile")}</div>
                 </div>

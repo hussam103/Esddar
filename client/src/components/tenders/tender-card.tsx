@@ -234,7 +234,7 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
         {/* Action Buttons - Fixed at bottom */}
         <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3 flex justify-between items-center mt-auto flex-shrink-0">
           <button 
-            className="text-sm text-primary-600 dark:text-primary-400 font-medium hover:text-primary-700 dark:hover:text-primary-300"
+            className="text-sm text-primary-600 dark:text-primary-400 font-medium hover:text-primary-700 dark:hover:text-primary-300 rtl:text-right"
             onClick={() => setLocation(`/tenders/${tender.id}`)}
           >
             {t("tenders.viewDetails")}
@@ -245,14 +245,14 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
               href={getExternalTenderUrl()}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3 py-1 bg-gradient-to-l from-primary-600 to-primary-500 text-white text-sm rounded hover:from-primary-700 hover:to-primary-600 transition-colors duration-150 inline-block text-center"
+              className="px-3 py-1 bg-gradient-to-l from-primary-600 to-primary-500 text-white text-sm rounded hover:from-primary-700 hover:to-primary-600 transition-colors duration-150 inline-block text-center whitespace-nowrap"
             >
               {t("tenders.applyOnEtimad")}
             </a>
           ) : (
             // For locally generated tenders, redirect to local page
             <button 
-              className="px-3 py-1 bg-gradient-to-l from-primary-600 to-primary-500 text-white text-sm rounded hover:from-primary-700 hover:to-primary-600 transition-colors duration-150"
+              className="px-3 py-1 bg-gradient-to-l from-primary-600 to-primary-500 text-white text-sm rounded hover:from-primary-700 hover:to-primary-600 transition-colors duration-150 whitespace-nowrap"
               onClick={() => setLocation(`/tenders/${tender.id}`)}
             >
               {t("tenders.apply")}

@@ -9,6 +9,7 @@ import { Bookmark, Clock, MapPin, Tag, Building, Hash } from "lucide-react";
 import { SARIcon } from "@/components/ui/sar-icon";
 import { Badge } from "@/components/ui/badge";
 import { formatSAR } from "@/components/ui/currency";
+import { TenderDetailsButton } from "@/components/ui/tender-details-button";
 
 type TenderCardProps = {
   tender: Tender;

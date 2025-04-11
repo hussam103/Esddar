@@ -866,7 +866,7 @@ export default function AdminDashboard() {
                           <Dialog>
                             <DialogTrigger asChild>
                               <Button variant="outline" size="sm">
-                                عرض التفاصيل
+                                {language === "ar" ? "عرض التفاصيل" : "View Details"}
                               </Button>
                             </DialogTrigger>
                             <DialogContent className="sm:max-w-[550px]">

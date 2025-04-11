@@ -9,8 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function TendersPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [category, setCategory] = useState<string>("All Categories");
-  const [sortBy, setSortBy] = useState<string>("Match Score");
+  const [category, setCategory] = useState<string>("كل الفئات");
+  const [sortBy, setSortBy] = useState<string>("نسبة التطابق");
 
   // Fetch tenders
   const { data: tenders = [], isLoading } = useQuery<Tender[]>({
@@ -18,28 +18,28 @@ export default function TendersPage() {
   });
 
   // Filter tenders by category
-  const filteredTenders = category === "All Categories"
+  const filteredTenders = category === "كل الفئات"
     ? tenders
     : tenders.filter(tender => tender.category === category);
 
   // Sort tenders
   const sortedTenders = [...filteredTenders].sort((a, b) => {
     switch (sortBy) {
-      case "Deadline (Earliest)":
+      case "الموعد النهائي (الأقرب)":
         return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
-      case "Value (Highest)":
+      case "القيمة (الأعلى)":
         return Number(b.valueMax) - Number(a.valueMax);
-      case "Recently Added":
+      case "أضيف مؤخراً":
         // For this simple implementation, we'll use ID as a proxy for "recently added"
         return b.id - a.id;
-      default: // Match Score - just a random implementation for demo
+      default: // نسبة التطابق - just a random implementation for demo
         return Math.random() - 0.5; // Random for demo purposes
     }
   });
 
   // Get unique categories for filter
   const uniqueCategories = Array.from(new Set(tenders.map(tender => tender.category)));
-  const categories = ["All Categories", ...uniqueCategories];
+  const categories = ["كل الفئات", ...uniqueCategories];
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">

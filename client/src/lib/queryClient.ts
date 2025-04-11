@@ -39,12 +39,14 @@ export async function apiRequest(
         }
       });
       
+      xhr.responseType = 'blob';
       xhr.onload = () => {
+        const contentType = xhr.getResponseHeader('Content-Type') || 'application/json';
         const response = new Response(xhr.response, {
           status: xhr.status,
           statusText: xhr.statusText,
           headers: new Headers({
-            'Content-Type': xhr.getResponseHeader('Content-Type') || 'application/json'
+            'Content-Type': contentType
           })
         });
         

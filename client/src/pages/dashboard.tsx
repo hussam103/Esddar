@@ -10,17 +10,23 @@ import ActiveApplications from "@/components/dashboard/active-applications";
 import UpcomingDeadlines from "@/components/dashboard/upcoming-deadlines";
 import { Tender, UserProfile } from "@shared/schema";
 
-// Import the proper Application type from schema
-import { Application } from "@shared/schema";
-
-// Define a lighter version of the Application type with tender info
-interface ApplicationWithTender extends Application {
+// Don't import the Application type from schema as our components have custom types
+// Define the Application type that matches what our components expect
+type CustomApplication = {
+  id: number;
+  tenderId: number;
+  status: string;
+  submittedAt?: Date;
+  userId: number;
+  proposalContent?: string;
+  documents?: unknown;
+  matchScore?: number;
   tender?: {
     title: string;
     agency: string;
     bidNumber: string;
   };
-}
+};
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -48,12 +54,12 @@ export default function Dashboard() {
   });
 
   // Transform application data to include tender info
-  const applications: ApplicationWithTender[] = fetchedApplications.map(app => ({
+  const applications: CustomApplication[] = fetchedApplications.map(app => ({
     ...app,
-    submittedAt: app.submittedAt || null,
-    proposalContent: app.proposalContent || null,
-    documents: app.documents || null,
-    matchScore: app.matchScore || null,
+    submittedAt: app.submittedAt || undefined,
+    proposalContent: app.proposalContent || undefined,
+    documents: app.documents || undefined,
+    matchScore: app.matchScore || undefined,
     tender: app.tender
   }));
 

@@ -156,7 +156,7 @@ export default function RecommendedTenders({ loading, tenders }: RecommendedTend
         {displayTenders.map((tender, index) => {
           const daysRemaining = getDaysRemaining(tender.deadline);
           const deadlineClass = getDeadlineClass(daysRemaining);
-          const matchScore = getMatchScore(index);
+          const matchScore = getMatchScore(tender);
           
           return (
             <div key={tender.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200">

@@ -7,6 +7,8 @@ import { useLanguage } from "@/hooks/use-language";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Bookmark, Clock, MapPin, Tag } from "lucide-react";
+import { formatSAR } from "@/components/ui/currency";
+import { SARIcon } from "@/components/ui/sar-icon";
 
 type RecommendedTendersProps = {
   loading: boolean;
@@ -191,11 +193,14 @@ export default function RecommendedTenders({ loading, tenders }: RecommendedTend
                 </div>
                 <div className="px-4 pb-2">
                   <div className="flex items-center justify-between text-sm">
-                    <div>
+                    <div className="flex items-center">
+                      <SARIcon className="h-4 w-4 text-primary mr-1" />
                       <span className="font-medium text-gray-700">
                         {language === "ar" ? "القيمة:" : "Value:"}
                       </span>
-                      <span className="text-gray-900">${Number(tender.valueMin).toLocaleString()} - ${Number(tender.valueMax).toLocaleString()}</span>
+                      <span className="text-gray-900 ml-1">
+                        {formatSAR(Number(tender.valueMin), false, language === 'ar' ? 'ar-SA' : 'en-US')} - {formatSAR(Number(tender.valueMax), false, language === 'ar' ? 'ar-SA' : 'en-US')}
+                      </span>
                     </div>
                   </div>
                 </div>

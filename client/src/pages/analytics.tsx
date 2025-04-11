@@ -8,11 +8,15 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { TrendingUp, Award, AlertTriangle } from "lucide-react";
+import { formatSAR } from "@/components/ui/currency";
+import { useLanguage } from "@/hooks/use-language";
+import { SARIcon } from "@/components/ui/sar-icon";
 
 const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
 export default function AnalyticsPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { language } = useLanguage();
 
   // Fetch applications
   const { data: applications = [], isLoading: applicationsLoading } = useQuery({
@@ -220,7 +224,9 @@ export default function AnalyticsPage() {
                         </div>
                         <div>
                           <h3 className="font-medium">Highest Value Contract</h3>
-                          <p className="text-sm text-gray-500">Your largest awarded contract was $250,000 for IT Infrastructure.</p>
+                          <p className="text-sm text-gray-500">
+                            Your largest awarded contract was {formatSAR(250000, false, language === 'ar' ? 'ar-SA' : 'en-US')} for IT Infrastructure.
+                          </p>
                         </div>
                       </div>
                       

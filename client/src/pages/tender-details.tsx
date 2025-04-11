@@ -20,7 +20,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Calendar, MapPin, Tag, DollarSign, FileText, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { Loader2, Calendar, MapPin, Tag, FileText, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { SARIcon } from "@/components/ui/sar-icon";
 
 // Create application schema
 const applicationSchema = z.object({
@@ -306,7 +307,7 @@ export default function TenderDetailsPage() {
                       </div>
                     </div>
                     <div className="flex items-center col-span-2">
-                      <DollarSign className="h-5 w-5 text-primary mr-2" />
+                      <SARIcon className="h-5 w-5 text-primary mr-2" />
                       <div>
                         <p className="text-sm text-gray-500">{t("tenderDetails.value")}</p>
                         <p className="font-medium">

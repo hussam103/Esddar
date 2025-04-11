@@ -6,7 +6,9 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/use-language";
 import { Bookmark, Clock, MapPin, Tag, Building, Hash } from "lucide-react";
+import { SARIcon } from "@/components/ui/sar-icon";
 import { Badge } from "@/components/ui/badge";
+import { formatSAR } from "@/components/ui/currency";
 
 type TenderCardProps = {
   tender: Tender;
@@ -45,14 +47,8 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
     if (isNaN(num)) return notAvailableText;
     if (num === 0) return notAvailableText;
     
-    // Use appropriate locale based on current language
-    const locale = language === 'ar' ? 'ar-SA' : 'en-US';
-    
-    return new Intl.NumberFormat(locale, {
-      style: 'currency',
-      currency: 'SAR',
-      maximumFractionDigits: 0,
-    }).format(num);
+    // Use our shared currency formatter
+    return formatSAR(num, false, language === 'ar' ? 'ar-SA' : 'en-US');
   };
   
   // Get the URL for external tenders
@@ -199,7 +195,8 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
         {/* Tender Value */}
         <div className="px-4 pb-2">
           <div className="flex items-center justify-between text-sm">
-            <div>
+            <div className="flex items-center">
+              <SARIcon className={`h-4 w-4 text-primary ${iconMargin}`} />
               <span className={`font-medium text-gray-700 dark:text-gray-300 ${iconMargin}`}>{t("tenders.value")}:</span>
               <span className="text-gray-900 dark:text-gray-100">{formatCurrency(tender.valueMin)} - {formatCurrency(tender.valueMax)}</span>
             </div>

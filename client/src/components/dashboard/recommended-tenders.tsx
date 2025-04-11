@@ -225,15 +225,15 @@ export default function RecommendedTenders({ loading, tenders }: RecommendedTend
                     </div>
                   </div>
                 </div>
-                <div className="border-t border-gray-200 px-4 py-3 flex justify-between">
+                <div className="border-t border-gray-200 px-4 py-3 flex justify-between items-center">
                   <button 
-                    className="text-sm text-primary-600 font-medium hover:text-primary-700"
+                    className="text-sm text-primary-600 font-medium hover:text-primary-700 rtl:text-right"
                     onClick={() => setLocation(`/tenders/${tender.id}`)}
                   >
                     {language === "ar" ? "عرض التفاصيل" : "View Details"}
                   </button>
                   <button 
-                    className="px-3 py-1 bg-primary-600 text-white text-sm rounded hover:bg-primary-700 transition-colors duration-150"
+                    className="px-3 py-1 bg-primary-600 text-white text-sm rounded hover:bg-primary-700 transition-colors duration-150 whitespace-nowrap"
                     onClick={() => setLocation(`/tenders/${tender.id}`)}
                   >
                     {language === "ar" ? "تقديم طلب" : "Apply"}

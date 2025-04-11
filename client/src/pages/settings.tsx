@@ -263,32 +263,60 @@ export default function SettingsPage() {
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-medium">مناقصات جديدة متطابقة</p>
-                          <p className="text-sm text-gray-500">استلام إشعارات عند العثور على مناقصات جديدة متطابقة</p>
+                          <p className="font-medium">
+                            {language === "ar" ? "مناقصات جديدة متطابقة" : "New Matching Tenders"}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {language === "ar" 
+                              ? "استلام إشعارات عند العثور على مناقصات جديدة متطابقة" 
+                              : "Receive notifications when new matching tenders are found"
+                            }
+                          </p>
                         </div>
                         <Switch defaultChecked />
                       </div>
                       
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-medium">مواعيد المناقصات</p>
-                          <p className="text-sm text-gray-500">الحصول على تذكيرات للمواعيد النهائية القادمة</p>
+                          <p className="font-medium">
+                            {language === "ar" ? "مواعيد المناقصات" : "Tender Deadlines"}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {language === "ar" 
+                              ? "الحصول على تذكيرات للمواعيد النهائية القادمة" 
+                              : "Get reminders for upcoming deadlines"
+                            }
+                          </p>
                         </div>
                         <Switch defaultChecked />
                       </div>
                       
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-medium">تحديثات حالة الطلب</p>
-                          <p className="text-sm text-gray-500">تلقي إشعار عند تغيير حالة طلبك</p>
+                          <p className="font-medium">
+                            {language === "ar" ? "تحديثات حالة الطلب" : "Application Status Updates"}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {language === "ar" 
+                              ? "تلقي إشعار عند تغيير حالة طلبك" 
+                              : "Get notified when your application status changes"
+                            }
+                          </p>
                         </div>
                         <Switch defaultChecked />
                       </div>
                       
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-medium">ملخص دوري</p>
-                          <p className="text-sm text-gray-500">ملخص أسبوعي لجميع نشاطات المناقصات</p>
+                          <p className="font-medium">
+                            {language === "ar" ? "ملخص دوري" : "Periodic Summary"}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {language === "ar" 
+                              ? "ملخص أسبوعي لجميع نشاطات المناقصات" 
+                              : "Weekly summary of all tender activities"
+                            }
+                          </p>
                         </div>
                         <Switch />
                       </div>
@@ -296,22 +324,38 @@ export default function SettingsPage() {
                   </div>
                   
                   <div>
-                    <h3 className="text-sm font-medium mb-3">إشعارات التطبيق</h3>
+                    <h3 className="text-sm font-medium mb-3">
+                      {language === "ar" ? "إشعارات التطبيق" : "App Notifications"}
+                    </h3>
                     <Separator className="mb-4" />
                     
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-medium">جميع الإشعارات</p>
-                          <p className="text-sm text-gray-500">تفعيل أو تعطيل جميع إشعارات التطبيق</p>
+                          <p className="font-medium">
+                            {language === "ar" ? "جميع الإشعارات" : "All Notifications"}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {language === "ar" 
+                              ? "تفعيل أو تعطيل جميع إشعارات التطبيق" 
+                              : "Enable or disable all app notifications"
+                            }
+                          </p>
                         </div>
                         <Switch defaultChecked />
                       </div>
                       
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-medium">تنبيهات صوتية</p>
-                          <p className="text-sm text-gray-500">تشغيل صوت عند وصول الإشعارات</p>
+                          <p className="font-medium">
+                            {language === "ar" ? "تنبيهات صوتية" : "Sound Alerts"}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {language === "ar" 
+                              ? "تشغيل صوت عند وصول الإشعارات" 
+                              : "Play sound when notifications arrive"
+                            }
+                          </p>
                         </div>
                         <Switch />
                       </div>
@@ -319,7 +363,9 @@ export default function SettingsPage() {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button>حفظ إعدادات الإشعارات</Button>
+                  <Button>
+                    {language === "ar" ? "حفظ إعدادات الإشعارات" : "Save Notification Settings"}
+                  </Button>
                 </CardFooter>
               </Card>
             </TabsContent>
@@ -339,13 +385,17 @@ export default function SettingsPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div>
-                    <h3 className="text-sm font-medium mb-3">معلومات الحساب</h3>
+                    <h3 className="text-sm font-medium mb-3">
+                      {language === "ar" ? "معلومات الحساب" : "Account Information"}
+                    </h3>
                     <Separator className="mb-4" />
                     
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="text-sm font-medium">اسم المستخدم</label>
+                          <label className="text-sm font-medium">
+                            {language === "ar" ? "اسم المستخدم" : "Username"}
+                          </label>
                           <Input value={user?.username} disabled className="mt-1" />
                         </div>
                         

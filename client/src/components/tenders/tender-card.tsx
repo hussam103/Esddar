@@ -4,7 +4,8 @@ import { useMutation } from "@tanstack/react-query";
 import { Tender } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Bookmark, Clock, MapPin, Tag } from "lucide-react";
+import { Bookmark, Clock, MapPin, Tag, Building, Hash } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 type TenderCardProps = {
   tender: Tender;
@@ -28,9 +29,22 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
 
   // Get deadline class based on days remaining
   const getDeadlineClass = (daysRemaining: number): string => {
-    if (daysRemaining <= 5) return "text-red-600";
-    if (daysRemaining <= 15) return "text-amber-600";
-    return "text-gray-600";
+    if (daysRemaining <= 5) return "text-red-600 dark:text-red-400";
+    if (daysRemaining <= 15) return "text-amber-600 dark:text-amber-400";
+    return "text-gray-600 dark:text-gray-400";
+  };
+
+  // Format currency with SAR
+  const formatCurrency = (value: string): string => {
+    const num = Number(value);
+    if (isNaN(num)) return "غير محدد";
+    if (num === 0) return "غير محدد";
+    
+    return new Intl.NumberFormat('ar-SA', {
+      style: 'currency',
+      currency: 'SAR',
+      maximumFractionDigits: 0,
+    }).format(num);
   };
 
   // Save tender mutation
@@ -44,13 +58,13 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
       queryClient.invalidateQueries({ queryKey: [`/api/is-tender-saved/${tender.id}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/saved-tenders"] });
       toast({
-        title: "Tender saved",
-        description: "The tender has been added to your saved list",
+        title: "تم حفظ المناقصة",
+        description: "تمت إضافة المناقصة إلى قائمة المناقصات المحفوظة",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Failed to save tender",
+        title: "فشل في حفظ المناقصة",
         description: error.message,
         variant: "destructive",
       });
@@ -68,13 +82,13 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
       queryClient.invalidateQueries({ queryKey: [`/api/is-tender-saved/${tender.id}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/saved-tenders"] });
       toast({
-        title: "Tender removed",
-        description: "The tender has been removed from your saved list",
+        title: "تمت إزالة المناقصة",
+        description: "تمت إزالة المناقصة من قائمة المناقصات المحفوظة",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Failed to remove tender",
+        title: "فشل في إزالة المناقصة",
         description: error.message,
         variant: "destructive",
       });
@@ -94,70 +108,92 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
   const deadlineClass = getDeadlineClass(daysRemaining);
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200">
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200">
       <div className="relative">
-        <div className="absolute top-0 right-0 bg-primary-600 text-white text-xs font-bold px-2 py-1 rounded-bl-md">
-          {matchScore}% Match
+        {/* Match Score Badge */}
+        <div className="absolute top-0 right-0 bg-gradient-to-l from-primary-700 to-primary-500 text-white text-xs font-bold px-2 py-1 rounded-bl-md">
+          {matchScore}% نسبة تطابق
         </div>
+        
+        {/* Tender Header */}
         <div className="p-4">
           <div className="flex justify-between items-start">
-            <div>
-              <h3 className="font-medium text-gray-900">{tender.title}</h3>
-              <p className="text-sm text-gray-600">{tender.agency}</p>
+            <div className="w-5/6">
+              <h3 className="font-medium text-gray-900 dark:text-gray-100 text-md line-clamp-2" title={tender.title}>
+                {tender.title}
+              </h3>
+              <div className="flex items-center mt-1">
+                <Building className="h-3 w-3 text-gray-500 dark:text-gray-400 ml-1" />
+                <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-1" title={tender.agency}>
+                  {tender.agency}
+                </p>
+              </div>
             </div>
             <button 
-              className={`${isSaved ? 'text-primary-600' : 'text-gray-400'} hover:text-primary-600`}
+              className={`${isSaved ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'} hover:text-primary-600 dark:hover:text-primary-400`}
               onClick={handleSaveTender}
               disabled={saveTenderMutation.isPending || unsaveTenderMutation.isPending}
+              aria-label={isSaved ? "إزالة من المحفوظات" : "حفظ المناقصة"}
             >
               <Bookmark className={`h-5 w-5 ${isSaved ? 'fill-current' : ''}`} />
             </button>
           </div>
-          <div className="mt-3 flex items-center text-xs text-gray-500">
-            <span className="flex items-center">
-              <MapPin className="h-3 w-3 mr-1" />
-              {tender.location}
-            </span>
-            <span className="mx-2">•</span>
-            <span className="flex items-center">
-              <Tag className="h-3 w-3 mr-1" />
-              {tender.category}
-            </span>
+          
+          {/* Tender Metadata */}
+          <div className="mt-3 flex flex-wrap items-center text-xs text-gray-500 dark:text-gray-400 gap-2">
+            <div className="flex items-center">
+              <Hash className="h-3 w-3 ml-1" />
+              <span>رقم المناقصة: {tender.bidNumber}</span>
+            </div>
+            <div className="flex items-center">
+              <MapPin className="h-3 w-3 ml-1" />
+              <span>{tender.location}</span>
+            </div>
+            <div className="flex items-center">
+              <Tag className="h-3 w-3 ml-1" />
+              <span>{tender.category}</span>
+            </div>
           </div>
         </div>
+        
+        {/* Tender Value */}
         <div className="px-4 pb-2">
           <div className="flex items-center justify-between text-sm">
             <div>
-              <span className="font-medium text-gray-700">Value:</span>
-              <span className="text-gray-900">${Number(tender.valueMin).toLocaleString()} - ${Number(tender.valueMax).toLocaleString()}</span>
+              <span className="font-medium text-gray-700 dark:text-gray-300 ml-1">القيمة:</span>
+              <span className="text-gray-900 dark:text-gray-100">{formatCurrency(tender.valueMin)} - {formatCurrency(tender.valueMax)}</span>
             </div>
           </div>
         </div>
+        
+        {/* Deadline & Status */}
         <div className="px-4 pb-3">
           <div className="flex items-center justify-between text-sm">
             <div className={`flex items-center ${deadlineClass}`}>
-              <Clock className="h-3 w-3 mr-1" />
-              <span>Deadline: {daysRemaining} days left</span>
+              <Clock className="h-3 w-3 ml-1" />
+              <span>الموعد النهائي: {daysRemaining} يوم متبقي</span>
             </div>
             <div>
-              <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                {tender.status.charAt(0).toUpperCase() + tender.status.slice(1)}
-              </span>
+              <Badge variant="outline" className="bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800">
+                {tender.status === 'open' ? 'مفتوح' : tender.status}
+              </Badge>
             </div>
           </div>
         </div>
-        <div className="border-t border-gray-200 px-4 py-3 flex justify-between">
+        
+        {/* Action Buttons */}
+        <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3 flex justify-between">
           <button 
-            className="text-sm text-primary-600 font-medium hover:text-primary-700"
+            className="text-sm text-primary-600 dark:text-primary-400 font-medium hover:text-primary-700 dark:hover:text-primary-300"
             onClick={() => setLocation(`/tenders/${tender.id}`)}
           >
-            View Details
+            عرض التفاصيل
           </button>
           <button 
-            className="px-3 py-1 bg-primary-600 text-white text-sm rounded hover:bg-primary-700 transition-colors duration-150"
+            className="px-3 py-1 bg-gradient-to-l from-primary-600 to-primary-500 text-white text-sm rounded hover:from-primary-700 hover:to-primary-600 transition-colors duration-150"
             onClick={() => setLocation(`/tenders/${tender.id}`)}
           >
-            Apply Now
+            تقديم طلب
           </button>
         </div>
       </div>

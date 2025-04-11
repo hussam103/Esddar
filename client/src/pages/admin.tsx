@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export default function AdminPage() {
-  const { user } = useAuth();
+  const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
@@ -108,14 +108,27 @@ export default function AdminPage() {
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">لوحة الإدارة</h1>
-        <Button 
-          variant="outline" 
-          onClick={() => setLocation("/admin/dashboard")}
-          className="flex items-center space-x-2 space-x-reverse"
-        >
-          <span>لوحة تحكم متقدمة</span>
-          <ExternalLink className="h-4 w-4" />
-        </Button>
+        <div className="flex space-x-3 space-x-reverse">
+          <Button 
+            variant="destructive" 
+            onClick={() => {
+              logoutMutation.mutate();
+              setLocation("/auth");
+            }}
+            className="flex items-center space-x-2 space-x-reverse"
+            disabled={logoutMutation.isPending}
+          >
+            {logoutMutation.isPending ? "جاري تسجيل الخروج..." : "تسجيل الخروج"}
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => setLocation("/admin/dashboard")}
+            className="flex items-center space-x-2 space-x-reverse"
+          >
+            <span>لوحة تحكم متقدمة</span>
+            <ExternalLink className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <Card className="mb-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100 dark:from-blue-950/40 dark:to-indigo-950/40 dark:border-blue-900/50">

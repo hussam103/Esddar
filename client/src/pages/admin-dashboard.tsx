@@ -450,9 +450,25 @@ export default function AdminDashboard() {
   // Chart colors
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A569BD', '#EC7063'];
 
+  // We already have useLocation defined above, just need to get logoutMutation
+  const { logoutMutation } = useAuth();
+
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-4">لوحة تحكم الإدارة</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-3xl font-bold">لوحة تحكم الإدارة</h1>
+        <Button 
+          variant="destructive" 
+          onClick={() => {
+            logoutMutation.mutate();
+            setLocation("/auth");
+          }}
+          className="flex items-center space-x-2 space-x-reverse"
+          disabled={logoutMutation.isPending}
+        >
+          {logoutMutation.isPending ? "جاري تسجيل الخروج..." : "تسجيل الخروج"}
+        </Button>
+      </div>
       <p className="text-gray-600 mb-6">
         إدارة مصادر المناقصات، الإحصائيات، ونظام التوصيات الذكي
       </p>

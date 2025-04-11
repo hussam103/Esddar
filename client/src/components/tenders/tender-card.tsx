@@ -175,7 +175,15 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
               <Clock className="h-3 w-3 ml-1" />
               <span>الموعد النهائي: {daysRemaining} يوم متبقي</span>
             </div>
-            <div>
+            <div className="flex space-x-2 space-x-reverse">
+              {/* Badge for tender source */}
+              {!tender.bidNumber?.startsWith('T-20') ? (
+                <Badge className="bg-blue-50 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+                  منصة اعتماد
+                </Badge>
+              ) : null}
+              
+              {/* Badge for tender status */}
               <Badge variant="outline" className="bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800">
                 {tender.status === 'open' ? 'مفتوح' : tender.status}
               </Badge>
@@ -191,12 +199,25 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
           >
             عرض التفاصيل
           </button>
-          <button 
-            className="px-3 py-1 bg-gradient-to-l from-primary-600 to-primary-500 text-white text-sm rounded hover:from-primary-700 hover:to-primary-600 transition-colors duration-150"
-            onClick={() => setLocation(`/tenders/${tender.id}`)}
-          >
-            تقديم طلب
-          </button>
+          {tender.bidNumber && tender.bidNumber.startsWith('T-20') ? (
+            // For generated tenders, redirect to local page
+            <button 
+              className="px-3 py-1 bg-gradient-to-l from-primary-600 to-primary-500 text-white text-sm rounded hover:from-primary-700 hover:to-primary-600 transition-colors duration-150"
+              onClick={() => setLocation(`/tenders/${tender.id}`)}
+            >
+              تقديم طلب
+            </button>
+          ) : (
+            // For Etimad tenders, open in a new tab
+            <a 
+              href={`https://tenders.etimad.sa/Tender/Details/${tender.bidNumber}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-1 bg-gradient-to-l from-primary-600 to-primary-500 text-white text-sm rounded hover:from-primary-700 hover:to-primary-600 transition-colors duration-150 inline-block text-center"
+            >
+              تقديم طلب في اعتماد
+            </a>
+          )}
         </div>
       </div>
     </div>

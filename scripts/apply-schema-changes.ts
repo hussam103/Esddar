@@ -43,6 +43,13 @@ async function main() {
     await db.execute(sql`
       ALTER TABLE IF EXISTS user_profiles 
       ADD COLUMN IF NOT EXISTS company_description TEXT,
+      ADD COLUMN IF NOT EXISTS business_type TEXT,
+      ADD COLUMN IF NOT EXISTS company_activities JSONB DEFAULT '[]',
+      ADD COLUMN IF NOT EXISTS main_industries JSONB DEFAULT '[]',
+      ADD COLUMN IF NOT EXISTS specializations JSONB DEFAULT '[]',
+      ADD COLUMN IF NOT EXISTS target_markets JSONB DEFAULT '[]',
+      ADD COLUMN IF NOT EXISTS certifications JSONB DEFAULT '[]',
+      ADD COLUMN IF NOT EXISTS keywords JSONB DEFAULT '[]',
       ADD COLUMN IF NOT EXISTS skills TEXT,
       ADD COLUMN IF NOT EXISTS past_experience TEXT,
       ADD COLUMN IF NOT EXISTS preferred_sectors TEXT[],
@@ -63,13 +70,18 @@ async function main() {
       CREATE TABLE IF NOT EXISTS company_documents (
         id SERIAL PRIMARY KEY,
         user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        document_type TEXT NOT NULL,
+        document_id TEXT NOT NULL UNIQUE,
         file_name TEXT NOT NULL,
         file_path TEXT NOT NULL,
+        file_size INTEGER NOT NULL,
+        document_type TEXT DEFAULT 'company_profile',
+        status TEXT NOT NULL DEFAULT 'pending',
         extracted_text TEXT,
-        meta_data JSONB,
-        processing_status TEXT DEFAULT 'pending',
-        uploaded_at TIMESTAMP DEFAULT NOW()
+        extracted_data JSONB,
+        error_message TEXT,
+        whisper_hash TEXT,
+        uploaded_at TIMESTAMP DEFAULT NOW(),
+        processed_at TIMESTAMP
       );
     `);
     console.log("✓ Created company_documents table");

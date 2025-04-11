@@ -10,22 +10,17 @@ import ActiveApplications from "@/components/dashboard/active-applications";
 import UpcomingDeadlines from "@/components/dashboard/upcoming-deadlines";
 import { Tender, UserProfile } from "@shared/schema";
 
-// Define a custom Application type that matches what components expect
-type ApplicationWithUndefinedDate = {
-  id: number;
-  tenderId: number;
-  status: string;
-  submittedAt: Date | null;
+// Import the proper Application type from schema
+import { Application } from "@shared/schema";
+
+// Define a lighter version of the Application type with tender info
+interface ApplicationWithTender extends Application {
   tender?: {
     title: string;
     agency: string;
     bidNumber: string;
   };
-  userId: number;
-  proposalContent: string | null;
-  documents: unknown;
-  matchScore: number | null;
-};
+}
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -52,13 +47,14 @@ export default function Dashboard() {
     queryKey: ["/api/applications"],
   });
 
-  // Transform application data to match the expected type
-  const applications: ApplicationWithUndefinedDate[] = fetchedApplications.map(app => ({
+  // Transform application data to include tender info
+  const applications: ApplicationWithTender[] = fetchedApplications.map(app => ({
     ...app,
     submittedAt: app.submittedAt || null,
     proposalContent: app.proposalContent || null,
-    documents: app.documents || {},
-    matchScore: app.matchScore || null
+    documents: app.documents || null,
+    matchScore: app.matchScore || null,
+    tender: app.tender
   }));
 
   // Toggle mobile menu

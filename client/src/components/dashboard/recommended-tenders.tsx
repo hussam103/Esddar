@@ -86,9 +86,10 @@ export default function RecommendedTenders({ loading, tenders }: RecommendedTend
     );
   }
 
-  // Calculate match scores (simulated for now)
-  const getMatchScore = (index: number): number => {
-    return 98 - (index * 2);
+  // Get match score from tender data or use a fallback
+  const getMatchScore = (tender: Tender): number => {
+    // If the tender has a matchScore property, use it
+    return (tender as any).matchScore || 95;
   };
 
   return (

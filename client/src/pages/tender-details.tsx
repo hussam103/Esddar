@@ -332,7 +332,11 @@ export default function TenderDetailsPage() {
                   <div className="flex flex-col space-y-2">
                     <h3 className="font-medium">Status</h3>
                     <div className="flex items-center space-x-2 space-x-reverse">
-                      <Badge variant={tender.status === "open" ? "success" : "secondary"}>
+                      <Badge 
+                        className={tender.status === "open" 
+                          ? "bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-300 border-green-200 dark:border-green-800" 
+                          : ""}
+                      >
                         {tender.status.charAt(0).toUpperCase() + tender.status.slice(1)}
                       </Badge>
                       
@@ -440,16 +444,30 @@ export default function TenderDetailsPage() {
                   <Button variant="outline" onClick={() => setLocation("/tenders")}>
                     Back to Tenders
                   </Button>
-                  <Button 
-                    onClick={form.handleSubmit(onSubmit)}
-                    disabled={createApplicationMutation.isPending}
-                  >
-                    {createApplicationMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      "Submit Application"
-                    )}
-                  </Button>
+                  
+                  {tender.source === 'etimad' ? (
+                    // For Etimad tenders, we provide a link to apply on Etimad platform
+                    <a 
+                      href={`https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=${encodeURIComponent(tender.etimadId || '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 rounded bg-gradient-to-l from-primary-600 to-primary-500 text-white hover:from-primary-700 hover:to-primary-600 transition-colors duration-150"
+                    >
+                      تقديم طلب في منصة اعتماد
+                    </a>
+                  ) : (
+                    // For local tenders, use the regular submit application button
+                    <Button 
+                      onClick={form.handleSubmit(onSubmit)}
+                      disabled={createApplicationMutation.isPending}
+                    >
+                      {createApplicationMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        "Submit Application"
+                      )}
+                    </Button>
+                  )}
                 </CardFooter>
               </Card>
             </div>

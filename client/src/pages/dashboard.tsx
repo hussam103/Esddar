@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/hooks/use-language";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import MatchingScore from "@/components/dashboard/matching-score";
@@ -27,6 +28,7 @@ type ApplicationWithUndefinedDate = {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { t, language } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Fetch tenders
@@ -57,13 +59,15 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row" dir="rtl">
+    <div className="min-h-screen flex flex-col md:flex-row" dir={language === "ar" ? "rtl" : "ltr"}>
       <Sidebar mobileMenuOpen={mobileMenuOpen} closeMobileMenu={() => setMobileMenuOpen(false)} />
       
       <main className="flex-1 overflow-y-auto">
         <Header 
-          title="لوحة التحكم" 
-          subtitle={`مرحباً بعودتك، ${user?.companyName}`}
+          title={t("nav.dashboard")} 
+          subtitle={language === "ar" ? 
+            `مرحباً بعودتك، ${user?.companyName}` : 
+            `Welcome back, ${user?.companyName}`}
           toggleMobileMenu={toggleMobileMenu}
         />
         

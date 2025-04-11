@@ -3,6 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ArrowUp } from "lucide-react";
 import { useLocation } from "wouter";
+import { useLanguage } from "@/hooks/use-language";
 
 type MatchingScoreProps = {
   loading: boolean;
@@ -12,6 +13,7 @@ type MatchingScoreProps = {
 
 export default function MatchingScore({ loading, userProfile, profileCompleteness }: MatchingScoreProps) {
   const [, setLocation] = useLocation();
+  const { t, language } = useLanguage();
 
   if (loading) {
     return (
@@ -43,15 +45,25 @@ export default function MatchingScore({ loading, userProfile, profileCompletenes
     <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
         <div className="mb-4 md:mb-0">
-          <h2 className="text-lg font-semibold text-gray-900">مؤشر المطابقة الذكي</h2>
-          <p className="text-sm text-gray-500">بناءً على ملف شركتك والنشاط السابق</p>
+          <h2 className="text-lg font-semibold text-gray-900">
+            {language === "ar" ? "مؤشر المطابقة الذكي" : "Smart Matching Score"}
+          </h2>
+          <p className="text-sm text-gray-500">
+            {language === "ar" 
+              ? "بناءً على ملف شركتك والنشاط السابق" 
+              : "Based on your company profile and previous activity"}
+          </p>
         </div>
-        <div className="flex items-center space-x-3 space-x-reverse">
+        <div className={`flex items-center ${language === "ar" ? "space-x-3 space-x-reverse" : "space-x-3"}`}>
           <div className="bg-primary-50 px-3 py-1.5 rounded-full">
-            <span className="text-sm font-medium text-primary-700">اكتمال الملف: {profileCompleteness}%</span>
+            <span className="text-sm font-medium text-primary-700">
+              {language === "ar" 
+                ? `اكتمال الملف: ${profileCompleteness}%` 
+                : `Profile completion: ${profileCompleteness}%`}
+            </span>
           </div>
           <Button onClick={() => setLocation("/settings")}>
-            إكمال الملف
+            {language === "ar" ? "إكمال الملف" : "Complete Profile"}
           </Button>
         </div>
       </div>

@@ -43,14 +43,16 @@ export default function LandingPage() {
                     size="lg"
                     className="bg-white text-primary-900 hover:bg-gray-100"
                     onClick={() => setLocation("/auth")}
+                    style={{ backgroundColor: "white", color: "#1e40af" }}
                   >
                     ابدأ مجاناً
                   </Button>
                   <Button
                     size="lg"
                     variant="outline"
-                    className="border-white text-white hover:bg-white/10"
+                    className="border-white text-white hover:bg-white/10 outline-btn"
                     onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
+                    style={{ color: "white", backgroundColor: "transparent", borderColor: "white" }}
                   >
                     شاهد الأسعار
                   </Button>
@@ -80,7 +82,10 @@ export default function LandingPage() {
                     </div>
                   </div>
                   <div className="absolute bottom-6 left-6">
-                    <Button className="bg-white text-primary-900 hover:bg-gray-100">
+                    <Button 
+                      className="bg-white text-primary-900 hover:bg-gray-100" 
+                      style={{ color: '#1e40af', backgroundColor: 'white' }}
+                    >
                       تقديم طلب
                     </Button>
                   </div>
@@ -417,6 +422,7 @@ export default function LandingPage() {
                 size="lg"
                 className="bg-white text-primary-900 hover:bg-gray-100"
                 onClick={() => setLocation("/auth")}
+                style={{ backgroundColor: "white", color: "#1e40af" }}
               >
                 ابدأ مجاناً
               </Button>
@@ -425,6 +431,7 @@ export default function LandingPage() {
                 variant="outline"
                 className="border-white text-white hover:bg-white/10"
                 onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
+                style={{ color: "white", backgroundColor: "transparent", borderColor: "white" }}
               >
                 عرض خطط الأسعار
               </Button>

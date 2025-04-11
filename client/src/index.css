@@ -13,8 +13,23 @@ html, body, #root {
   color: white !important;
 }
 
+.hero-banner button, .hero-banner a, .hero-banner [role="button"] {
+  color: #1e40af !important;
+  background-color: white !important;
+  border-color: white !important;
+}
+
+.hero-banner .outline-btn, 
+.hero-banner button[data-variant="outline"],
+.hero-banner [data-variant="outline"] {
+  color: white !important; 
+  background-color: transparent !important;
+  border-color: white !important;
+}
+
 .cta-section {
   background-color: #1e3a8a !important; /* bg-primary-900 */
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%) !important; /* from-primary-900 to-primary-600 */
   color: white !important;
 }
 

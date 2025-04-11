@@ -271,7 +271,10 @@ export default function AnalyticsPage() {
                             <td className="px-4 py-3 font-medium">{app.tender?.title}</td>
                             <td className="px-4 py-3 text-gray-600">{app.tender?.agency}</td>
                             <td className="px-4 py-3 text-gray-600">
-                              ${Number(app.tender?.valueMin).toLocaleString()} - ${Number(app.tender?.valueMax).toLocaleString()}
+                              <div className="flex items-center">
+                                <SARIcon className="h-3 w-3 text-gray-600 mr-1" />
+                                {formatSAR(Number(app.tender?.valueMin || 0), false, language === 'ar' ? 'ar-SA' : 'en-US')} - {formatSAR(Number(app.tender?.valueMax || 0), false, language === 'ar' ? 'ar-SA' : 'en-US')}
+                              </div>
                             </td>
                             <td className="px-4 py-3 text-gray-600">
                               {app.submittedAt 

@@ -72,10 +72,10 @@ export async function saveUploadedFile(
     
     // Create document record in database
     const document = await storage.createCompanyDocument({
-      id: documentId,
+      documentId: documentId,
       userId: userId,
       fileName: sanitizedFileName,
-      fileType: file.mimetype,
+      documentType: 'company_profile',
       filePath: filePath,
       fileSize: file.size,
       status: 'pending',
@@ -112,8 +112,7 @@ export async function processDocumentWithOCR(documentId: string): Promise<void> 
     
     // Update processing status
     await storage.updateCompanyDocument(documentId, {
-      status: 'processing',
-      processingStartedAt: new Date()
+      status: 'processing'
     });
     
     const jobStatus = processingJobs.get(documentId);
@@ -167,7 +166,7 @@ export async function processDocumentWithOCR(documentId: string): Promise<void> 
       await storage.updateCompanyDocument(documentId, {
         status: 'error',
         errorMessage: error.message || 'Error calling WhisperLLM API',
-        processingCompletedAt: new Date()
+        processedAt: new Date()
       });
       
       const jobStatus = processingJobs.get(documentId);
@@ -183,7 +182,7 @@ export async function processDocumentWithOCR(documentId: string): Promise<void> 
     await storage.updateCompanyDocument(documentId, {
       status: 'error',
       errorMessage: error.message || 'Error processing document',
-      processingCompletedAt: new Date()
+      processedAt: new Date()
     });
     
     const jobStatus = processingJobs.get(documentId);
@@ -240,7 +239,7 @@ async function getOCRResults(documentId: string, whisperHash: string): Promise<v
                 status: 'completed',
                 extractedText,
                 extractedData,
-                processingCompletedAt: new Date()
+                processedAt: new Date()
               });
               
               // Update user profile with extracted company information
@@ -281,7 +280,7 @@ async function getOCRResults(documentId: string, whisperHash: string): Promise<v
     await storage.updateCompanyDocument(documentId, {
       status: 'error',
       errorMessage: error.message || 'Error getting OCR results',
-      processingCompletedAt: new Date()
+      processedAt: new Date()
     });
     
     const jobStatus = processingJobs.get(documentId);
@@ -326,7 +325,7 @@ ${text.substring(0, 10000)} // Limit to first 10k characters for API limit
     });
 
     // Parse the extracted information
-    const extractedInfo = JSON.parse(completion.choices[0].message.content);
+    const extractedInfo = JSON.parse(completion.choices[0].message.content || "{}");
     
     return extractedInfo;
   } catch (error) {
@@ -366,10 +365,7 @@ async function updateUserProfileWithExtractedData(userId: number, extractedData:
         companyActivities: extractedData.companyActivities || [],
         businessType: extractedData.businessType,
         mainIndustries: extractedData.mainIndustries || [],
-        specializations: extractedData.specializations || [],
-        preferences: {},
-        createdAt: new Date(),
-        updatedAt: new Date()
+        specializations: extractedData.specializations || []
       });
     }
   } catch (error) {

@@ -768,5 +768,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // API endpoint for testing a specific Etimad tender ID
+  app.post("/api/test-etimad-tender", async (req, res) => {
+    // Check if user is authenticated and is an admin
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "لم يتم التعرف على المستخدم" 
+      });
+    }
+    
+    // Check if the user is an admin (ID 1)
+    if (req.user.id !== 1) {
+      return res.status(403).json({
+        success: false, 
+        message: "ليس لديك الصلاحيات الكافية للقيام بهذا الإجراء"
+      });
+    }
+    
+    const { tenderId } = req.body;
+    
+    if (!tenderId) {
+      return res.status(400).json({
+        success: false, 
+        message: "يرجى تقديم معرف المناقصة للاختبار"
+      });
+    }
+    
+    try {
+      // Function to fetch tender details
+      const getTenderDetails = async (tenderIdString: string): Promise<any> => {
+        try {
+          console.log(`Getting details for tender ID: ${tenderIdString}`);
+          
+          // Using the correct URL format for tender details
+          const url = `https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=${encodeURIComponent(tenderIdString)}`;
+          
+          console.log(`Fetching details from URL: ${url}`);
+          
+          const response = await axios.get(url, {
+            headers: {
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+              'Accept-Language': 'ar,en;q=0.9',
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            }
+          });
+          
+          // Parse the HTML response to extract detailed information using cheerio
+          const $ = cheerio.load(response.data);
+          
+          // Extract tender details from the HTML
+          const tenderDetails = {
+            title: $('.tender-title').text().trim() || $('.info_header .head').text().trim(),
+            agency: $('.agency-name').text().trim() || $('.block_header-entity').text().trim(),
+            description: $('.tender-description').text().trim() || $('.info_header .body').text().trim(),
+            requirements: $('.requirements').text().trim() || '',
+            bidNumber: $('.tender-id').text().trim() || '',
+            url: url,
+            htmlContent: response.data.substring(0, 1000) + '...' // Sending a preview of the HTML for debugging
+          };
+          
+          return {
+            success: true,
+            details: tenderDetails
+          };
+        } catch (error: any) {
+          console.error(`Error getting details for tender ID ${tenderIdString}:`, error.message);
+          if (error.response) {
+            console.error('Response status:', error.response.status);
+          }
+          return {
+            success: false,
+            error: error.message,
+            status: error.response?.status
+          };
+        }
+      };
+      
+      const result = await getTenderDetails(tenderId);
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Error in test-etimad-tender endpoint:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to test tender ID',
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
   return httpServer;
 }

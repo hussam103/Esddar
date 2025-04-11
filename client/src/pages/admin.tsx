@@ -5,15 +5,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { AlertTriangle, ExternalLink, Loader2 } from "lucide-react";
+import { AlertTriangle, ExternalLink, Loader2, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export default function AdminPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
   const [result, setResult] = useState<{
     success: boolean;
     message: string;
@@ -23,8 +26,15 @@ export default function AdminPage() {
       skipped: number;
     };
   } | null>(null);
+  const [testResult, setTestResult] = useState<{
+    success: boolean;
+    details?: any;
+    error?: string;
+    status?: number;
+  } | null>(null);
   const [pageNumber, setPageNumber] = useState("1");
   const [pageSize, setPageSize] = useState("50");
+  const [tenderId, setTenderId] = useState("");
 
   // Check if user is admin (you may want to add an isAdmin field to your user model)
   // For now, we'll just check if the user is the original admin user
@@ -266,27 +276,137 @@ export default function AdminPage() {
                       id="stenderId"
                       placeholder="أدخل معرف المناقصة من منصة اعتماد..."
                       className="flex-1"
-                      value={pageNumber}
-                      onChange={(e) => setPageNumber(e.target.value)}
+                      value={tenderId}
+                      onChange={(e) => setTenderId(e.target.value)}
                     />
                   </div>
                   
-                  <a 
-                    href={`https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=${encodeURIComponent(pageNumber)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-2 rounded bg-primary-600 text-white hover:bg-primary-700 transition-colors duration-150 inline-flex items-center"
-                  >
-                    اختبار الرابط <ExternalLink className="h-4 w-4 mr-1" />
-                  </a>
+                  <div className="flex space-x-2 space-x-reverse">
+                    <Button 
+                      variant="default"
+                      className="py-2"
+                      disabled={!tenderId || isTesting}
+                      onClick={async () => {
+                        try {
+                          setIsTesting(true);
+                          setTestResult(null);
+                          
+                          const response = await apiRequest("POST", "/api/test-etimad-tender", {
+                            tenderId
+                          });
+                          
+                          const data = await response.json();
+                          setTestResult(data);
+                          
+                          if (data.success) {
+                            toast({
+                              title: "تم الاتصال بمنصة اعتماد",
+                              description: `تم العثور على المناقصة: ${data.details?.title || 'عنوان غير متوفر'}`,
+                              variant: "default",
+                            });
+                          } else {
+                            toast({
+                              title: "فشل الاتصال بمنصة اعتماد",
+                              description: data.error || "حدث خطأ أثناء محاولة الاتصال بمنصة اعتماد",
+                              variant: "destructive",
+                            });
+                          }
+                        } catch (error) {
+                          console.error("Error testing tender ID:", error);
+                          setTestResult({
+                            success: false,
+                            error: error instanceof Error ? error.message : "حدث خطأ غير معروف"
+                          });
+                          toast({
+                            title: "فشل اختبار معرف المناقصة",
+                            description: "حدث خطأ أثناء محاولة اختبار معرف المناقصة",
+                            variant: "destructive",
+                          });
+                        } finally {
+                          setIsTesting(false);
+                        }
+                      }}
+                    >
+                      {isTesting ? (
+                        <>
+                          <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                          جاري الفحص...
+                        </>
+                      ) : (
+                        "فحص المعرف"
+                      )}
+                    </Button>
+                    
+                    <a 
+                      href={`https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=${encodeURIComponent(tenderId)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-2 rounded bg-blue-50 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center hover:bg-blue-100 transition-colors"
+                    >
+                      فتح الرابط <ExternalLink className="h-4 w-4 mr-1" />
+                    </a>
+                  </div>
                 </div>
                 
                 <div className="mt-4">
                   <p className="text-xs text-gray-500">الرابط الناتج:</p>
                   <code className="text-xs block border mt-1 p-2 rounded-md bg-gray-50 dark:bg-gray-900 overflow-x-auto">
-                    https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId={encodeURIComponent(pageNumber)}
+                    https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId={encodeURIComponent(tenderId)}
                   </code>
                 </div>
+
+                {testResult && (
+                  <div className={`mt-4 p-4 rounded-md ${testResult.success ? "bg-green-50 dark:bg-green-900/20" : "bg-red-50 dark:bg-red-900/20"}`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      {testResult.success ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      ) : (
+                        <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                      )}
+                      <p className="font-medium">{testResult.success ? "تم الاتصال بنجاح" : "فشل الاتصال"}</p>
+                    </div>
+                    
+                    {testResult.success && testResult.details && (
+                      <div className="mt-2 space-y-2">
+                        <Accordion type="single" collapsible>
+                          <AccordionItem value="details">
+                            <AccordionTrigger className="py-2 text-sm font-medium">عرض تفاصيل المناقصة</AccordionTrigger>
+                            <AccordionContent>
+                              <div className="text-sm space-y-2 mt-2">
+                                <div className="grid grid-cols-1 gap-2">
+                                  <div className="p-2 bg-gray-50 dark:bg-gray-900 rounded-md">
+                                    <span className="font-medium">العنوان:</span> {testResult.details.title || "غير متوفر"}
+                                  </div>
+                                  <div className="p-2 bg-gray-50 dark:bg-gray-900 rounded-md">
+                                    <span className="font-medium">الجهة:</span> {testResult.details.agency || "غير متوفر"}
+                                  </div>
+                                  <div className="p-2 bg-gray-50 dark:bg-gray-900 rounded-md">
+                                    <span className="font-medium">الوصف:</span> {testResult.details.description || "غير متوفر"}
+                                  </div>
+                                  <div className="p-2 bg-gray-50 dark:bg-gray-900 rounded-md">
+                                    <span className="font-medium">رقم العطاء:</span> {testResult.details.bidNumber || "غير متوفر"}
+                                  </div>
+                                </div>
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
+                      </div>
+                    )}
+                    
+                    {!testResult.success && (
+                      <div className="mt-2 space-y-2 text-sm">
+                        <p><span className="font-medium">الخطأ:</span> {testResult.error || "خطأ غير معروف"}</p>
+                        {testResult.status && (
+                          <p><span className="font-medium">رمز الاستجابة:</span> {testResult.status}</p>
+                        )}
+                        <p>
+                          يرجى التأكد من أن معرف المناقصة صحيح وأن منصة اعتماد متاحة. بعض المناقصات قد تكون متاحة فقط للمستخدمين المسجلين.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               
               <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800">

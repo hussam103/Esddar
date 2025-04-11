@@ -49,20 +49,19 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
     }).format(num);
   };
   
-  // Extract tender ID for Etimad URL
-  const getEtimadTenderUrl = (bidNumber: string | null | undefined, tenderId: string | null | undefined): string => {
-    if (!bidNumber) return "https://tenders.etimad.sa/Tender/AllTendersForVisitor";
-    
-    // Using the correct URL format from Etimad website as provided
+  // Get the URL for Etimad tenders
+  const getEtimadTenderUrl = (): string => {
+    // Using the correct URL format from Etimad website as provided by user
     // Format: https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=ENCODED_ID
     
-    // For demonstration purposes, since we don't have the actual encoded IDs
-    // We'll use the AllTendersForVisitor page where users can search by the bid number
+    // Check if we have an etimadId (STenderId) for this tender
+    if (tender.source === 'etimad' && tender.etimadId) {
+      // Build a direct link to the specific tender on Etimad
+      return `https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=${encodeURIComponent(tender.etimadId)}`;
+    }
     
-    // In a production environment, you would need to:
-    // 1. Store the encoded STenderId value when scraping from Etimad
-    // 2. Use that encoded value in the URL
-    return `https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=${tenderId || 'Je%20VYYeBPEr%20i%20031Bh5hg=='}`;
+    // Fallback to the main Etimad tenders page if we don't have a valid ID
+    return "https://tenders.etimad.sa/Tender/AllTendersForVisitor";
   };
 
   // Save tender mutation
@@ -193,7 +192,7 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
             </div>
             <div className="flex space-x-2 space-x-reverse">
               {/* Badge for tender source */}
-              {!tender.bidNumber?.startsWith('T-20') ? (
+              {tender.source === 'etimad' ? (
                 <Badge className="bg-blue-50 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300 border-blue-200 dark:border-blue-800">
                   منصة اعتماد
                 </Badge>
@@ -215,24 +214,24 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
           >
             عرض التفاصيل
           </button>
-          {tender.bidNumber && tender.bidNumber.startsWith('T-20') ? (
-            // For generated tenders, redirect to local page
-            <button 
-              className="px-3 py-1 bg-gradient-to-l from-primary-600 to-primary-500 text-white text-sm rounded hover:from-primary-700 hover:to-primary-600 transition-colors duration-150"
-              onClick={() => setLocation(`/tenders/${tender.id}`)}
-            >
-              تقديم طلب
-            </button>
-          ) : (
-            // For Etimad tenders, open in a new tab
+          {tender.source === 'etimad' ? (
+            // For Etimad tenders, open in a new tab to Etimad website
             <a 
-              href={getEtimadTenderUrl(tender.bidNumber, tender.etimadId || null)}
+              href={getEtimadTenderUrl()}
               target="_blank"
               rel="noopener noreferrer"
               className="px-3 py-1 bg-gradient-to-l from-primary-600 to-primary-500 text-white text-sm rounded hover:from-primary-700 hover:to-primary-600 transition-colors duration-150 inline-block text-center"
             >
               تقديم طلب في منصة اعتماد
             </a>
+          ) : (
+            // For locally generated tenders, redirect to local page
+            <button 
+              className="px-3 py-1 bg-gradient-to-l from-primary-600 to-primary-500 text-white text-sm rounded hover:from-primary-700 hover:to-primary-600 transition-colors duration-150"
+              onClick={() => setLocation(`/tenders/${tender.id}`)}
+            >
+              تقديم طلب
+            </button>
           )}
         </div>
       </div>

@@ -142,7 +142,11 @@ async function saveTendersToDatabase(tendersData: any[]): Promise<void> {
         deadline: new Date(tender.LastOfferPresentationDate),
         status: 'open',
         requirements: tender.TenderDescription || '',
-        bidNumber: tender.ReferenceNumber
+        bidNumber: tender.ReferenceNumber,
+        // Add the Etimad IdString as etimadId for direct linking
+        etimadId: tender.IdString || null,
+        // Set source to 'etimad' for tenders from Etimad platform
+        source: 'etimad'
       };
       
       // Insert the tender into the database

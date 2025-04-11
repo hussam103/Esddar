@@ -16,9 +16,12 @@ import {
   type InsertUserProfile
 } from "@shared/schema";
 import session from "express-session";
-import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
+import { db } from "./db";
+import { eq, and } from "drizzle-orm";
+import { pool } from "./db";
 
-const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
   // User management
@@ -51,63 +54,45 @@ export interface IStorage {
   updateUserProfile(userId: number, profile: Partial<UserProfile>): Promise<UserProfile | undefined>;
   
   // Session store
-  sessionStore: session.SessionStore;
+  sessionStore: any;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private tenders: Map<number, Tender>;
-  private savedTenders: Map<number, SavedTender>;
-  private applications: Map<number, Application>;
-  private userProfiles: Map<number, UserProfile>;
-  sessionStore: session.SessionStore;
-  
-  private userCurrentId: number;
-  private tenderCurrentId: number;
-  private savedTenderCurrentId: number;
-  private applicationCurrentId: number;
-  private userProfileCurrentId: number;
+export class DatabaseStorage implements IStorage {
+  sessionStore: any;
 
   constructor() {
-    this.users = new Map();
-    this.tenders = new Map();
-    this.savedTenders = new Map();
-    this.applications = new Map();
-    this.userProfiles = new Map();
-    
-    this.userCurrentId = 1;
-    this.tenderCurrentId = 1;
-    this.savedTenderCurrentId = 1;
-    this.applicationCurrentId = 1;
-    this.userProfileCurrentId = 1;
-    
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000,
+    this.sessionStore = new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true
     });
     
-    // Initialize some sample tenders
-    this.initializeTenders();
+    // Initialize sample data
+    this.initializeData();
   }
   
   // User management
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const result = await db.select().from(users).where(eq(users.id, id));
+    return result[0];
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const result = await db.select().from(users).where(eq(users.username, username));
+    return result[0];
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.userCurrentId++;
-    const user: User = { ...insertUser, id, profileCompleteness: 60, services: [] };
-    this.users.set(id, user);
+    const result = await db.insert(users).values({
+      ...insertUser,
+      profileCompleteness: 60,
+      services: []
+    }).returning();
+    
+    const user = result[0];
     
     // Create a default user profile for AI matching
     await this.createUserProfile({
-      userId: id,
+      userId: user.id,
       matchAccuracy: 85,
       tendersFound: 24,
       proposalsSubmitted: 8,
@@ -118,261 +103,270 @@ export class MemStorage implements IStorage {
   }
   
   async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
-    const user = await this.getUser(id);
-    if (!user) return undefined;
+    const result = await db.update(users)
+      .set(userData)
+      .where(eq(users.id, id))
+      .returning();
     
-    const updatedUser = { ...user, ...userData };
-    this.users.set(id, updatedUser);
-    return updatedUser;
+    return result[0];
   }
   
   // Tender management
   async getTender(id: number): Promise<Tender | undefined> {
-    return this.tenders.get(id);
+    const result = await db.select().from(tenders).where(eq(tenders.id, id));
+    return result[0];
   }
   
   async getTenders(): Promise<Tender[]> {
-    return Array.from(this.tenders.values());
+    return await db.select().from(tenders);
   }
   
   async getTendersByCategory(category: string): Promise<Tender[]> {
-    return Array.from(this.tenders.values()).filter(
-      (tender) => tender.category === category
-    );
+    return await db.select().from(tenders).where(eq(tenders.category, category));
   }
   
   async createTender(insertTender: InsertTender): Promise<Tender> {
-    const id = this.tenderCurrentId++;
-    const tender: Tender = { ...insertTender, id };
-    this.tenders.set(id, tender);
-    return tender;
+    const result = await db.insert(tenders).values(insertTender).returning();
+    return result[0];
   }
   
   // Saved tenders
   async getSavedTenders(userId: number): Promise<Tender[]> {
-    const saved = Array.from(this.savedTenders.values()).filter(
-      (saved) => saved.userId === userId
-    );
-    
-    return Promise.all(
-      saved.map(async (item) => {
-        const tender = await this.getTender(item.tenderId);
-        if (!tender) throw new Error(`Tender with id ${item.tenderId} not found`);
-        return tender;
-      })
-    );
+    return await db.select({
+      id: tenders.id,
+      title: tenders.title,
+      agency: tenders.agency,
+      description: tenders.description,
+      category: tenders.category,
+      location: tenders.location,
+      valueMin: tenders.valueMin,
+      valueMax: tenders.valueMax,
+      deadline: tenders.deadline,
+      status: tenders.status,
+      requirements: tenders.requirements,
+      bidNumber: tenders.bidNumber
+    })
+    .from(tenders)
+    .innerJoin(savedTenders, eq(tenders.id, savedTenders.tenderId))
+    .where(eq(savedTenders.userId, userId));
   }
   
   async saveTender(data: InsertSavedTender): Promise<SavedTender> {
-    const id = this.savedTenderCurrentId++;
-    const savedTender: SavedTender = { 
-      ...data, 
-      id, 
-      savedAt: new Date() 
-    };
-    this.savedTenders.set(id, savedTender);
-    return savedTender;
+    // Check if already saved to avoid duplicates
+    const existing = await db.select()
+      .from(savedTenders)
+      .where(and(
+        eq(savedTenders.userId, data.userId),
+        eq(savedTenders.tenderId, data.tenderId)
+      ));
+    
+    if (existing.length > 0) {
+      return existing[0];
+    }
+    
+    const result = await db.insert(savedTenders)
+      .values(data)
+      .returning();
+    
+    return result[0];
   }
   
   async unsaveTender(userId: number, tenderId: number): Promise<boolean> {
-    const saved = Array.from(this.savedTenders.values()).find(
-      (saved) => saved.userId === userId && saved.tenderId === tenderId
-    );
+    const result = await db.delete(savedTenders)
+      .where(and(
+        eq(savedTenders.userId, userId),
+        eq(savedTenders.tenderId, tenderId)
+      ));
     
-    if (saved) {
-      this.savedTenders.delete(saved.id);
-      return true;
-    }
-    
-    return false;
+    return result.count > 0;
   }
   
   async isTenderSaved(userId: number, tenderId: number): Promise<boolean> {
-    return Array.from(this.savedTenders.values()).some(
-      (saved) => saved.userId === userId && saved.tenderId === tenderId
-    );
+    const result = await db.select()
+      .from(savedTenders)
+      .where(and(
+        eq(savedTenders.userId, userId),
+        eq(savedTenders.tenderId, tenderId)
+      ));
+    
+    return result.length > 0;
   }
   
   // Applications
   async getApplications(userId: number): Promise<Application[]> {
-    return Array.from(this.applications.values()).filter(
-      (app) => app.userId === userId
-    );
+    return await db.select()
+      .from(applications)
+      .where(eq(applications.userId, userId));
   }
   
   async getApplication(id: number): Promise<Application | undefined> {
-    return this.applications.get(id);
+    const result = await db.select()
+      .from(applications)
+      .where(eq(applications.id, id));
+    
+    return result[0];
   }
   
   async createApplication(insertApplication: InsertApplication): Promise<Application> {
-    const id = this.applicationCurrentId++;
-    const application: Application = { 
-      ...insertApplication, 
-      id,
-      submittedAt: insertApplication.status === 'draft' ? undefined : new Date()
-    };
-    this.applications.set(id, application);
-    return application;
+    const submittedAt = insertApplication.status === 'draft' ? null : new Date();
+    
+    const result = await db.insert(applications)
+      .values({
+        ...insertApplication,
+        submittedAt
+      })
+      .returning();
+    
+    return result[0];
   }
   
   async updateApplication(id: number, applicationData: Partial<Application>): Promise<Application | undefined> {
     const application = await this.getApplication(id);
     if (!application) return undefined;
     
-    const updatedApplication = { 
-      ...application, 
-      ...applicationData,
-      // Update submission time if status changed to submitted
-      submittedAt: applicationData.status === 'submitted' && application.status !== 'submitted' 
-        ? new Date() 
-        : application.submittedAt
-    };
+    // Update submission time if status changed to submitted
+    let submittedAt = application.submittedAt;
+    if (applicationData.status === 'submitted' && application.status !== 'submitted') {
+      submittedAt = new Date();
+    }
     
-    this.applications.set(id, updatedApplication);
-    return updatedApplication;
+    const result = await db.update(applications)
+      .set({
+        ...applicationData,
+        submittedAt
+      })
+      .where(eq(applications.id, id))
+      .returning();
+    
+    return result[0];
   }
   
   // User profiles for AI matching
   async getUserProfile(userId: number): Promise<UserProfile | undefined> {
-    return Array.from(this.userProfiles.values()).find(
-      (profile) => profile.userId === userId
-    );
+    const result = await db.select()
+      .from(userProfiles)
+      .where(eq(userProfiles.userId, userId));
+    
+    return result[0];
   }
   
   async createUserProfile(insertProfile: InsertUserProfile): Promise<UserProfile> {
-    const id = this.userProfileCurrentId++;
-    const profile: UserProfile = { ...insertProfile, id };
-    this.userProfiles.set(id, profile);
-    return profile;
+    const result = await db.insert(userProfiles)
+      .values(insertProfile)
+      .returning();
+    
+    return result[0];
   }
   
   async updateUserProfile(userId: number, profileData: Partial<UserProfile>): Promise<UserProfile | undefined> {
-    const profile = await this.getUserProfile(userId);
-    if (!profile) return undefined;
+    const result = await db.update(userProfiles)
+      .set(profileData)
+      .where(eq(userProfiles.userId, userId))
+      .returning();
     
-    const updatedProfile = { ...profile, ...profileData };
-    this.userProfiles.set(profile.id, updatedProfile);
-    return updatedProfile;
+    return result[0];
   }
   
-  // Initialize sample tenders for testing
-  private async initializeTenders() {
-    const now = new Date();
-    
-    // Sample tenders
-    const sampleTenders: InsertTender[] = [
-      {
-        title: "IT Infrastructure Upgrade",
-        agency: "Ministry of Technology",
-        description: "Comprehensive upgrade of IT infrastructure including servers, networking, and security systems.",
-        category: "IT Services",
-        location: "National",
-        valueMin: "250000",
-        valueMax: "300000",
-        deadline: new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000), // 15 days from now
-        status: "open",
-        requirements: "ISO 27001 certification, minimum 5 years experience",
-        bidNumber: "T-2023-001"
-      },
-      {
-        title: "Cloud Migration Services",
-        agency: "Department of Finance",
-        description: "Migration of legacy systems to cloud infrastructure with minimal downtime.",
-        category: "Cloud Services",
-        location: "Regional",
-        valueMin: "180000",
-        valueMax: "220000",
-        deadline: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
-        status: "open",
-        requirements: "AWS/Azure certification, prior government experience",
-        bidNumber: "T-2023-002"
-      },
-      {
-        title: "Cybersecurity Assessment",
-        agency: "National Security Agency",
-        description: "Comprehensive security assessment of government digital infrastructure.",
-        category: "Security",
-        location: "National",
-        valueMin: "120000",
-        valueMax: "150000",
-        deadline: new Date(now.getTime() + 28 * 24 * 60 * 60 * 1000), // 28 days from now
-        status: "open",
-        requirements: "Security clearance, CISSP certification",
-        bidNumber: "T-2023-003"
-      },
-      {
-        title: "Data Center Maintenance",
-        agency: "Ministry of Defense",
-        description: "Ongoing maintenance and support for mission-critical data centers.",
-        category: "IT Services",
-        location: "National",
-        valueMin: "300000",
-        valueMax: "350000",
-        deadline: new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000), // 10 days from now
-        status: "open",
-        requirements: "Security clearance, 24/7 support capability",
-        bidNumber: "T-2023-085"
-      },
-      {
-        title: "Network Infrastructure Upgrade",
-        agency: "Department of Education",
-        description: "Upgrade of network infrastructure across all educational institutions.",
-        category: "Networking",
-        location: "National",
-        valueMin: "400000",
-        valueMax: "450000",
-        deadline: new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000), // 20 days from now
-        status: "open",
-        requirements: "Education sector experience, Cisco certification",
-        bidNumber: "T-2023-079"
-      },
-      {
-        title: "Digital Transformation Consultancy",
-        agency: "Ministry of Health",
-        description: "Strategic consultancy for digital transformation of healthcare services.",
-        category: "Consulting",
-        location: "National",
-        valueMin: "200000",
-        valueMax: "250000",
-        deadline: new Date(now.getTime() + 21 * 24 * 60 * 60 * 1000), // 21 days from now
-        status: "open",
-        requirements: "Healthcare experience, digital strategy expertise",
-        bidNumber: "T-2023-100"
+  // Initialize sample data for demonstration purposes
+  private async initializeData() {
+    try {
+      // Check if tenders already exist
+      const existingTenders = await db.select().from(tenders).limit(1);
+      
+      if (existingTenders.length === 0) {
+        const now = new Date();
+        
+        // Sample tenders for demonstration
+        const sampleTenders: InsertTender[] = [
+          {
+            title: "IT Infrastructure Upgrade",
+            agency: "Ministry of Technology",
+            description: "Comprehensive upgrade of IT infrastructure including servers, networking, and security systems.",
+            category: "IT Services",
+            location: "National",
+            valueMin: "250000",
+            valueMax: "300000",
+            deadline: new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000), // 15 days from now
+            status: "open",
+            requirements: "ISO 27001 certification, minimum 5 years experience",
+            bidNumber: "T-2023-001"
+          },
+          {
+            title: "Cloud Migration Services",
+            agency: "Department of Finance",
+            description: "Migration of legacy systems to cloud infrastructure with minimal downtime.",
+            category: "Cloud Services",
+            location: "Regional",
+            valueMin: "180000",
+            valueMax: "220000",
+            deadline: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
+            status: "open",
+            requirements: "AWS/Azure certification, prior government experience",
+            bidNumber: "T-2023-002"
+          },
+          {
+            title: "Cybersecurity Assessment",
+            agency: "National Security Agency",
+            description: "Comprehensive security assessment of government digital infrastructure.",
+            category: "Security",
+            location: "National",
+            valueMin: "120000",
+            valueMax: "150000",
+            deadline: new Date(now.getTime() + 28 * 24 * 60 * 60 * 1000), // 28 days from now
+            status: "open",
+            requirements: "Security clearance, CISSP certification",
+            bidNumber: "T-2023-003"
+          },
+          {
+            title: "Data Center Maintenance",
+            agency: "Ministry of Defense",
+            description: "Ongoing maintenance and support for mission-critical data centers.",
+            category: "IT Services",
+            location: "National",
+            valueMin: "300000",
+            valueMax: "350000",
+            deadline: new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000), // 10 days from now
+            status: "open",
+            requirements: "Security clearance, 24/7 support capability",
+            bidNumber: "T-2023-085"
+          },
+          {
+            title: "Network Infrastructure Upgrade",
+            agency: "Department of Education",
+            description: "Upgrade of network infrastructure across all educational institutions.",
+            category: "Networking",
+            location: "National",
+            valueMin: "400000",
+            valueMax: "450000",
+            deadline: new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000), // 20 days from now
+            status: "open",
+            requirements: "Education sector experience, Cisco certification",
+            bidNumber: "T-2023-079"
+          },
+          {
+            title: "Digital Transformation Consultancy",
+            agency: "Ministry of Health",
+            description: "Strategic consultancy for digital transformation of healthcare services.",
+            category: "Consulting",
+            location: "National",
+            valueMin: "200000",
+            valueMax: "250000",
+            deadline: new Date(now.getTime() + 21 * 24 * 60 * 60 * 1000), // 21 days from now
+            status: "open",
+            requirements: "Healthcare experience, digital strategy expertise",
+            bidNumber: "T-2023-100"
+          }
+        ];
+        
+        // Add tenders to database
+        for (const tender of sampleTenders) {
+          await this.createTender(tender);
+        }
       }
-    ];
-    
-    // Create each tender
-    for (const tender of sampleTenders) {
-      await this.createTender(tender);
+    } catch (error) {
+      console.error('Error initializing data:', error);
     }
-    
-    // Create sample applications
-    const sampleApplications: InsertApplication[] = [
-      {
-        userId: 1, // Will be assigned to the first registered user
-        tenderId: 4,
-        status: "under_review",
-        proposalContent: "Detailed proposal for data center maintenance",
-        documents: [{ name: "proposal.pdf", size: 1024 * 1024 }]
-      },
-      {
-        userId: 1,
-        tenderId: 5,
-        status: "shortlisted",
-        proposalContent: "Comprehensive network upgrade proposal",
-        documents: [{ name: "network_proposal.pdf", size: 2048 * 1024 }]
-      },
-      {
-        userId: 1,
-        tenderId: 6,
-        status: "declined",
-        proposalContent: "Digital transformation strategy",
-        documents: [{ name: "strategy.pdf", size: 1536 * 1024 }]
-      }
-    ];
-    
-    // We'll add these applications once a user registers
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

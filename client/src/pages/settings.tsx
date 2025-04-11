@@ -203,7 +203,7 @@ export default function SettingsPage() {
                         ) : (
                           <>
                             <Save className="mr-2 h-4 w-4" />
-                            Save Changes
+                            حفظ التغييرات
                           </>
                         )}
                       </Button>
@@ -216,45 +216,45 @@ export default function SettingsPage() {
             <TabsContent value="notifications">
               <Card>
                 <CardHeader>
-                  <CardTitle>Notification Preferences</CardTitle>
+                  <CardTitle>تفضيلات الإشعارات</CardTitle>
                   <CardDescription>
-                    Choose when and how you'd like to be notified
+                    اختر متى وكيف ترغب في تلقي الإشعارات
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div>
-                    <h3 className="text-sm font-medium mb-3">Email Notifications</h3>
+                    <h3 className="text-sm font-medium mb-3">إشعارات البريد الإلكتروني</h3>
                     <Separator className="mb-4" />
                     
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-medium">New Tender Matches</p>
-                          <p className="text-sm text-gray-500">Receive notifications when new matching tenders are found</p>
+                          <p className="font-medium">مناقصات جديدة متطابقة</p>
+                          <p className="text-sm text-gray-500">استلام إشعارات عند العثور على مناقصات جديدة متطابقة</p>
                         </div>
                         <Switch defaultChecked />
                       </div>
                       
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-medium">Tender Deadlines</p>
-                          <p className="text-sm text-gray-500">Get reminders for upcoming tender deadlines</p>
+                          <p className="font-medium">مواعيد المناقصات</p>
+                          <p className="text-sm text-gray-500">الحصول على تذكيرات للمواعيد النهائية القادمة</p>
                         </div>
                         <Switch defaultChecked />
                       </div>
                       
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-medium">Application Status Updates</p>
-                          <p className="text-sm text-gray-500">Be notified when your application status changes</p>
+                          <p className="font-medium">تحديثات حالة الطلب</p>
+                          <p className="text-sm text-gray-500">تلقي إشعار عند تغيير حالة طلبك</p>
                         </div>
                         <Switch defaultChecked />
                       </div>
                       
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-medium">Digest Summary</p>
-                          <p className="text-sm text-gray-500">Weekly summary of all tender activity</p>
+                          <p className="font-medium">ملخص دوري</p>
+                          <p className="text-sm text-gray-500">ملخص أسبوعي لجميع نشاطات المناقصات</p>
                         </div>
                         <Switch />
                       </div>
@@ -262,22 +262,22 @@ export default function SettingsPage() {
                   </div>
                   
                   <div>
-                    <h3 className="text-sm font-medium mb-3">In-App Notifications</h3>
+                    <h3 className="text-sm font-medium mb-3">إشعارات التطبيق</h3>
                     <Separator className="mb-4" />
                     
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-medium">All Notifications</p>
-                          <p className="text-sm text-gray-500">Enable or disable all in-app notifications</p>
+                          <p className="font-medium">جميع الإشعارات</p>
+                          <p className="text-sm text-gray-500">تفعيل أو تعطيل جميع إشعارات التطبيق</p>
                         </div>
                         <Switch defaultChecked />
                       </div>
                       
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-medium">Sound Alerts</p>
-                          <p className="text-sm text-gray-500">Play sound when notifications arrive</p>
+                          <p className="font-medium">تنبيهات صوتية</p>
+                          <p className="text-sm text-gray-500">تشغيل صوت عند وصول الإشعارات</p>
                         </div>
                         <Switch />
                       </div>
@@ -285,7 +285,7 @@ export default function SettingsPage() {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button>Save Notification Settings</Button>
+                  <Button>حفظ إعدادات الإشعارات</Button>
                 </CardFooter>
               </Card>
             </TabsContent>
@@ -293,52 +293,52 @@ export default function SettingsPage() {
             <TabsContent value="account">
               <Card>
                 <CardHeader>
-                  <CardTitle>Account Settings</CardTitle>
+                  <CardTitle>إعدادات الحساب</CardTitle>
                   <CardDescription>
-                    Manage your account information and security
+                    إدارة معلومات حسابك والأمان
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div>
-                    <h3 className="text-sm font-medium mb-3">Account Information</h3>
+                    <h3 className="text-sm font-medium mb-3">معلومات الحساب</h3>
                     <Separator className="mb-4" />
                     
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="text-sm font-medium">Username</label>
+                          <label className="text-sm font-medium">اسم المستخدم</label>
                           <Input value={user?.username} disabled className="mt-1" />
                         </div>
                         
                         <div>
-                          <label className="text-sm font-medium">Email Address</label>
-                          <Input placeholder="Add email address" className="mt-1" />
+                          <label className="text-sm font-medium">البريد الإلكتروني</label>
+                          <Input placeholder="أضف البريد الإلكتروني" className="mt-1" />
                         </div>
                       </div>
                     </div>
                   </div>
                   
                   <div>
-                    <h3 className="text-sm font-medium mb-3">Password</h3>
+                    <h3 className="text-sm font-medium mb-3">كلمة المرور</h3>
                     <Separator className="mb-4" />
                     
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="text-sm font-medium">Current Password</label>
-                          <Input type="password" placeholder="Enter current password" className="mt-1" />
+                          <label className="text-sm font-medium">كلمة المرور الحالية</label>
+                          <Input type="password" placeholder="أدخل كلمة المرور الحالية" className="mt-1" />
                         </div>
                         
                         <div />
                         
                         <div>
-                          <label className="text-sm font-medium">New Password</label>
-                          <Input type="password" placeholder="Enter new password" className="mt-1" />
+                          <label className="text-sm font-medium">كلمة المرور الجديدة</label>
+                          <Input type="password" placeholder="أدخل كلمة المرور الجديدة" className="mt-1" />
                         </div>
                         
                         <div>
-                          <label className="text-sm font-medium">Confirm New Password</label>
-                          <Input type="password" placeholder="Confirm new password" className="mt-1" />
+                          <label className="text-sm font-medium">تأكيد كلمة المرور الجديدة</label>
+                          <Input type="password" placeholder="تأكيد كلمة المرور الجديدة" className="mt-1" />
                         </div>
                       </div>
                     </div>
@@ -346,9 +346,9 @@ export default function SettingsPage() {
                 </CardContent>
                 <CardFooter className="flex justify-between">
                   <Button variant="outline" className="text-red-600 hover:text-red-700 hover:bg-red-50">
-                    Delete Account
+                    حذف الحساب
                   </Button>
-                  <Button>Update Account</Button>
+                  <Button>تحديث الحساب</Button>
                 </CardFooter>
               </Card>
             </TabsContent>

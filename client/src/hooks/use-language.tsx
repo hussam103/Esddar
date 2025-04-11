@@ -70,7 +70,26 @@ const translations = {
     "tenders.removedDesc": "تمت إزالة المناقصة من قائمة المناقصات المحفوظة",
     "tenders.removeError": "فشل في إزالة المناقصة",
     "tenders.saveTender": "حفظ المناقصة",
-    "tenders.removeFromSaved": "إزالة من المحفوظات"
+    "tenders.removeFromSaved": "إزالة من المحفوظات",
+    // Tender details page
+    "tenderDetails.applyForTender": "تقديم طلب لهذه المناقصة",
+    "tenderDetails.completeForm": "أكمل النموذج أدناه لتقديم طلبك",
+    "tenderDetails.tabDetails": "التفاصيل",
+    "tenderDetails.tabProposal": "المقترح",
+    "tenderDetails.deadline": "الموعد النهائي",
+    "tenderDetails.daysLeft": "يوم متبقي",
+    "tenderDetails.value": "القيمة",
+    "tenderDetails.category": "الفئة",
+    "tenderDetails.bidNumber": "رقم المناقصة",
+    "tenderDetails.proposalContent": "محتوى المقترح",
+    "tenderDetails.proposalPlaceholder": "وصف مقترحك لهذه المناقصة...",
+    "tenderDetails.aiSuggestions": "اقتراحات الذكاء الاصطناعي",
+    "tenderDetails.aiSuggestion1": "أبرز خبرتك في المشاريع المماثلة",
+    "tenderDetails.aiSuggestion2": "تناول المتطلبات المحددة المذكورة في المناقصة",
+    "tenderDetails.aiSuggestion3": "أضف نقاط البيع الفريدة التي تتوافق مع هذه الفرصة",
+    "tenderDetails.backToTenders": "العودة إلى المناقصات",
+    "tenderDetails.applyOnEtimad": "تقديم طلب في منصة اعتماد",
+    "tenderDetails.submitApplication": "تقديم الطلب"
   },
   en: {
     "app.name": "Esddar",
@@ -132,7 +151,26 @@ const translations = {
     "tenders.removedDesc": "The tender has been removed from your saved tenders list",
     "tenders.removeError": "Failed to remove tender",
     "tenders.saveTender": "Save tender",
-    "tenders.removeFromSaved": "Remove from saved"
+    "tenders.removeFromSaved": "Remove from saved",
+    // Tender details page
+    "tenderDetails.applyForTender": "Apply for this Tender",
+    "tenderDetails.completeForm": "Complete the form below to submit your application",
+    "tenderDetails.tabDetails": "Details",
+    "tenderDetails.tabProposal": "Proposal",
+    "tenderDetails.deadline": "Deadline",
+    "tenderDetails.daysLeft": "days left",
+    "tenderDetails.value": "Value",
+    "tenderDetails.category": "Category",
+    "tenderDetails.bidNumber": "Bid Number",
+    "tenderDetails.proposalContent": "Proposal Content",
+    "tenderDetails.proposalPlaceholder": "Describe your proposal for this tender...",
+    "tenderDetails.aiSuggestions": "AI Suggestions",
+    "tenderDetails.aiSuggestion1": "Highlight your experience with similar projects",
+    "tenderDetails.aiSuggestion2": "Address specific requirements mentioned in the tender",
+    "tenderDetails.aiSuggestion3": "Include your unique selling points that match this opportunity",
+    "tenderDetails.backToTenders": "Back to Tenders",
+    "tenderDetails.applyOnEtimad": "Apply on Etimad Platform",
+    "tenderDetails.submitApplication": "Submit Application"
   }
 };
 

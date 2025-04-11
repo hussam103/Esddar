@@ -455,7 +455,7 @@ export default function TenderDetailsPage() {
                       rel="noopener noreferrer"
                       className="px-4 py-2 rounded bg-gradient-to-l from-primary-600 to-primary-500 text-white hover:from-primary-700 hover:to-primary-600 transition-colors duration-150"
                     >
-                      تقديم طلب في منصة اعتماد
+                      {t("tenderDetails.applyOnEtimad")}
                     </a>
                   ) : (
                     // For local tenders, use the regular submit application button
@@ -466,7 +466,7 @@ export default function TenderDetailsPage() {
                       {createApplicationMutation.isPending ? (
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       ) : (
-                        "Submit Application"
+                        t("tenderDetails.submitApplication")
                       )}
                     </Button>
                   )}

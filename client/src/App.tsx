@@ -13,6 +13,7 @@ import AnalyticsPage from "@/pages/analytics";
 import SettingsPage from "@/pages/settings";
 import LandingPage from "@/pages/landing-page";
 import SubscriptionPage from "@/pages/subscription-page";
+import AdminPage from "@/pages/admin";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 import { NotificationsProvider } from "./hooks/use-notifications";
@@ -30,6 +31,7 @@ function Router() {
       <ProtectedRoute path="/analytics" component={AnalyticsPage}/>
       <ProtectedRoute path="/settings" component={SettingsPage}/>
       <ProtectedRoute path="/subscribe/:plan" component={SubscriptionPage}/>
+      <ProtectedRoute path="/admin" component={AdminPage}/>
       <Route component={NotFound} />
     </Switch>
   );

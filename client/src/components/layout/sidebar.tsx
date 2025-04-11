@@ -11,7 +11,8 @@ import {
   Bell, 
   Settings, 
   X, 
-  MenuIcon
+  MenuIcon,
+  ShieldAlert
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ type SidebarProps = {
 export default function Sidebar({ mobileMenuOpen, closeMobileMenu, activePage = "/" }: SidebarProps) {
   const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
+  const isAdmin = user?.id === 1;
 
   const navItems = [
     { path: "/dashboard", label: "لوحة التحكم", icon: Home },
@@ -35,6 +37,11 @@ export default function Sidebar({ mobileMenuOpen, closeMobileMenu, activePage = 
     { path: "/notifications", label: "الإشعارات", icon: Bell },
     { path: "/settings", label: "الإعدادات", icon: Settings },
   ];
+  
+  // Add admin menu item only for admin user
+  if (isAdmin) {
+    navItems.push({ path: "/admin", label: "لوحة الإدارة", icon: ShieldAlert });
+  }
 
   // Function to get company initials
   const getCompanyInitials = (name: string): string => {

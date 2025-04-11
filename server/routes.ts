@@ -534,8 +534,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
-      // Function to get the CSRF token
-      async function getCSRFToken(): Promise<string | null> {
+      // Using arrow functions to avoid strict mode issues
+      const getCSRFToken = async (): Promise<string | null> => {
         try {
           console.log('Getting CSRF token...');
           const response = await axios.get('https://tenders.etimad.sa/Tender/AllTendersForVisitor', {
@@ -553,10 +553,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error('Error getting CSRF token:', error);
           return null;
         }
-      }
+      };
 
-      // Function to scrape the tenders
-      async function scrapeTenders(pageNumber: number = 1, pageSize: number = 50): Promise<any[]> {
+      // Using arrow functions to avoid strict mode issues
+      const scrapeTenders = async (pageNumber: number = 1, pageSize: number = 50): Promise<any[]> => {
         try {
           console.log(`Scraping page ${pageNumber}...`);
           const csrfToken = await getCSRFToken();
@@ -607,10 +607,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error('Error scraping tenders:', error);
           return [];
         }
-      }
+      };
 
-      // Function to save tenders to the database
-      async function saveTendersToDatabase(tendersData: any[]): Promise<{saved: number, skipped: number}> {
+      // Using arrow functions to avoid strict mode issues
+      const saveTendersToDatabase = async (tendersData: any[]): Promise<{saved: number, skipped: number}> => {
         let saved = 0;
         let skipped = 0;
         
@@ -654,7 +654,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error('Error saving tenders to database:', error);
           throw error;
         }
-      }
+      };
 
       // Main function to scrape
       const pageNumber = parseInt(req.body.pageNumber || '1');

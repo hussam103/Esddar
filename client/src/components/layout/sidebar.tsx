@@ -35,9 +35,6 @@ export default function Sidebar({ mobileMenuOpen, closeMobileMenu, activePage = 
     { path: "/dashboard", label: t("nav.dashboard"), icon: Home },
     { path: "/tenders", label: t("nav.tenders"), icon: ListFilter },
     { path: "/saved", label: t("nav.saved"), icon: Bookmark },
-    { path: "/proposals", label: t("nav.applications"), icon: FileText },
-    { path: "/analytics", label: t("dashboard.activeTenders"), icon: BarChart2 },
-    { path: "/notifications", label: "الإشعارات", icon: Bell },
     { path: "/settings", label: t("nav.settings"), icon: Settings },
   ];
   

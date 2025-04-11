@@ -41,6 +41,10 @@ export const tenders = pgTable("tenders", {
   status: text("status").notNull().default("open"),
   requirements: text("requirements"),
   bidNumber: text("bid_number").notNull(),
+  // STenderId needed for Etimad link
+  etimadId: text("etimad_id"),
+  // Source of the tender (etimad or local)
+  source: text("source").default("local"),
 });
 
 export const insertTenderSchema = createInsertSchema(tenders).omit({

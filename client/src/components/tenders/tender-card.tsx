@@ -151,8 +151,8 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200">
       <div className="relative">
         {/* Match Score Badge */}
-        <div className="absolute top-0 right-0 bg-gradient-to-l from-primary-700 to-primary-500 text-white text-xs font-bold px-2 py-1 rounded-bl-md">
-          {matchScore}% نسبة تطابق
+        <div className={`absolute top-0 ${isRTL ? 'right-0 rounded-bl-md' : 'left-0 rounded-br-md'} bg-gradient-to-l from-primary-700 to-primary-500 text-white text-xs font-bold px-2 py-1`}>
+          {matchScore}% {t("tenders.matchRate")}
         </div>
         
         {/* Tender Header */}
@@ -163,7 +163,7 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
                 {tender.title}
               </h3>
               <div className="flex items-center mt-1">
-                <Building className="h-3 w-3 text-gray-500 dark:text-gray-400 ml-1" />
+                <Building className={`h-3 w-3 text-gray-500 dark:text-gray-400 ${iconMargin}`} />
                 <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-1" title={tender.agency}>
                   {tender.agency}
                 </p>
@@ -173,24 +173,24 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
               className={`${isSaved ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'} hover:text-primary-600 dark:hover:text-primary-400`}
               onClick={handleSaveTender}
               disabled={saveTenderMutation.isPending || unsaveTenderMutation.isPending}
-              aria-label={isSaved ? "إزالة من المحفوظات" : "حفظ المناقصة"}
+              aria-label={isSaved ? t("tenders.removeFromSaved") : t("tenders.saveTender")}
             >
               <Bookmark className={`h-5 w-5 ${isSaved ? 'fill-current' : ''}`} />
             </button>
           </div>
           
           {/* Tender Metadata */}
-          <div className="mt-3 flex flex-wrap items-center text-xs text-gray-500 dark:text-gray-400 gap-2">
+          <div className={`mt-3 flex flex-wrap items-center text-xs text-gray-500 dark:text-gray-400 gap-2 ${directionClass}`}>
             <div className="flex items-center">
-              <Hash className="h-3 w-3 ml-1" />
-              <span>رقم المناقصة: {tender.bidNumber}</span>
+              <Hash className={`h-3 w-3 ${iconMargin}`} />
+              <span>{t("tenders.bidNumber")}: {tender.bidNumber}</span>
             </div>
             <div className="flex items-center">
-              <MapPin className="h-3 w-3 ml-1" />
+              <MapPin className={`h-3 w-3 ${iconMargin}`} />
               <span>{tender.location}</span>
             </div>
             <div className="flex items-center">
-              <Tag className="h-3 w-3 ml-1" />
+              <Tag className={`h-3 w-3 ${iconMargin}`} />
               <span>{tender.category}</span>
             </div>
           </div>
@@ -200,7 +200,7 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
         <div className="px-4 pb-2">
           <div className="flex items-center justify-between text-sm">
             <div>
-              <span className="font-medium text-gray-700 dark:text-gray-300 ml-1">القيمة:</span>
+              <span className={`font-medium text-gray-700 dark:text-gray-300 ${iconMargin}`}>{t("tenders.value")}:</span>
               <span className="text-gray-900 dark:text-gray-100">{formatCurrency(tender.valueMin)} - {formatCurrency(tender.valueMax)}</span>
             </div>
           </div>
@@ -210,20 +210,20 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
         <div className="px-4 pb-3">
           <div className="flex items-center justify-between text-sm">
             <div className={`flex items-center ${deadlineClass}`}>
-              <Clock className="h-3 w-3 ml-1" />
-              <span>الموعد النهائي: {daysRemaining} يوم متبقي</span>
+              <Clock className={`h-3 w-3 ${iconMargin}`} />
+              <span>{t("tenders.deadline")}: {daysRemaining} {t("tenders.daysRemaining")}</span>
             </div>
-            <div className="flex space-x-2 space-x-reverse">
+            <div className={`flex ${isRTL ? 'space-x-2 space-x-reverse' : 'space-x-2'}`}>
               {/* Badge for tender source */}
               {tender.source === 'etimad' ? (
                 <Badge className="bg-blue-50 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300 border-blue-200 dark:border-blue-800">
-                  منصة اعتماد
+                  {t("tenders.etimadPlatform")}
                 </Badge>
               ) : null}
               
               {/* Badge for tender status */}
               <Badge variant="outline" className="bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800">
-                {tender.status === 'open' ? 'مفتوح' : tender.status}
+                {tender.status === 'open' ? t("tenders.statusOpen") : tender.status}
               </Badge>
             </div>
           </div>
@@ -235,7 +235,7 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
             className="text-sm text-primary-600 dark:text-primary-400 font-medium hover:text-primary-700 dark:hover:text-primary-300"
             onClick={() => setLocation(`/tenders/${tender.id}`)}
           >
-            عرض التفاصيل
+            {t("tenders.viewDetails")}
           </button>
           {tender.source === 'etimad' ? (
             // For Etimad tenders, open in a new tab to Etimad website
@@ -245,7 +245,7 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
               rel="noopener noreferrer"
               className="px-3 py-1 bg-gradient-to-l from-primary-600 to-primary-500 text-white text-sm rounded hover:from-primary-700 hover:to-primary-600 transition-colors duration-150 inline-block text-center"
             >
-              تقديم طلب في منصة اعتماد
+              {t("tenders.applyOnEtimad")}
             </a>
           ) : (
             // For locally generated tenders, redirect to local page
@@ -253,7 +253,7 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
               className="px-3 py-1 bg-gradient-to-l from-primary-600 to-primary-500 text-white text-sm rounded hover:from-primary-700 hover:to-primary-600 transition-colors duration-150"
               onClick={() => setLocation(`/tenders/${tender.id}`)}
             >
-              تقديم طلب
+              {t("tenders.apply")}
             </button>
           )}
         </div>

@@ -6,9 +6,11 @@ import TenderCard from "@/components/tenders/tender-card";
 import { Tender } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BookmarkX } from "lucide-react";
+import { useLanguage } from "@/hooks/use-language";
 
 export default function SavedTendersPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { t, language } = useLanguage();
 
   // Fetch saved tenders
   const { data: savedTenders = [], isLoading } = useQuery<Tender[]>({
@@ -25,8 +27,8 @@ export default function SavedTendersPage() {
       
       <main className="flex-1 overflow-y-auto">
         <Header 
-          title="المناقصات المحفوظة" 
-          subtitle="فرص المناقصات المفضلة لديك"
+          title={t("savedTenders.title")} 
+          subtitle={t("savedTenders.subtitle")}
           toggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
         />
         
@@ -57,11 +59,11 @@ export default function SavedTendersPage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 border rounded-lg mt-4 bg-white">
-                  <BookmarkX className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-700">لا توجد مناقصات محفوظة</h3>
-                  <p className="text-gray-500 mt-2">لم تقم بحفظ أي مناقصات حتى الآن.</p>
-                  <p className="text-gray-500">احفظ المناقصات للوصول إليها بسرعة لاحقاً.</p>
+                <div className="text-center py-12 border rounded-lg mt-4 bg-white dark:bg-gray-800">
+                  <BookmarkX className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-700 dark:text-gray-200">{t("savedTenders.noTenders")}</h3>
+                  <p className="text-gray-500 dark:text-gray-400 mt-2">{t("savedTenders.notSavedYet")}</p>
+                  <p className="text-gray-500 dark:text-gray-400">{t("savedTenders.saveForLater")}</p>
                 </div>
               )}
             </>

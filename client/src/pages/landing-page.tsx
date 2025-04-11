@@ -8,7 +8,7 @@ export default function LandingPage() {
   const [, setLocation] = useLocation();
   
   return (
-    <div className="min-h-screen flex flex-col" dir="rtl">
+    <div className="min-h-screen flex flex-col bg-gray-50" dir="rtl">
       {/* Hero Section */}
       <header className="bg-primary-50 border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex justify-between items-center">
@@ -26,7 +26,7 @@ export default function LandingPage() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1">
+      <main className="flex-1 bg-gray-50">
         {/* Hero Banner */}
         <section className="bg-gradient-to-r from-primary-900 to-primary-800 text-white py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

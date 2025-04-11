@@ -571,11 +571,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           console.log(`Scraping page ${pageNumber} with pageSize ${pageSize}...`);
           
-          // Using the direct API endpoint as provided
+          // Using the first API endpoint from the instructions:
+          // https://tenders.etimad.sa/Tender/AllSupplierTendersForVisitorAsync
           const timestamp = new Date().getTime();
           const url = `https://tenders.etimad.sa/Tender/AllSupplierTendersForVisitorAsync?PageSize=${pageSize}&PageNumber=${pageNumber}&_=${timestamp}`;
           
-          console.log(`Fetching from URL: ${url}`);
+          console.log(`Fetching tender list from URL: ${url}`);
           
           // Make the request with the correct headers
           const config = {
@@ -801,10 +802,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           console.log(`Getting details for tender ID: ${tenderIdString}`);
           
-          // Using the correct URL format for tender details
-          const url = `https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=${encodeURIComponent(tenderIdString)}`;
+          // Using the second API endpoint from the instructions:
+          // https://tenders.etimad.sa/Tender/OpenTenderDetailsReportForVisitor?tenderIdString=<TenderIdString>
+          const url = `https://tenders.etimad.sa/Tender/OpenTenderDetailsReportForVisitor?tenderIdString=${encodeURIComponent(tenderIdString)}`;
           
-          console.log(`Fetching details from URL: ${url}`);
+          console.log(`Fetching detailed tender data from URL: ${url}`);
           
           const response = await axios.get(url, {
             headers: {

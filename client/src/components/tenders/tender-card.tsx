@@ -51,18 +51,18 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
   
   // Get the URL for Etimad tenders
   const getEtimadTenderUrl = (): string => {
-    // Using the correct URL format from Etimad website as provided by user
-    // Format: https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=ENCODED_ID
+    // Using the correct URL format from Etimad website as provided by the instructions
     
-    // Check if we have an etimadId (STenderId) for this tender
+    // Check if we have an etimadId (tenderIdString) for this tender
     if (tender.source === 'etimad' && tender.etimadId) {
-      // Build a direct link to the specific tender on Etimad
-      return `https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=${encodeURIComponent(tender.etimadId)}`;
+      // According to the instructions, the correct URL for detailed tenders is:
+      // https://tenders.etimad.sa/Tender/OpenTenderDetailsReportForVisitor?tenderIdString=<tenderIdString>
+      return `https://tenders.etimad.sa/Tender/OpenTenderDetailsReportForVisitor?tenderIdString=${encodeURIComponent(tender.etimadId)}`;
     }
     
     // Check if we have a bid number that we can use
     if (tender.bidNumber && !tender.bidNumber.startsWith('T-20')) {
-      // For externally sourced tenders without STenderId, we can still link to Etimad 
+      // For externally sourced tenders without tenderIdString, we can still link to Etimad 
       return "https://tenders.etimad.sa/Tender/AllTendersForVisitor";
     }
     

@@ -220,7 +220,7 @@ export default function AdminPage() {
                       </Button>
                       
                       <a 
-                        href="https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=12345"
+                        href="https://tenders.etimad.sa/Tender/OpenTenderDetailsReportForVisitor?tenderIdString=12345"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-2 py-1 text-sm rounded bg-blue-50 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center"
@@ -245,7 +245,7 @@ export default function AdminPage() {
                       </Button>
                       
                       <a 
-                        href="https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=67890"
+                        href="https://tenders.etimad.sa/Tender/OpenTenderDetailsReportForVisitor?tenderIdString=67890"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-2 py-1 text-sm rounded bg-blue-50 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center"
@@ -265,13 +265,13 @@ export default function AdminPage() {
                 <h3 className="text-md font-medium mb-2">اختبار معرف مناقصة محدد في منصة اعتماد</h3>
                 
                 <div className="text-sm space-y-1 mb-4">
-                  <p>استخدم هذا القسم لاختبار معرفات المناقصات مباشرة من منصة اعتماد. أدخل معرف المناقصة المعروف باسم STenderId.</p>
-                  <p>يمكنك العثور على هذا المعرف في عنوان URL عند تصفح مناقصة في منصة اعتماد.</p>
+                  <p>استخدم هذا القسم لاختبار معرفات المناقصات مباشرة من منصة اعتماد. أدخل معرف المناقصة المعروف باسم tenderIdString.</p>
+                  <p>يمكنك استخراج هذا المعرف من URL مناقصات منصة اعتماد.</p>
                 </div>
                 
                 <div className="flex items-end space-x-2 space-x-reverse">
                   <div className="flex-1">
-                    <Label htmlFor="stenderId" className="mb-2 block text-sm">معرف المناقصة (STenderId)</Label>
+                    <Label htmlFor="stenderId" className="mb-2 block text-sm">معرف المناقصة (tenderIdString)</Label>
                     <Input
                       id="stenderId"
                       placeholder="أدخل معرف المناقصة من منصة اعتماد..."
@@ -338,7 +338,7 @@ export default function AdminPage() {
                     </Button>
                     
                     <a 
-                      href={`https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=${encodeURIComponent(tenderId)}`}
+                      href={`https://tenders.etimad.sa/Tender/OpenTenderDetailsReportForVisitor?tenderIdString=${encodeURIComponent(tenderId)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="px-3 py-2 rounded bg-blue-50 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center hover:bg-blue-100 transition-colors"
@@ -351,7 +351,7 @@ export default function AdminPage() {
                 <div className="mt-4">
                   <p className="text-xs text-gray-500">الرابط الناتج:</p>
                   <code className="text-xs block border mt-1 p-2 rounded-md bg-gray-50 dark:bg-gray-900 overflow-x-auto">
-                    https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId={encodeURIComponent(tenderId)}
+                    https://tenders.etimad.sa/Tender/OpenTenderDetailsReportForVisitor?tenderIdString={encodeURIComponent(tenderId)}
                   </code>
                 </div>
 
@@ -414,7 +414,7 @@ export default function AdminPage() {
                 <AlertTitle className="text-amber-800 dark:text-amber-300 mr-2">ملاحظات حول تكامل منصة اعتماد</AlertTitle>
                 <AlertDescription className="text-amber-700 dark:text-amber-400 mr-6">
                   <ul className="list-disc mr-4 mt-2 space-y-1 text-sm">
-                    <li>تأكد من أن معرف المناقصة (STenderId) صحيح للتمكن من الوصول إلى المناقصة بشكل صحيح.</li>
+                    <li>تأكد من أن معرف المناقصة (tenderIdString) صحيح للتمكن من الوصول إلى المناقصة بشكل صحيح.</li>
                     <li>تتطلب بعض المناقصات تسجيل الدخول في منصة اعتماد للوصول إليها.</li>
                     <li>يمكن للمستخدم الاطلاع على المناقصات بدون تسجيل دخول ولكن لتقديم طلب يجب تسجيل الدخول.</li>
                   </ul>

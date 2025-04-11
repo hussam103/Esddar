@@ -1,0 +1,103 @@
+1. Scrape the Tenders List (Summary Data)
+Use the API:
+
+arduino
+Copy
+Edit
+https://tenders.etimad.sa/Tender/AllSupplierTendersForVisitorAsync
+Send a GET request with parameters:
+
+PageSize=10
+
+PageNumber=X (where X is the page number you want to scrape)
+
+_=timestamp (random number to simulate a browser request)
+
+For each page, you will receive a JSON response containing multiple tenders.
+
+Extract these fields from each tender:
+
+tenderId
+
+tenderIdString
+
+tenderName
+
+agencyName
+
+closingDate
+
+(etc.)
+
+🔵 Goal: Collect the tenderIdString for every tender.
+🔵 Result: You get the basic list of tenders (summary info only).
+
+2. Visit Each Tender’s Detail Page (Detailed Data)
+For each tenderIdString, send a GET request to:
+
+arduino
+Copy
+Edit
+https://tenders.etimad.sa/Tender/OpenTenderDetailsReportForVisitor?tenderIdString=<TenderIdString>
+This page will return HTML (not JSON).
+
+The tender’s full details (like description, purpose, value, deadlines, etc.) are inside an HTML table.
+
+🔵 Goal: Access the full tender report page.
+
+3. Parse the Tender Details
+Use an HTML parser like BeautifulSoup to read the HTML.
+
+Locate the <table> inside the page.
+
+For each <tr> (table row):
+
+Read the <th> (header/title)
+
+Read the <td> (value/data)
+
+Decode Arabic text (because it will often be HTML-escaped like &#x645;&#x633;).
+
+🔵 Goal: Extract clean, readable tender details in English and Arabic.
+
+4. Save the Data
+For each tender, create a structured object like:
+
+Tender Name
+
+Tender Number
+
+Tender Value
+
+Tender Purpose
+
+Last Date for Questions
+
+Last Date for Offers
+
+Execution Place
+
+Etc.
+
+Save all tenders into:
+
+Excel (.xlsx) file
+
+OR CSV file
+
+🔵 Goal: Organize all tenders neatly into a database or file for later use.
+
+5. Handle Large Volume
+The total tenders are around 248,000+ tenders.
+
+To scrape all of them:
+
+Loop over all pages from PageNumber=1 up to the last page.
+
+Be careful about:
+
+Adding delays between requests (to avoid getting blocked).
+
+Handling errors (retry if the request fails).
+
+🔵 Goal: Complete a full scrape safely and politely (without overwhelming the server).

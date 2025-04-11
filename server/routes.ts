@@ -546,6 +546,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add a new external source
   app.post("/api/admin/sources", isAdmin, async (req, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
       const source = await db.insert(externalSources).values({
         ...req.body,
         createdBy: req.user.id,
@@ -562,6 +566,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update an external source
   app.put("/api/admin/sources/:id", isAdmin, async (req, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
       const id = parseInt(req.params.id);
       const source = await db.update(externalSources)
         .set(req.body)

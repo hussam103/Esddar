@@ -107,7 +107,40 @@ export default function AdminPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold mb-6">لوحة الإدارة</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">لوحة الإدارة</h1>
+        <Button 
+          variant="outline" 
+          onClick={() => setLocation("/admin/dashboard")}
+          className="flex items-center space-x-2 space-x-reverse"
+        >
+          <span>لوحة تحكم متقدمة</span>
+          <ExternalLink className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <Card className="mb-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100 dark:from-blue-950/40 dark:to-indigo-950/40 dark:border-blue-900/50">
+        <CardContent className="p-6">
+          <div className="flex items-start space-x-4 space-x-reverse">
+            <div className="bg-blue-100 dark:bg-blue-900/50 p-3 rounded-full">
+              <AlertCircle className="h-6 w-6 text-blue-700 dark:text-blue-400" />
+            </div>
+            <div>
+              <h3 className="text-lg font-medium text-blue-800 dark:text-blue-300 mb-2">لوحة التحكم المتقدمة</h3>
+              <p className="text-blue-700 dark:text-blue-400 mb-4">
+                تمت إضافة لوحة تحكم متقدمة تتيح لك إدارة مصادر المناقصات المتعددة ونظام التوصيات الذكي والإحصائيات.
+              </p>
+              <Button 
+                variant="default" 
+                onClick={() => setLocation("/admin/dashboard")}
+                className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-800 dark:hover:bg-blue-700"
+              >
+                انتقل إلى لوحة التحكم المتقدمة
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="bg-white dark:bg-gray-800">

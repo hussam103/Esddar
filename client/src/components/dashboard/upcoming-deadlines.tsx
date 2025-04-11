@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { Tender, Application } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/hooks/use-language";
 
 type UpcomingDeadlinesProps = {
   loading: boolean;
@@ -13,6 +14,7 @@ type UpcomingDeadlinesProps = {
 export default function UpcomingDeadlines({ loading, applications, tenders }: UpcomingDeadlinesProps) {
   const [, setLocation] = useLocation();
   const [currentMonth] = useState(new Date());
+  const { language } = useLanguage();
 
   // Get the number of days in the current month
   const getDaysInMonth = (date: Date): number => {

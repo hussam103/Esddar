@@ -2,6 +2,7 @@ import { useLocation } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/hooks/use-language";
 
 type Application = {
   id: number;
@@ -22,11 +23,13 @@ type ActiveApplicationsProps = {
 
 export default function ActiveApplications({ loading, applications }: ActiveApplicationsProps) {
   const [, setLocation] = useLocation();
+  const { t, language } = useLanguage();
 
   // Format date for display
   const formatDate = (dateString?: Date | string): string => {
-    if (!dateString) return "غير متاح";
-    return new Date(dateString).toLocaleDateString('ar-SA', {
+    if (!dateString) return language === "ar" ? "غير متاح" : "Not available";
+    
+    return new Date(dateString).toLocaleDateString(language === "ar" ? 'ar-SA' : 'en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
@@ -35,20 +38,38 @@ export default function ActiveApplications({ loading, applications }: ActiveAppl
 
   // Format status for display
   const formatStatus = (status: string): string => {
-    switch (status) {
-      case "submitted":
-        return "تم التقديم";
-      case "under_review":
-        return "قيد المراجعة";
-      case "shortlisted":
-        return "مؤهل للقائمة المختصرة";
-      case "declined":
-        return "مرفوض";
-      default:
-        return status
-          .split('_')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ');
+    if (language === "ar") {
+      switch (status) {
+        case "submitted":
+          return "تم التقديم";
+        case "under_review":
+          return "قيد المراجعة";
+        case "shortlisted":
+          return "مؤهل للقائمة المختصرة";
+        case "declined":
+          return "مرفوض";
+        default:
+          return status
+            .split('_')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+      }
+    } else {
+      switch (status) {
+        case "submitted":
+          return "Submitted";
+        case "under_review":
+          return "Under Review";
+        case "shortlisted":
+          return "Shortlisted";
+        case "declined":
+          return "Declined";
+        default:
+          return status
+            .split('_')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+      }
     }
   };
 
@@ -75,12 +96,22 @@ export default function ActiveApplications({ loading, applications }: ActiveAppl
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead>
-                <tr className="bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <th className="px-4 py-3">عنوان المناقصة</th>
-                  <th className="px-4 py-3">الجهة</th>
-                  <th className="px-4 py-3">تاريخ التقديم</th>
-                  <th className="px-4 py-3">الحالة</th>
-                  <th className="px-4 py-3">الإجراء</th>
+                <tr className={`bg-gray-50 ${language === "ar" ? "text-right" : "text-left"} text-xs font-medium text-gray-500 uppercase tracking-wider`}>
+                  <th className="px-4 py-3">
+                    {language === "ar" ? "عنوان المناقصة" : "Tender Title"}
+                  </th>
+                  <th className="px-4 py-3">
+                    {language === "ar" ? "الجهة" : "Agency"}
+                  </th>
+                  <th className="px-4 py-3">
+                    {language === "ar" ? "تاريخ التقديم" : "Submission Date"}
+                  </th>
+                  <th className="px-4 py-3">
+                    {language === "ar" ? "الحالة" : "Status"}
+                  </th>
+                  <th className="px-4 py-3">
+                    {language === "ar" ? "الإجراء" : "Action"}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -119,18 +150,30 @@ export default function ActiveApplications({ loading, applications }: ActiveAppl
 
   return (
     <section className="mt-8">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">الطلبات النشطة</h2>
+      <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        {language === "ar" ? "الطلبات النشطة" : "Active Applications"}
+      </h2>
       
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead>
-              <tr className="bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                <th className="px-4 py-3">عنوان المناقصة</th>
-                <th className="px-4 py-3">الجهة</th>
-                <th className="px-4 py-3">تاريخ التقديم</th>
-                <th className="px-4 py-3">الحالة</th>
-                <th className="px-4 py-3">الإجراء</th>
+              <tr className={`bg-gray-50 ${language === "ar" ? "text-right" : "text-left"} text-xs font-medium text-gray-500 uppercase tracking-wider`}>
+                <th className="px-4 py-3">
+                  {language === "ar" ? "عنوان المناقصة" : "Tender Title"}
+                </th>
+                <th className="px-4 py-3">
+                  {language === "ar" ? "الجهة" : "Agency"}
+                </th>
+                <th className="px-4 py-3">
+                  {language === "ar" ? "تاريخ التقديم" : "Submission Date"}
+                </th>
+                <th className="px-4 py-3">
+                  {language === "ar" ? "الحالة" : "Status"}
+                </th>
+                <th className="px-4 py-3">
+                  {language === "ar" ? "الإجراء" : "Action"}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -139,7 +182,12 @@ export default function ActiveApplications({ loading, applications }: ActiveAppl
                   <tr key={app.id} className="border-t border-gray-200 hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-900">{app.tender?.title}</div>
-                      <div className="text-xs text-gray-500">رقم المناقصة #{app.tender?.bidNumber}</div>
+                      <div className="text-xs text-gray-500">
+                        {language === "ar" 
+                          ? `رقم المناقصة #${app.tender?.bidNumber}`
+                          : `Tender # ${app.tender?.bidNumber}`
+                        }
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
                       {app.tender?.agency}
@@ -158,7 +206,7 @@ export default function ActiveApplications({ loading, applications }: ActiveAppl
                         className="text-primary-600 hover:text-primary-700 font-medium p-0 h-auto"
                         onClick={() => setLocation(`/applications/${app.id}`)}
                       >
-                        عرض
+                        {language === "ar" ? "عرض" : "View"}
                       </Button>
                     </td>
                   </tr>
@@ -166,7 +214,7 @@ export default function ActiveApplications({ loading, applications }: ActiveAppl
               ) : (
                 <tr className="border-t border-gray-200">
                   <td colSpan={5} className="px-4 py-6 text-center text-gray-500">
-                    لا توجد طلبات نشطة
+                    {language === "ar" ? "لا توجد طلبات نشطة" : "No active applications"}
                   </td>
                 </tr>
               )}

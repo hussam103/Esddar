@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { Redirect } from "wouter";
+import { useLocation } from "wouter";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 export default function AdminPage() {

@@ -365,7 +365,7 @@ export default function TenderDetailsPage() {
                     </div>
                     <div>
                       <p className="font-medium text-lg">{tender.agency}</p>
-                      <p className="text-gray-600 text-sm">Government Institution</p>
+                      <p className="text-gray-600 text-sm">{t("tenderDetails.governmentInstitution")}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -376,36 +376,36 @@ export default function TenderDetailsPage() {
             <div>
               <Card>
                 <CardHeader>
-                  <CardTitle>Apply for this Tender</CardTitle>
+                  <CardTitle>{t("tenderDetails.applyForTender")}</CardTitle>
                   <CardDescription>
-                    Complete the form below to submit your application
+                    {t("tenderDetails.completeForm")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue="details">
                     <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="details">Details</TabsTrigger>
-                      <TabsTrigger value="proposal">Proposal</TabsTrigger>
+                      <TabsTrigger value="details">{t("tenderDetails.tabDetails")}</TabsTrigger>
+                      <TabsTrigger value="proposal">{t("tenderDetails.tabProposal")}</TabsTrigger>
                     </TabsList>
                     <TabsContent value="details" className="space-y-4 pt-4">
                       <div>
-                        <h3 className="font-medium mb-2">Deadline</h3>
+                        <h3 className="font-medium mb-2">{t("tenderDetails.deadline")}</h3>
                         <p className={`${deadlineClass} font-medium`}>
-                          {formatDate(tender.deadline)} ({daysRemaining} days left)
+                          {formatDate(tender.deadline)} ({daysRemaining} {t("tenderDetails.daysLeft")})
                         </p>
                       </div>
                       <div>
-                        <h3 className="font-medium mb-2">Value</h3>
+                        <h3 className="font-medium mb-2">{t("tenderDetails.value")}</h3>
                         <p className="font-medium">
                           ${Number(tender.valueMin).toLocaleString()} - ${Number(tender.valueMax).toLocaleString()}
                         </p>
                       </div>
                       <div>
-                        <h3 className="font-medium mb-2">Category</h3>
+                        <h3 className="font-medium mb-2">{t("tenderDetails.category")}</h3>
                         <p>{tender.category}</p>
                       </div>
                       <div>
-                        <h3 className="font-medium mb-2">Bid Number</h3>
+                        <h3 className="font-medium mb-2">{t("tenderDetails.bidNumber")}</h3>
                         <p>{tender.bidNumber}</p>
                       </div>
                     </TabsContent>
@@ -417,10 +417,10 @@ export default function TenderDetailsPage() {
                             name="proposalContent"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Proposal Content</FormLabel>
+                                <FormLabel>{t("tenderDetails.proposalContent")}</FormLabel>
                                 <FormControl>
                                   <Textarea 
-                                    placeholder="Describe your proposal for this tender..." 
+                                    placeholder={t("tenderDetails.proposalPlaceholder")}
                                     className="min-h-[200px]"
                                     {...field} 
                                   />
@@ -430,11 +430,11 @@ export default function TenderDetailsPage() {
                             )}
                           />
                           <div>
-                            <h3 className="text-sm font-medium mb-2">AI Suggestions</h3>
+                            <h3 className="text-sm font-medium mb-2">{t("tenderDetails.aiSuggestions")}</h3>
                             <div className="text-sm bg-primary-50 p-3 rounded-md text-primary-700 space-y-2">
-                              <p>• Highlight your experience with similar projects</p>
-                              <p>• Address specific requirements mentioned in the tender</p>
-                              <p>• Include your unique selling points that match this opportunity</p>
+                              <p>• {t("tenderDetails.aiSuggestion1")}</p>
+                              <p>• {t("tenderDetails.aiSuggestion2")}</p>
+                              <p>• {t("tenderDetails.aiSuggestion3")}</p>
                             </div>
                           </div>
                         </form>
@@ -444,7 +444,7 @@ export default function TenderDetailsPage() {
                 </CardContent>
                 <CardFooter className="flex justify-between">
                   <Button variant="outline" onClick={() => setLocation("/tenders")}>
-                    Back to Tenders
+                    {t("tenderDetails.backToTenders")}
                   </Button>
                   
                   {tender.source === 'etimad' ? (

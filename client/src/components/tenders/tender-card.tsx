@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Tender } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/hooks/use-language";
 import { Bookmark, Clock, MapPin, Tag, Building, Hash } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -16,6 +17,7 @@ type TenderCardProps = {
 export default function TenderCard({ tender, matchScore, saved = false }: TenderCardProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { t, language } = useLanguage();
   const [isSaved, setIsSaved] = useState(saved);
 
   // Get days remaining until deadline
@@ -36,13 +38,17 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
 
   // Format currency with SAR
   const formatCurrency = (value: string | null | undefined): string => {
-    if (!value) return "غير محدد";
+    const notAvailableText = t("tenders.notAvailable");
+    if (!value) return notAvailableText;
     
     const num = Number(value);
-    if (isNaN(num)) return "غير محدد";
-    if (num === 0) return "غير محدد";
+    if (isNaN(num)) return notAvailableText;
+    if (num === 0) return notAvailableText;
     
-    return new Intl.NumberFormat('ar-SA', {
+    // Use appropriate locale based on current language
+    const locale = language === 'ar' ? 'ar-SA' : 'en-US';
+    
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
       currency: 'SAR',
       maximumFractionDigits: 0,
@@ -87,13 +93,13 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
       queryClient.invalidateQueries({ queryKey: [`/api/is-tender-saved/${tender.id}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/saved-tenders"] });
       toast({
-        title: "تم حفظ المناقصة",
-        description: "تمت إضافة المناقصة إلى قائمة المناقصات المحفوظة",
+        title: t("tenders.savedSuccess"),
+        description: t("tenders.savedSuccessDesc"),
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "فشل في حفظ المناقصة",
+        title: t("tenders.savedError"),
         description: error.message,
         variant: "destructive",
       });
@@ -111,13 +117,13 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
       queryClient.invalidateQueries({ queryKey: [`/api/is-tender-saved/${tender.id}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/saved-tenders"] });
       toast({
-        title: "تمت إزالة المناقصة",
-        description: "تمت إزالة المناقصة من قائمة المناقصات المحفوظة",
+        title: t("tenders.unsavedSuccess"),
+        description: t("tenders.unsavedSuccessDesc"),
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "فشل في إزالة المناقصة",
+        title: t("tenders.unsavedError"),
         description: error.message,
         variant: "destructive",
       });
@@ -135,6 +141,11 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
 
   const daysRemaining = getDaysRemaining(tender.deadline);
   const deadlineClass = getDeadlineClass(daysRemaining);
+  
+  // Adjust layout based on current language direction
+  const isRTL = language === "ar";
+  const directionClass = isRTL ? "space-x-reverse" : "";
+  const iconMargin = isRTL ? "ml-1" : "mr-1";
 
   return (
     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200">

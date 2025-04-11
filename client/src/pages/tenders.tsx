@@ -105,8 +105,8 @@ export default function TendersPage() {
       
       <main className="flex-1 overflow-y-auto">
         <Header 
-          title="كل المناقصات" 
-          subtitle="تصفح جميع المناقصات الحكومية المتاحة"
+          title={t("tenders.title")} 
+          subtitle={t("tenders.subtitle")}
           toggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
         />
         
@@ -145,8 +145,8 @@ export default function TendersPage() {
               
               {sortedTenders.length === 0 && (
                 <div className="text-center py-12 border rounded-lg mt-4 bg-white dark:bg-gray-800">
-                  <h3 className="text-lg font-medium text-gray-700 dark:text-gray-200">لم يتم العثور على مناقصات</h3>
-                  <p className="text-gray-500 dark:text-gray-400 mt-2">حاول تعديل معايير التصفية</p>
+                  <h3 className="text-lg font-medium text-gray-700 dark:text-gray-200">{t("tenders.noTendersFound")}</h3>
+                  <p className="text-gray-500 dark:text-gray-400 mt-2">{t("tenders.tryChangingFilters")}</p>
                 </div>
               )}
             </>

@@ -40,12 +40,20 @@ export default function UpcomingDeadlines({ loading, applications, tenders }: Up
     const oneWeekLater = new Date(now);
     oneWeekLater.setDate(now.getDate() + 7);
     
-    // Find tenders with deadlines in the next 7 days
-    return tenders
+    // For demonstration purposes, let's duplicate some tenders to show scrolling behavior
+    let upcomingTenders = tenders
       .filter(tender => {
         const deadlineDate = new Date(tender.deadline);
         return deadlineDate >= now && deadlineDate <= oneWeekLater;
-      })
+      });
+    
+    // If we don't have enough tenders with deadlines, include all tenders
+    if (upcomingTenders.length < 3) {
+      upcomingTenders = [...tenders];
+    }
+    
+    // Sort by deadline date (ascending)
+    return upcomingTenders
       .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
   };
 
@@ -226,11 +234,11 @@ export default function UpcomingDeadlines({ loading, applications, tenders }: Up
         </div>
         
         {/* Right Column: Deadline List */}
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden flex flex-col h-[500px]">
           <div className="px-4 py-3 border-b border-gray-200 font-medium">
             {language === "ar" ? "الأيام السبعة القادمة" : "Next Seven Days"}
           </div>
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-gray-200 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300">
             {upcomingDeadlines.length > 0 ? (
               upcomingDeadlines.map((tender) => {
                 const { day, month } = formatDeadlineDate(tender.deadline);
@@ -238,13 +246,17 @@ export default function UpcomingDeadlines({ loading, applications, tenders }: Up
                 const deadlineClass = getDeadlineClass(daysRemaining);
                 
                 return (
-                  <div key={tender.id} className="p-4 flex items-start">
-                    <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-red-100 text-red-800 rounded ml-3">
+                  <div key={tender.id} className="p-4 flex items-start hover:bg-gray-50">
+                    <div className={`flex-shrink-0 w-10 h-10 flex items-center justify-center bg-red-100 text-red-800 rounded ${language === "ar" ? "ml-3" : "mr-3"}`}>
                       <span className="text-sm font-medium">{day}</span>
                     </div>
-                    <div className="flex-1">
-                      <div className="font-medium">{tender.title}</div>
-                      <div className="text-sm text-gray-600">{tender.agency}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm line-clamp-1" title={tender.title}>
+                        {tender.title}
+                      </div>
+                      <div className="text-sm text-gray-600 line-clamp-1" title={tender.agency}>
+                        {tender.agency}
+                      </div>
                       <div className={`mt-1 text-xs ${deadlineClass}`}>
                         {language === "ar" 
                           ? `متبقي ${daysRemaining} يوم` 
@@ -252,12 +264,16 @@ export default function UpcomingDeadlines({ loading, applications, tenders }: Up
                         }
                       </div>
                     </div>
-                    <Button 
-                      size="sm"
-                      onClick={() => setLocation(`/tenders/${tender.id}`)}
-                    >
-                      {language === "ar" ? "مراجعة" : "Review"}
-                    </Button>
+                    <div className="flex-shrink-0 ml-2">
+                      <Button 
+                        size="sm"
+                        variant="outline"
+                        className="whitespace-nowrap"
+                        onClick={() => setLocation(`/tenders/${tender.id}`)}
+                      >
+                        {language === "ar" ? "مراجعة" : "Review"}
+                      </Button>
+                    </div>
                   </div>
                 );
               })

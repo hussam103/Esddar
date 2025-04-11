@@ -1,4 +1,5 @@
 import { pgTable, text, serial, integer, boolean, timestamp, numeric, jsonb } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -12,12 +13,14 @@ export const users = pgTable("users", {
   description: text("description"),
   services: text("services").array(),
   profileCompleteness: integer("profile_completeness").default(0),
+  role: text("role").default("user"), // 'user' or 'admin'
   // Subscription fields
   subscriptionPlan: text("subscription_plan"),
   subscriptionPrice: numeric("subscription_price"),
   subscriptionStatus: text("subscription_status"),
   subscriptionStartDate: timestamp("subscription_start_date"),
   subscriptionEndDate: timestamp("subscription_end_date"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -25,6 +28,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
   companyName: true,
   industry: true,
+  role: true,
 });
 
 // Tender schema
@@ -41,14 +45,22 @@ export const tenders = pgTable("tenders", {
   status: text("status").notNull().default("open"),
   requirements: text("requirements"),
   bidNumber: text("bid_number").notNull(),
-  // STenderId needed for Etimad link
-  etimadId: text("etimad_id"),
-  // Source of the tender (etimad or local)
+  // External source identification
+  externalId: text("external_id"),
+  // Source of the tender (etimad, local, etc)
   source: text("source").default("local"),
+  // Vector embedding information for RAG
+  vectorId: text("vector_id"),
+  vectorStatus: text("vector_status").default("pending"), // 'pending', 'processed', 'failed'
+  createdAt: timestamp("created_at").defaultNow(),
+  url: text("url"),
 });
 
 export const insertTenderSchema = createInsertSchema(tenders).omit({
   id: true,
+  vectorId: true,
+  vectorStatus: true,
+  createdAt: true,
 });
 
 // User's saved tenders
@@ -73,26 +85,189 @@ export const applications = pgTable("applications", {
   submittedAt: timestamp("submitted_at"),
   proposalContent: text("proposal_content"),
   documents: jsonb("documents"),
+  matchScore: integer("match_score"), // AI-generated match score
 });
 
 export const insertApplicationSchema = createInsertSchema(applications).omit({
   id: true,
   submittedAt: true,
+  matchScore: true,
 });
 
 // User match profiles (for AI matching)
 export const userProfiles = pgTable("user_profiles", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().unique(),
+  companyDescription: text("company_description"),
+  skills: text("skills"),
+  pastExperience: text("past_experience"),
+  preferredSectors: text("preferred_sectors").array(),
+  companySize: text("company_size"),
+  yearsInBusiness: integer("years_in_business"),
   matchAccuracy: integer("match_accuracy").default(0),
   tendersFound: integer("tenders_found").default(0),
   proposalsSubmitted: integer("proposals_submitted").default(0),
   successRate: integer("success_rate").default(0),
+  // Vector embedding information for RAG
+  vectorId: text("vector_id"),
+  vectorStatus: text("vector_status").default("pending"), // 'pending', 'processed', 'failed'
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const insertUserProfileSchema = createInsertSchema(userProfiles).omit({
   id: true,
+  vectorId: true,
+  vectorStatus: true,
+  createdAt: true,
+  updatedAt: true,
 });
+
+// Company documents for OCR processing
+export const companyDocuments = pgTable("company_documents", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  documentType: text("document_type").notNull(), // 'license', 'certificate', etc.
+  fileName: text("file_name").notNull(),
+  filePath: text("file_path").notNull(),
+  extractedText: text("extracted_text"),
+  metaData: jsonb("meta_data"),
+  processingStatus: text("processing_status").default("pending"), // 'pending', 'processed', 'failed'
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
+});
+
+export const insertCompanyDocumentSchema = createInsertSchema(companyDocuments).omit({
+  id: true,
+  extractedText: true,
+  processingStatus: true,
+  uploadedAt: true,
+});
+
+// External sources for tender scraping
+export const externalSources = pgTable("external_sources", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  url: text("url").notNull(),
+  type: text("type").notNull(), // 'api', 'website_scrape'
+  apiEndpoint: text("api_endpoint"),
+  credentials: jsonb("credentials"),
+  active: boolean("active").default(true),
+  lastScrapedAt: timestamp("last_scraped_at"),
+  scrapingFrequency: integer("scraping_frequency").default(24), // Hours between scrapes
+  createdAt: timestamp("created_at").defaultNow(),
+  createdBy: integer("created_by").notNull(), // Admin ID
+});
+
+export const insertExternalSourceSchema = createInsertSchema(externalSources).omit({
+  id: true,
+  lastScrapedAt: true,
+  createdAt: true,
+});
+
+// Logs for scraping operations
+export const scrapeLogs = pgTable("scrape_logs", {
+  id: serial("id").primaryKey(),
+  sourceId: integer("source_id").notNull(),
+  startTime: timestamp("start_time").defaultNow(),
+  endTime: timestamp("end_time"),
+  status: text("status").default("running"), // 'running', 'completed', 'failed'
+  totalTenders: integer("total_tenders").default(0),
+  newTenders: integer("new_tenders").default(0),
+  updatedTenders: integer("updated_tenders").default(0),
+  failedTenders: integer("failed_tenders").default(0),
+  errorMessage: text("error_message"),
+  details: jsonb("details"),
+});
+
+export const insertScrapeLogSchema = createInsertSchema(scrapeLogs).omit({
+  id: true,
+  startTime: true,
+  endTime: true,
+});
+
+// RAG matches between tenders and company profiles
+export const tenderMatches = pgTable("tender_matches", {
+  id: serial("id").primaryKey(),
+  tenderId: integer("tender_id").notNull(),
+  userProfileId: integer("user_profile_id").notNull(),
+  matchScore: integer("match_score").notNull(), // 0-100
+  matchDetails: jsonb("match_details"),
+  createdAt: timestamp("created_at").defaultNow(),
+  notificationSent: boolean("notification_sent").default(false),
+});
+
+export const insertTenderMatchSchema = createInsertSchema(tenderMatches).omit({
+  id: true,
+  createdAt: true,
+  notificationSent: true,
+});
+
+// Vector database records to track embeddings
+export const vectorRecords = pgTable("vector_records", {
+  id: serial("id").primaryKey(),
+  externalId: text("external_id").notNull(), // ID in vector database (Pinecone)
+  sourceType: text("source_type").notNull(), // 'tender', 'company_profile', 'document'
+  sourceId: integer("source_id").notNull(), // ID of the source record
+  embeddingModel: text("embedding_model").notNull(), // Which model was used for embedding
+  dimensions: integer("dimensions").notNull(),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertVectorRecordSchema = createInsertSchema(vectorRecords).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Define relations
+export const usersRelations = relations(users, ({ many, one }) => ({
+  savedTenders: many(savedTenders),
+  applications: many(applications),
+  profile: one(userProfiles, { fields: [users.id], references: [userProfiles.userId] }),
+  documents: many(companyDocuments),
+  createdSources: many(externalSources, { fields: [users.id], references: [externalSources.createdBy] }),
+}));
+
+export const tendersRelations = relations(tenders, ({ many }) => ({
+  savedBy: many(savedTenders),
+  applications: many(applications),
+  matches: many(tenderMatches),
+}));
+
+export const savedTendersRelations = relations(savedTenders, ({ one }) => ({
+  user: one(users, { fields: [savedTenders.userId], references: [users.id] }),
+  tender: one(tenders, { fields: [savedTenders.tenderId], references: [tenders.id] }),
+}));
+
+export const applicationsRelations = relations(applications, ({ one }) => ({
+  user: one(users, { fields: [applications.userId], references: [users.id] }),
+  tender: one(tenders, { fields: [applications.tenderId], references: [tenders.id] }),
+}));
+
+export const userProfilesRelations = relations(userProfiles, ({ one, many }) => ({
+  user: one(users, { fields: [userProfiles.userId], references: [users.id] }),
+  matches: many(tenderMatches),
+}));
+
+export const companyDocumentsRelations = relations(companyDocuments, ({ one }) => ({
+  user: one(users, { fields: [companyDocuments.userId], references: [users.id] }),
+}));
+
+export const externalSourcesRelations = relations(externalSources, ({ one, many }) => ({
+  createdByUser: one(users, { fields: [externalSources.createdBy], references: [users.id] }),
+  logs: many(scrapeLogs),
+}));
+
+export const scrapeLogsRelations = relations(scrapeLogs, ({ one }) => ({
+  source: one(externalSources, { fields: [scrapeLogs.sourceId], references: [externalSources.id] }),
+}));
+
+export const tenderMatchesRelations = relations(tenderMatches, ({ one }) => ({
+  tender: one(tenders, { fields: [tenderMatches.tenderId], references: [tenders.id] }),
+  userProfile: one(userProfiles, { fields: [tenderMatches.userProfileId], references: [userProfiles.id] }),
+}));
 
 // Define types from schemas
 export type User = typeof users.$inferSelect;
@@ -109,3 +284,18 @@ export type InsertApplication = z.infer<typeof insertApplicationSchema>;
 
 export type UserProfile = typeof userProfiles.$inferSelect;
 export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
+
+export type CompanyDocument = typeof companyDocuments.$inferSelect;
+export type InsertCompanyDocument = z.infer<typeof insertCompanyDocumentSchema>;
+
+export type ExternalSource = typeof externalSources.$inferSelect;
+export type InsertExternalSource = z.infer<typeof insertExternalSourceSchema>;
+
+export type ScrapeLog = typeof scrapeLogs.$inferSelect;
+export type InsertScrapeLog = z.infer<typeof insertScrapeLogSchema>;
+
+export type TenderMatch = typeof tenderMatches.$inferSelect;
+export type InsertTenderMatch = z.infer<typeof insertTenderMatchSchema>;
+
+export type VectorRecord = typeof vectorRecords.$inferSelect;
+export type InsertVectorRecord = z.infer<typeof insertVectorRecordSchema>;

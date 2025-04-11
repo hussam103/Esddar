@@ -21,7 +21,7 @@ export default function MatchingScore({ loading, userProfile, profileCompletenes
             <Skeleton className="h-6 w-48 mb-2" />
             <Skeleton className="h-4 w-64" />
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 space-x-reverse">
             <Skeleton className="h-10 w-40" />
             <Skeleton className="h-10 w-32" />
           </div>
@@ -43,49 +43,49 @@ export default function MatchingScore({ loading, userProfile, profileCompletenes
     <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
         <div className="mb-4 md:mb-0">
-          <h2 className="text-lg font-semibold text-gray-900">AI Matching Score</h2>
-          <p className="text-sm text-gray-500">Based on your company profile and past activity</p>
+          <h2 className="text-lg font-semibold text-gray-900">مؤشر المطابقة الذكي</h2>
+          <p className="text-sm text-gray-500">بناءً على ملف شركتك والنشاط السابق</p>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 space-x-reverse">
           <div className="bg-primary-50 px-3 py-1.5 rounded-full">
-            <span className="text-sm font-medium text-primary-700">Profile Completeness: {profileCompleteness}%</span>
+            <span className="text-sm font-medium text-primary-700">اكتمال الملف: {profileCompleteness}%</span>
           </div>
           <Button onClick={() => setLocation("/settings")}>
-            Complete Profile
+            إكمال الملف
           </Button>
         </div>
       </div>
       
       <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-          <div className="text-sm text-gray-600">Match Accuracy</div>
+          <div className="text-sm text-gray-600">دقة المطابقة</div>
           <div className="mt-1 flex items-baseline">
             <span className="text-2xl font-bold text-gray-900">{userProfile?.matchAccuracy || 0}%</span>
-            <span className="ml-1 text-xs text-green-600 flex items-center">
+            <span className="mr-1 text-xs text-green-600 flex items-center">
               <ArrowUp className="h-3 w-3" />
               5%
             </span>
           </div>
         </div>
         <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-          <div className="text-sm text-gray-600">Tenders Found</div>
+          <div className="text-sm text-gray-600">المناقصات المكتشفة</div>
           <div className="mt-1 flex items-baseline">
             <span className="text-2xl font-bold text-gray-900">{userProfile?.tendersFound || 0}</span>
-            <span className="ml-1 text-xs text-gray-500">this week</span>
+            <span className="mr-1 text-xs text-gray-500">هذا الأسبوع</span>
           </div>
         </div>
         <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-          <div className="text-sm text-gray-600">Proposals Submitted</div>
+          <div className="text-sm text-gray-600">العروض المقدمة</div>
           <div className="mt-1 flex items-baseline">
             <span className="text-2xl font-bold text-gray-900">{userProfile?.proposalsSubmitted || 0}</span>
-            <span className="ml-1 text-xs text-gray-500">this month</span>
+            <span className="mr-1 text-xs text-gray-500">هذا الشهر</span>
           </div>
         </div>
         <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-          <div className="text-sm text-gray-600">Success Rate</div>
+          <div className="text-sm text-gray-600">معدل النجاح</div>
           <div className="mt-1 flex items-baseline">
             <span className="text-2xl font-bold text-gray-900">{userProfile?.successRate || 0}%</span>
-            <span className="ml-1 text-xs text-green-600 flex items-center">
+            <span className="mr-1 text-xs text-green-600 flex items-center">
               <ArrowUp className="h-3 w-3" />
               8%
             </span>

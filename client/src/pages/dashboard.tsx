@@ -7,7 +7,7 @@ import MatchingScore from "@/components/dashboard/matching-score";
 import RecommendedTenders from "@/components/dashboard/recommended-tenders";
 import ActiveApplications from "@/components/dashboard/active-applications";
 import UpcomingDeadlines from "@/components/dashboard/upcoming-deadlines";
-import { Tender } from "@shared/schema";
+import { Tender, Application, UserProfile } from "@shared/schema";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -19,12 +19,12 @@ export default function Dashboard() {
   });
 
   // Fetch user profile
-  const { data: userProfile, isLoading: profileLoading } = useQuery({
+  const { data: userProfile, isLoading: profileLoading } = useQuery<UserProfile>({
     queryKey: ["/api/user-profile"],
   });
 
   // Fetch applications
-  const { data: applications = [], isLoading: applicationsLoading } = useQuery({
+  const { data: applications = [], isLoading: applicationsLoading } = useQuery<Application[]>({
     queryKey: ["/api/applications"],
   });
 
@@ -34,13 +34,13 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row">
+    <div className="min-h-screen flex flex-col md:flex-row" dir="rtl">
       <Sidebar mobileMenuOpen={mobileMenuOpen} closeMobileMenu={() => setMobileMenuOpen(false)} />
       
       <main className="flex-1 overflow-y-auto">
         <Header 
-          title="Dashboard" 
-          subtitle={`Welcome back, ${user?.companyName}`}
+          title="لوحة التحكم" 
+          subtitle={`مرحباً بعودتك، ${user?.companyName}`}
           toggleMobileMenu={toggleMobileMenu}
         />
         

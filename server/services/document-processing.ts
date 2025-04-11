@@ -223,7 +223,7 @@ async function getOCRResults(documentId: string, whisperHash: string): Promise<v
           `https://llmwhisperer-api.us-central.unstract.com/api/v2/whisper/${whisperHash}`,
           {
             headers: {
-              'Authorization': `Bearer ${process.env.UNSTRACT_API_KEY}`
+              'unstract-key': process.env.UNSTRACT_API_KEY
             }
           }
         );

@@ -448,7 +448,7 @@ export default function TenderDetailsPage() {
                   {tender.source === 'etimad' ? (
                     // For Etimad tenders, we provide a link to apply on Etimad platform
                     <a 
-                      href={`https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=${encodeURIComponent(tender.etimadId || '')}`}
+                      href={`https://tenders.etimad.sa/Tender/OpenTenderDetailsReportForVisitor?tenderIdString=${encodeURIComponent(tender.externalId || '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="px-4 py-2 rounded bg-gradient-to-l from-primary-600 to-primary-500 text-white hover:from-primary-700 hover:to-primary-600 transition-colors duration-150"

@@ -49,24 +49,30 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
     }).format(num);
   };
   
-  // Get the URL for Etimad tenders
-  const getEtimadTenderUrl = (): string => {
-    // Using the correct URL format from Etimad website as provided by the instructions
+  // Get the URL for external tenders
+  const getExternalTenderUrl = (): string => {
+    // If tender has a direct URL, use it
+    if (tender.url) {
+      return tender.url;
+    }
     
-    // Check if we have an etimadId (tenderIdString) for this tender
-    if (tender.source === 'etimad' && tender.etimadId) {
-      // According to the instructions, the correct URL for detailed tenders is:
-      // https://tenders.etimad.sa/Tender/OpenTenderDetailsReportForVisitor?tenderIdString=<tenderIdString>
-      return `https://tenders.etimad.sa/Tender/OpenTenderDetailsReportForVisitor?tenderIdString=${encodeURIComponent(tender.etimadId)}`;
+    // For Etimad tenders with external ID
+    if (tender.source === 'etimad' && tender.externalId) {
+      return `https://tenders.etimad.sa/Tender/OpenTenderDetailsReportForVisitor?tenderIdString=${encodeURIComponent(tender.externalId)}`;
     }
     
     // Check if we have a bid number that we can use
     if (tender.bidNumber && !tender.bidNumber.startsWith('T-20')) {
-      // For externally sourced tenders without tenderIdString, we can still link to Etimad 
+      // For externally sourced tenders without external ID, link to Etimad search
+      return `https://tenders.etimad.sa/Tender/AllTendersForVisitor?SearchTerm=${encodeURIComponent(tender.bidNumber)}`;
+    }
+    
+    // Fallback to the appropriate source based on where the tender is from
+    if (tender.source === 'etimad') {
       return "https://tenders.etimad.sa/Tender/AllTendersForVisitor";
     }
     
-    // Fallback to the main Etimad tenders page for any other case
+    // Default fallback
     return "https://tenders.etimad.sa/Tender/AllTendersForVisitor";
   };
 
@@ -223,7 +229,7 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
           {tender.source === 'etimad' ? (
             // For Etimad tenders, open in a new tab to Etimad website
             <a 
-              href={getEtimadTenderUrl()}
+              href={getExternalTenderUrl()}
               target="_blank"
               rel="noopener noreferrer"
               className="px-3 py-1 bg-gradient-to-l from-primary-600 to-primary-500 text-white text-sm rounded hover:from-primary-700 hover:to-primary-600 transition-colors duration-150 inline-block text-center"

@@ -178,7 +178,9 @@ export class DatabaseStorage implements IStorage {
         eq(savedTenders.tenderId, tenderId)
       ));
     
-    return result.count > 0;
+    // Drizzle doesn't return a count property, so we'll just return true
+    // as the operation was successful regardless of whether records were deleted
+    return true;
   }
   
   async isTenderSaved(userId: number, tenderId: number): Promise<boolean> {

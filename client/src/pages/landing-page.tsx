@@ -10,7 +10,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
       {/* Hero Section */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-primary-50 border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center ml-2">
@@ -18,7 +18,7 @@ export default function LandingPage() {
             </div>
             <span className="text-xl font-bold text-gray-900">إصدار</span>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 space-x-reverse">
             <Button variant="ghost" onClick={() => setLocation("/auth")}>تسجيل الدخول</Button>
             <Button onClick={() => setLocation("/auth")}>إنشاء حساب</Button>
           </div>

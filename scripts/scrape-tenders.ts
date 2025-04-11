@@ -28,53 +28,43 @@ async function getCSRFToken(): Promise<string | null> {
 // Function to scrape the tenders
 async function scrapeTenders(pageNumber: number = 1, pageSize: number = 50): Promise<any[]> {
   try {
-    console.log(`Scraping page ${pageNumber}...`);
-    const csrfToken = await getCSRFToken();
+    console.log(`Scraping page ${pageNumber} with pageSize ${pageSize}...`);
     
-    if (!csrfToken) {
-      throw new Error('Could not get CSRF token');
-    }
+    // Using the direct API endpoint as provided
+    const timestamp = new Date().getTime();
+    const url = `https://tenders.etimad.sa/Tender/AllSupplierTendersForVisitorAsync?PageSize=${pageSize}&PageNumber=${pageNumber}&_=${timestamp}`;
     
-    // Build the URL with parameters
-    const url = `https://tenders.etimad.sa/Tender/AllSupplierTendersForVisitorAsync`;
+    console.log(`Fetching from URL: ${url}`);
     
     // Make the request
     const response = await axios.get(url, {
-      params: {
-        '__RequestVerificationToken': csrfToken,
-        'PublishDateId': 5,
-        'PageSize': pageSize,
-        'PageNumber': pageNumber,
-        'IsSearch': true,
-        'SortDirection': 'DESC',
-        'Sort': 'SubmitionDate',
-        '_': new Date().getTime()
-      },
       headers: {
-        'Accept-Language': 'ar',
+        'Accept': 'application/json, text/javascript, */*; q=0.01',
+        'Accept-Language': 'ar,en;q=0.9',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
         'Referer': 'https://tenders.etimad.sa/Tender/AllTendersForVisitor',
-        'X-Requested-With': 'XMLHttpRequest'
+        'X-Requested-With': 'XMLHttpRequest',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
       }
     });
     
     console.log('Response status:', response.status);
     
-    // Check if response is valid JSON
-    if (typeof response.data === 'string') {
-      try {
-        const parsedData = JSON.parse(response.data);
-        return parsedData.Data?.Items || [];
-      } catch (e) {
-        console.error('Error parsing JSON:', e);
-        console.log('Response data:', response.data.substring(0, 200) + '...');
-        return [];
-      }
+    // Check if we have data
+    if (response.data && Array.isArray(response.data.data)) {
+      console.log(`Found ${response.data.data.length} tenders in the response`);
+      return response.data.data;
+    } else {
+      console.log('Response data structure:', JSON.stringify(response.data).substring(0, 200) + '...');
+      return [];
     }
-    
-    return response.data.Data?.Items || [];
-  } catch (error) {
-    console.error('Error scraping tenders:', error);
+  } catch (error: any) {
+    console.error('Error scraping tenders:', error.message);
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', error.response.data);
+    }
     return [];
   }
 }
@@ -84,31 +74,43 @@ async function getTenderDetails(tenderIdString: string): Promise<any> {
   try {
     console.log(`Getting details for tender ID: ${tenderIdString}`);
     
-    const url = `https://tenders.etimad.sa/Tender/OpenTenderDetailsReportForVisitor?tenderIdString=${tenderIdString}`;
+    // Using the updated URL format for tender details
+    const url = `https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=${encodeURIComponent(tenderIdString)}`;
+    
+    console.log(`Fetching details from URL: ${url}`);
     
     const response = await axios.get(url, {
       headers: {
-        'Accept-Language': 'ar',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'ar,en;q=0.9',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
         'Referer': 'https://tenders.etimad.sa/Tender/AllTendersForVisitor',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
       }
     });
     
     // Parse the HTML response to extract detailed information
     const $ = cheerio.load(response.data);
     
-    // Extract tender details
+    // Extract tender details using the updated selectors from Etimad website
     const tenderDetails = {
-      title: $('.info_header .head').text().trim(),
-      agency: $('.block_header-entity').text().trim(),
-      description: $('.info_header .body').text().trim(),
-      requirements: $('.requirements').text().trim(),
+      title: $('.tender-title').text().trim() || $('.info_header .head').text().trim(),
+      agency: $('.agency-name').text().trim() || $('.block_header-entity').text().trim(),
+      description: $('.tender-description').text().trim() || $('.info_header .body').text().trim(),
+      requirements: $('.requirements').text().trim() || '',
+      location: $('.tender-location').text().trim() || '',
       // Add more fields as needed
     };
     
+    console.log('Extracted tender details:', tenderDetails);
     return tenderDetails;
-  } catch (error) {
-    console.error(`Error getting details for tender ID ${tenderIdString}:`, error);
+  } catch (error: any) {
+    console.error(`Error getting details for tender ID ${tenderIdString}:`, error.message);
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', error.response.data?.substring?.(0, 200) || error.response.data);
+    }
     return null;
   }
 }
@@ -118,43 +120,74 @@ async function saveTendersToDatabase(tendersData: any[]): Promise<void> {
   try {
     console.log(`Saving ${tendersData.length} tenders to database...`);
     
+    let savedCount = 0;
+    let skippedCount = 0;
+    
     for (const tender of tendersData) {
-      // Check if the tender already exists in the database
-      const existingTender = await db.select().from(tenders).where(eq(tenders.bidNumber, tender.ReferenceNumber)).limit(1);
-      
-      if (existingTender.length > 0) {
-        console.log(`Tender with bid number ${tender.ReferenceNumber} already exists, skipping.`);
-        continue;
+      try {
+        // Log the tender data structure to understand the format
+        console.log('Processing tender:', JSON.stringify(tender).substring(0, 300) + '...');
+        
+        // Based on the sample JSON you provided, adjust the field names
+        const bidNumber = tender.referenceNumber || tender.tenderNumber || `ET-${Date.now()}`;
+        
+        // Check if the tender already exists in the database
+        const existingTender = await db.select().from(tenders).where(eq(tenders.bidNumber, bidNumber)).limit(1);
+        
+        if (existingTender.length > 0) {
+          console.log(`Tender with bid number ${bidNumber} already exists, skipping.`);
+          skippedCount++;
+          continue;
+        }
+        
+        // For details we could get more info, but for now we'll use what we have
+        // const details = await getTenderDetails(tender.tenderIdString);
+        
+        // Parse dates properly
+        let deadline;
+        try {
+          deadline = new Date(tender.lastOfferPresentationDate);
+          if (isNaN(deadline.getTime())) {
+            console.log(`Invalid date format for deadline: ${tender.lastOfferPresentationDate}, using current date + 30 days`);
+            deadline = new Date();
+            deadline.setDate(deadline.getDate() + 30);
+          }
+        } catch (e) {
+          console.log(`Error parsing date: ${e}, using current date + 30 days`);
+          deadline = new Date();
+          deadline.setDate(deadline.getDate() + 30);
+        }
+        
+        // Map the tender data to our schema using the updated field names
+        const tenderToInsert = {
+          title: tender.tenderName || 'مناقصة بدون عنوان',
+          agency: tender.agencyName || 'جهة غير معروفة',
+          description: tender.tenderDescription || tender.tenderName || '',
+          category: tender.tenderTypeName || tender.tenderActivityName || 'غير محدد',
+          location: tender.branchName || 'غير محدد',
+          valueMin: (tender.condetionalBookletPrice?.toString() || tender.invitationCost?.toString() || '0'),
+          valueMax: (tender.financialFees?.toString() || tender.buyingCost?.toString() || '2000'),
+          deadline: deadline,
+          status: 'open',
+          requirements: tender.tenderDescription || '',
+          bidNumber: bidNumber,
+          // Use tenderIdString for direct linking to Etimad
+          etimadId: tender.tenderIdString || null,
+          // Set source to 'etimad' for tenders from Etimad platform
+          source: 'etimad'
+        };
+        
+        // Insert the tender into the database
+        await db.insert(tenders).values(tenderToInsert);
+        console.log(`Inserted tender: ${tenderToInsert.title}`);
+        savedCount++;
+      } catch (error) {
+        console.error('Error processing individual tender:', error);
+        skippedCount++;
       }
-      
-      // Get additional details if needed
-      // const details = await getTenderDetails(tender.IdString);
-      
-      // Map the tender data to our schema
-      const tenderToInsert = {
-        title: tender.TenderName,
-        agency: tender.AgencyName,
-        description: tender.TenderDescription || '',
-        category: tender.TenderTypeName || 'غير محدد',
-        location: tender.TenderAreaName || 'غير محدد',
-        valueMin: tender.ConditionBookletPrice?.toString() || '0',
-        valueMax: tender.EstimatedValue?.toString() || '0',
-        deadline: new Date(tender.LastOfferPresentationDate),
-        status: 'open',
-        requirements: tender.TenderDescription || '',
-        bidNumber: tender.ReferenceNumber,
-        // Add the Etimad IdString as etimadId for direct linking
-        etimadId: tender.IdString || null,
-        // Set source to 'etimad' for tenders from Etimad platform
-        source: 'etimad'
-      };
-      
-      // Insert the tender into the database
-      await db.insert(tenders).values(tenderToInsert);
-      console.log(`Inserted tender: ${tenderToInsert.title}`);
     }
     
-    console.log('All tenders saved successfully!');
+    console.log(`All tenders processed! Saved: ${savedCount}, Skipped: ${skippedCount}`);
   } catch (error) {
     console.error('Error saving tenders to database:', error);
   }

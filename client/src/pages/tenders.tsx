@@ -8,11 +8,15 @@ import { Tender } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/hooks/use-language";
 
 export default function TendersPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [category, setCategory] = useState<string>("كل الفئات");
-  const [sortBy, setSortBy] = useState<string>("نسبة التطابق");
+  const { t, language } = useLanguage();
+  const allCategoriesText = t("tenders.allCategories");
+  const matchPercentageText = t("tenders.matchPercentage");
+  const [category, setCategory] = useState<string>(allCategoriesText);
+  const [sortBy, setSortBy] = useState<string>(matchPercentageText);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -48,21 +52,29 @@ export default function TendersPage() {
     return baseScore;
   };
 
+  // Define sort options based on current language
+  const deadlineClosestText = t("tenders.deadlineClosest");
+  const valueHighestText = t("tenders.valueHighest");
+  const recentlyAddedText = t("tenders.recentlyAdded");
+
   // Sort tenders
   const sortedTenders = [...filteredTenders].sort((a, b) => {
     switch (sortBy) {
-      case "الموعد النهائي (الأقرب)":
+      case deadlineClosestText:
+      case "الموعد النهائي (الأقرب)": // Fallback for compatibility
         return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
-      case "القيمة (الأعلى)":
+      case valueHighestText:
+      case "القيمة (الأعلى)": // Fallback for compatibility
         // If valueMax is not a valid number, use 0
         const aValue = Number(a.valueMax) || 0;
         const bValue = Number(b.valueMax) || 0;
         return bValue - aValue;
-      case "أضيف مؤخراً":
+      case recentlyAddedText:
+      case "أضيف مؤخراً": // Fallback for compatibility
         // For this implementation, we'll use ID as a proxy for "recently added"
         // Higher ID means more recently added
         return b.id - a.id;
-      default: // "نسبة التطابق"
+      default: // Match percentage is the default
         // Sort by match score (higher scores first)
         return getMatchScore(b.id) - getMatchScore(a.id);
     }
@@ -70,18 +82,18 @@ export default function TendersPage() {
 
   // Get unique categories for filter
   const uniqueCategories = Array.from(new Set(tenders.map(tender => tender.category)));
-  const categories = ["كل الفئات", ...uniqueCategories];
+  const categories = [allCategoriesText, ...uniqueCategories];
 
   // Notification when tenders are loaded
   useEffect(() => {
     if (tenders.length > 0 && !isLoading) {
       toast({
-        title: "تم تحميل المناقصات",
-        description: `تم تحميل ${tenders.length} مناقصة بنجاح.`,
+        title: t("tenders.loadingSuccess"),
+        description: t("tenders.loadingSuccessDesc").replace("<count>", tenders.length.toString()),
         variant: "default",
       });
     }
-  }, [tenders.length, isLoading, toast]);
+  }, [tenders.length, isLoading, toast, t]);
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gray-50 dark:bg-gray-900">

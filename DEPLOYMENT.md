@@ -1,6 +1,6 @@
 # Esddar Application Deployment Guide
 
-This guide explains how to deploy the Esddar application to an AWS VPS server using Docker Compose.
+This guide explains how to deploy the Esddar (Hams Trac) application to an AWS VPS server using Docker Compose. Updated for better RTL support and multilingual interface.
 
 ## Prerequisites
 

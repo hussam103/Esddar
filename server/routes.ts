@@ -363,6 +363,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Initialize multer for file uploads
   const upload = multer({
+    storage: multer.memoryStorage(), // Use memory storage for handling file data
     limits: {
       fileSize: 10 * 1024 * 1024, // 10MB max file size
     },

@@ -11,16 +11,64 @@ export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
+  onUploadProgress?: (progressEvent: { loaded: number; total: number }) => void
 ): Promise<Response> {
-  const res = await fetch(url, {
+  // Check if data is FormData to handle file uploads
+  const isFormData = data instanceof FormData;
+  
+  const options: RequestInit = {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
+    headers: data && !isFormData ? { "Content-Type": "application/json" } : {},
+    body: data ? (isFormData ? data : JSON.stringify(data)) : undefined,
     credentials: "include",
-  });
-
-  await throwIfResNotOk(res);
-  return res;
+  };
+  
+  // For file uploads with progress tracking, use XMLHttpRequest instead of fetch
+  if (isFormData && onUploadProgress) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open(method, url);
+      xhr.withCredentials = true;
+      
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable && onUploadProgress) {
+          onUploadProgress({
+            loaded: event.loaded,
+            total: event.total
+          });
+        }
+      });
+      
+      xhr.onload = () => {
+        const response = new Response(xhr.response, {
+          status: xhr.status,
+          statusText: xhr.statusText,
+          headers: new Headers({
+            'Content-Type': xhr.getResponseHeader('Content-Type') || 'application/json'
+          })
+        });
+        
+        if (response.ok) {
+          resolve(response);
+        } else {
+          response.text().then(text => {
+            reject(new Error(`${response.status}: ${text || response.statusText}`));
+          });
+        }
+      };
+      
+      xhr.onerror = () => {
+        reject(new Error('Network error'));
+      };
+      
+      xhr.send(data as FormData);
+    });
+  } else {
+    // Regular fetch for non-FormData requests
+    const res = await fetch(url, options);
+    await throwIfResNotOk(res);
+    return res;
+  }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";

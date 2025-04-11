@@ -1,25 +1,19 @@
 import fs from 'fs';
 import path from 'path';
-import { promisify } from 'util';
-import fetch from 'node-fetch';
-import OpenAI from 'openai';
+import { promises as fsPromises } from 'fs';
+import { v4 as uuidv4 } from 'uuid';
 import { storage } from '../storage';
-import { CompanyDocument, User } from '@shared/schema';
-
-// Promisify fs functions
-const writeFileAsync = promisify(fs.writeFile);
-const readFileAsync = promisify(fs.readFile);
-const unlinkAsync = promisify(fs.unlink);
-const mkdirAsync = promisify(fs.mkdir);
-
-// Ensure the upload directory exists
-const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
-const TEMP_DIR = path.join(UPLOAD_DIR, 'temp');
+import axios from 'axios';
+import FormData from 'form-data';
+import OpenAI from "openai";
 
 // Initialize OpenAI client
-const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY 
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
 });
+
+// Map to store processing jobs status
+const processingJobs = new Map<string, ProcessingJobStatus>();
 
 interface ProcessingJobStatus {
   documentId: string;
@@ -33,23 +27,24 @@ interface ProcessingJobStatus {
   extractedData?: any;
 }
 
-// In-memory storage for processing jobs
-const processingJobs = new Map<string, ProcessingJobStatus>();
-
 /**
  * Ensure upload directories exist
  */
 export async function ensureUploadDirectories(): Promise<void> {
+  const uploadDir = path.join(process.cwd(), 'uploads');
+  const tempDir = path.join(uploadDir, 'temp');
+  const processedDir = path.join(uploadDir, 'processed');
+
   try {
-    if (!fs.existsSync(UPLOAD_DIR)) {
-      await mkdirAsync(UPLOAD_DIR, { recursive: true });
-    }
-    if (!fs.existsSync(TEMP_DIR)) {
-      await mkdirAsync(TEMP_DIR, { recursive: true });
-    }
+    // Create directories if they don't exist
+    await fsPromises.mkdir(uploadDir, { recursive: true });
+    await fsPromises.mkdir(tempDir, { recursive: true });
+    await fsPromises.mkdir(processedDir, { recursive: true });
+    
+    console.log('Upload directories created successfully');
   } catch (error) {
     console.error('Error creating upload directories:', error);
-    throw new Error('Failed to create upload directories');
+    throw error;
   }
 }
 
@@ -60,199 +55,240 @@ export async function saveUploadedFile(
   file: Express.Multer.File,
   userId: number
 ): Promise<string> {
-  await ensureUploadDirectories();
-  
-  // Generate unique document ID
-  const documentId = `${userId}_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-  
-  // Generate file path
-  const fileExt = path.extname(file.originalname);
-  const fileName = `${documentId}${fileExt}`;
-  const filePath = path.join(UPLOAD_DIR, fileName);
-  
-  // Save file to disk
-  await writeFileAsync(filePath, file.buffer);
-  
-  // Create processing job entry
-  processingJobs.set(documentId, {
-    documentId,
-    status: 'pending',
-    userId,
-    fileName: file.originalname,
-    filePath
-  });
-  
-  // Save document in database
-  await storage.createCompanyDocument({
-    userId,
-    fileName: file.originalname,
-    filePath,
-    fileSize: file.size,
-    uploadedAt: new Date(),
-    status: 'pending',
-    documentId
-  });
-  
-  return documentId;
+  try {
+    // Generate a unique document ID
+    const documentId = uuidv4();
+    
+    // Get file extension
+    const fileExt = path.extname(file.originalname);
+    const sanitizedFileName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+    
+    // Create paths
+    const uploadDir = path.join(process.cwd(), 'uploads', 'temp');
+    const filePath = path.join(uploadDir, `${documentId}${fileExt}`);
+    
+    // Write file to disk
+    await fsPromises.writeFile(filePath, file.buffer);
+    
+    // Create document record in database
+    const document = await storage.createCompanyDocument({
+      id: documentId,
+      userId: userId,
+      fileName: sanitizedFileName,
+      fileType: file.mimetype,
+      filePath: filePath,
+      fileSize: file.size,
+      status: 'pending',
+      uploadedAt: new Date()
+    });
+    
+    // Store job status
+    processingJobs.set(documentId, {
+      documentId,
+      status: 'pending',
+      userId,
+      fileName: sanitizedFileName,
+      filePath
+    });
+    
+    return documentId;
+  } catch (error) {
+    console.error('Error saving uploaded file:', error);
+    throw new Error('Failed to save uploaded file');
+  }
 }
 
 /**
  * Process document with WhisperLLM API for OCR
  */
 export async function processDocumentWithOCR(documentId: string): Promise<void> {
-  // Get job status
-  const job = processingJobs.get(documentId);
-  if (!job) {
-    throw new Error('Document job not found');
-  }
-  
   try {
-    // Update job status
-    job.status = 'processing';
-    processingJobs.set(documentId, job);
+    // Get document from database
+    const document = await storage.getCompanyDocument(documentId);
     
-    // Update document status in database
+    if (!document) {
+      throw new Error('Document not found');
+    }
+    
+    // Update processing status
     await storage.updateCompanyDocument(documentId, {
-      status: 'processing'
+      status: 'processing',
+      processingStartedAt: new Date()
     });
     
-    // Read file
-    const fileBuffer = await readFileAsync(job.filePath);
+    const jobStatus = processingJobs.get(documentId);
+    if (jobStatus) {
+      jobStatus.status = 'processing';
+    } else {
+      processingJobs.set(documentId, {
+        documentId,
+        status: 'processing',
+        userId: document.userId,
+        fileName: document.fileName,
+        filePath: document.filePath
+      });
+    }
     
     // Call WhisperLLM API for OCR
-    const whisperResponse = await fetch('https://llmwhisperer-api.us-central.unstract.com/api/v2/whisper?mode=form&output_mode=layout_preserving', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/octet-stream',
-        'unstract-key': process.env.UNSTRACT_API_KEY || '',
-      },
-      body: fileBuffer
-    });
-    
-    if (!whisperResponse.ok) {
-      throw new Error(`WhisperLLM API error: ${whisperResponse.statusText}`);
-    }
-    
-    const whisperResult = await whisperResponse.json();
-    
-    if (whisperResult.status !== 'processing' || !whisperResult.whisper_hash) {
-      throw new Error('Invalid response from WhisperLLM API');
-    }
-    
-    // Store whisper hash
-    job.whisperHash = whisperResult.whisper_hash;
-    processingJobs.set(documentId, job);
-    
-    // Wait for processing to complete
-    let isProcessed = false;
-    let attempts = 0;
-    const maxAttempts = 20; // Timeout after 20 attempts (about 2 minutes)
-    
-    while (!isProcessed && attempts < maxAttempts) {
-      attempts++;
+    try {
+      // Create form data with the file
+      const form = new FormData();
+      form.append('file', fs.createReadStream(document.filePath));
       
-      // Wait for 6 seconds between status checks
-      await new Promise(resolve => setTimeout(resolve, 6000));
-      
-      // Check processing status
-      const statusResponse = await fetch(`https://llmwhisperer-api.us-central.unstract.com/api/v2/whisper-status?whisper_hash=${job.whisperHash}`, {
-        method: 'GET',
-        headers: {
-          'unstract-key': process.env.UNSTRACT_API_KEY || '',
+      // Call WhisperLLM API
+      const whisperResponse = await axios.post(
+        'https://llmwhisperer-api.us-central.unstract.com/api/v2/whisper',
+        form,
+        {
+          headers: {
+            ...form.getHeaders(),
+            'Authorization': `Bearer ${process.env.UNSTRACT_API_KEY}`
+          },
+          timeout: 180000 // 3 minutes timeout
         }
+      );
+      
+      if (whisperResponse.status === 200 && whisperResponse.data.hash) {
+        // Update job status with whisper hash
+        const jobStatus = processingJobs.get(documentId);
+        if (jobStatus) {
+          jobStatus.whisperHash = whisperResponse.data.hash;
+        }
+        
+        // Poll for OCR results
+        await getOCRResults(documentId, whisperResponse.data.hash);
+      } else {
+        throw new Error(whisperResponse.data?.message || 'Failed to process document with OCR');
+      }
+    } catch (error: any) {
+      console.error('Error calling WhisperLLM API:', error);
+      
+      // Update processing status to error
+      await storage.updateCompanyDocument(documentId, {
+        status: 'error',
+        errorMessage: error.message || 'Error calling WhisperLLM API',
+        processingCompletedAt: new Date()
       });
       
-      if (!statusResponse.ok) {
-        throw new Error(`WhisperLLM status API error: ${statusResponse.statusText}`);
-      }
-      
-      const statusResult = await statusResponse.json();
-      
-      if (statusResult.status === 'processed') {
-        isProcessed = true;
-      } else if (statusResult.status === 'error' || statusResult.status === 'failed') {
-        throw new Error(`Document processing failed: ${statusResult.message || 'Unknown error'}`);
+      const jobStatus = processingJobs.get(documentId);
+      if (jobStatus) {
+        jobStatus.status = 'error';
+        jobStatus.message = error.message || 'Error calling WhisperLLM API';
       }
     }
+  } catch (error: any) {
+    console.error('Error processing document with OCR:', error);
     
-    if (!isProcessed) {
-      throw new Error('Document processing timed out');
-    }
-    
-    // Retrieve the processed text
-    const retrieveResponse = await fetch(`https://llmwhisperer-api.us-central.unstract.com/api/v2/whisper-retrieve?whisper_hash=${job.whisperHash}`, {
-      method: 'GET',
-      headers: {
-        'unstract-key': process.env.UNSTRACT_API_KEY || '',
-      }
-    });
-    
-    if (!retrieveResponse.ok) {
-      throw new Error(`WhisperLLM retrieve API error: ${retrieveResponse.statusText}`);
-    }
-    
-    const retrieveResult = await retrieveResponse.json();
-    
-    if (!retrieveResult.result_text) {
-      throw new Error('No text content returned from WhisperLLM API');
-    }
-    
-    // Store extracted text
-    job.extractedText = retrieveResult.result_text;
-    processingJobs.set(documentId, job);
-    
-    // Process with OpenAI to extract structured information
-    const extractedInfo = await extractCompanyInformation(job.extractedText, job.userId);
-    
-    // Store extracted data
-    job.extractedData = extractedInfo;
-    job.status = 'completed';
-    processingJobs.set(documentId, job);
-    
-    // Update document and user profile in database
-    await storage.updateCompanyDocument(documentId, {
-      status: 'completed',
-      processedAt: new Date(),
-      extractedText: job.extractedText,
-      extractedData: job.extractedData
-    });
-    
-    // Update user profile with extracted information
-    const userProfile = await storage.getUserProfile(job.userId);
-    if (userProfile) {
-      await storage.updateUserProfile(job.userId, {
-        companyDescription: extractedInfo.description,
-        businessType: extractedInfo.businessType,
-        companyActivities: extractedInfo.activities,
-        mainIndustries: extractedInfo.industries,
-        specializations: extractedInfo.specializations
-      });
-    } else {
-      await storage.createUserProfile({
-        userId: job.userId,
-        companyDescription: extractedInfo.description,
-        businessType: extractedInfo.businessType,
-        companyActivities: extractedInfo.activities,
-        mainIndustries: extractedInfo.industries,
-        specializations: extractedInfo.specializations
-      });
-    }
-    
-  } catch (error) {
-    console.error('Error processing document:', error);
-    
-    // Update job status to error
-    job.status = 'error';
-    job.message = error.message;
-    processingJobs.set(documentId, job);
-    
-    // Update document status in database
+    // Update processing status to error
     await storage.updateCompanyDocument(documentId, {
       status: 'error',
-      errorMessage: error.message
+      errorMessage: error.message || 'Error processing document',
+      processingCompletedAt: new Date()
     });
     
-    throw error;
+    const jobStatus = processingJobs.get(documentId);
+    if (jobStatus) {
+      jobStatus.status = 'error';
+      jobStatus.message = error.message || 'Error processing document';
+    }
+  }
+}
+
+/**
+ * Poll WhisperLLM API for OCR results
+ */
+async function getOCRResults(documentId: string, whisperHash: string): Promise<void> {
+  try {
+    // Poll WhisperLLM API for results
+    const maxRetries = 20;
+    let retries = 0;
+    let extractedText = null;
+    
+    while (retries < maxRetries) {
+      // Wait between retries
+      await new Promise(resolve => setTimeout(resolve, 10000)); // 10 seconds
+      
+      try {
+        // Check OCR status
+        const ocrStatusResponse = await axios.get(
+          `https://llmwhisperer-api.us-central.unstract.com/api/v2/whisper/${whisperHash}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${process.env.UNSTRACT_API_KEY}`
+            }
+          }
+        );
+        
+        // If OCR is complete, extract text and process with GPT-4o
+        if (ocrStatusResponse.status === 200 && ocrStatusResponse.data.status === 'complete') {
+          extractedText = ocrStatusResponse.data.text;
+          
+          // Update job status
+          const jobStatus = processingJobs.get(documentId);
+          if (jobStatus) {
+            jobStatus.extractedText = extractedText;
+          }
+          
+          // Process extracted text with OpenAI to identify company information
+          if (extractedText) {
+            const document = await storage.getCompanyDocument(documentId);
+            if (document) {
+              const extractedData = await extractCompanyInformation(extractedText, document.userId);
+              
+              // Update document with extracted text and data
+              await storage.updateCompanyDocument(documentId, {
+                status: 'completed',
+                extractedText,
+                extractedData,
+                processingCompletedAt: new Date()
+              });
+              
+              // Update user profile with extracted company information
+              await updateUserProfileWithExtractedData(document.userId, extractedData);
+              
+              // Update job status
+              const jobStatus = processingJobs.get(documentId);
+              if (jobStatus) {
+                jobStatus.status = 'completed';
+                jobStatus.extractedData = extractedData;
+              }
+            }
+          }
+          
+          // Processing complete, exit loop
+          break;
+        } else if (ocrStatusResponse.data.status === 'error') {
+          throw new Error(ocrStatusResponse.data.message || 'Error processing document with OCR');
+        }
+      } catch (error: any) {
+        console.error('Error checking OCR status:', error);
+        if (retries >= maxRetries - 1) {
+          throw error;
+        }
+      }
+      
+      retries++;
+    }
+    
+    // If no text was extracted after max retries, throw error
+    if (!extractedText) {
+      throw new Error('OCR processing timed out');
+    }
+  } catch (error: any) {
+    console.error('Error getting OCR results:', error);
+    
+    // Update processing status to error
+    await storage.updateCompanyDocument(documentId, {
+      status: 'error',
+      errorMessage: error.message || 'Error getting OCR results',
+      processingCompletedAt: new Date()
+    });
+    
+    const jobStatus = processingJobs.get(documentId);
+    if (jobStatus) {
+      jobStatus.status = 'error';
+      jobStatus.message = error.message || 'Error getting OCR results';
+    }
   }
 }
 
@@ -261,57 +297,83 @@ export async function processDocumentWithOCR(documentId: string): Promise<void> 
  */
 async function extractCompanyInformation(text: string, userId: number): Promise<any> {
   try {
-    // Get user data to help with the context
-    const user = await storage.getUser(userId);
-    
-    // Prepare the prompt for OpenAI
-    const prompt = `You are an expert business analyst tasked with extracting structured information from a company profile document.
-    
-The document has been processed using OCR and contains information about the company named "${user?.companyName || 'Unknown'}".
+    const prompt = `
+You are an expert AI assistant for extracting structured company information from documents.
+Analyze the following text extracted from a company document and identify key information about the business.
 
-Please analyze the text below and extract the following information in JSON format:
-1. description: A concise description of the company (max 300 words)
-2. businessType: The type of business (e.g., "Corporation", "LLC", "Sole Proprietorship", etc.)
-3. activities: An array of the company's main business activities and services (max 10 items)
-4. industries: An array of industries the company operates in (max 5 items)
-5. specializations: An array of the company's special expertise areas (max 8 items)
-6. targetMarkets: An array of the company's target markets or customer segments (max 5 items)
-7. certifications: An array of certifications or qualifications the company holds (max 10 items)
-8. keywords: An array of relevant keywords for the company's business (max 15 items)
+Extract the following information in JSON format:
+1. companyDescription: A concise description of the company (max 200 words)
+2. businessType: The type of business (e.g., LLC, Corporation, etc.)
+3. companyActivities: An array of specific business activities/services the company offers
+4. mainIndustries: An array of the main industries the company operates in
+5. specializations: An array of specialized services or capabilities
 
-If any information is not available in the text, use "unknown" for string fields or [] for array fields.
+Only include fields if you can extract them with high confidence. If information is not available, use null.
+Output in valid JSON format with these fields.
 
-Here is the company document text:
-${text.substring(0, 15000)}${text.length > 15000 ? '...' : ''}`;
+Here is the extracted text:
+${text.substring(0, 10000)} // Limit to first 10k characters for API limit
+`;
 
-    // Call OpenAI API
     const completion = await openai.chat.completions.create({
       model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [
-        { role: "system", content: "You are a business analyst expert who extracts structured information from company documents." },
+        { role: "system", content: "You are an AI that extracts structured company information from documents." },
         { role: "user", content: prompt }
       ],
-      response_format: { type: "json_object" },
       temperature: 0.2,
+      response_format: { type: "json_object" }
     });
 
-    // Parse the response
-    const jsonResponse = JSON.parse(completion.choices[0].message.content);
-    return jsonResponse;
+    // Parse the extracted information
+    const extractedInfo = JSON.parse(completion.choices[0].message.content);
     
+    return extractedInfo;
   } catch (error) {
     console.error('Error extracting company information:', error);
-    // Return a basic structure if extraction fails
     return {
-      description: "Unable to extract company description due to processing error.",
-      businessType: "unknown",
-      activities: [],
-      industries: [],
-      specializations: [],
-      targetMarkets: [],
-      certifications: [],
-      keywords: []
+      companyDescription: null,
+      businessType: null,
+      companyActivities: [],
+      mainIndustries: [],
+      specializations: []
     };
+  }
+}
+
+/**
+ * Update user profile with extracted company information
+ */
+async function updateUserProfileWithExtractedData(userId: number, extractedData: any): Promise<void> {
+  try {
+    // Get existing user profile
+    const existingProfile = await storage.getUserProfile(userId);
+    
+    if (existingProfile) {
+      // Update existing profile with extracted data
+      await storage.updateUserProfile(userId, {
+        companyDescription: extractedData.companyDescription || existingProfile.companyDescription,
+        companyActivities: extractedData.companyActivities || existingProfile.companyActivities,
+        businessType: extractedData.businessType || existingProfile.businessType,
+        mainIndustries: extractedData.mainIndustries || existingProfile.mainIndustries,
+        specializations: extractedData.specializations || existingProfile.specializations,
+      });
+    } else {
+      // Create new profile with extracted data
+      await storage.createUserProfile({
+        userId,
+        companyDescription: extractedData.companyDescription,
+        companyActivities: extractedData.companyActivities || [],
+        businessType: extractedData.businessType,
+        mainIndustries: extractedData.mainIndustries || [],
+        specializations: extractedData.specializations || [],
+        preferences: {},
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+    }
+  } catch (error) {
+    console.error('Error updating user profile with extracted data:', error);
   }
 }
 
@@ -326,12 +388,15 @@ export function getDocumentStatus(documentId: string): ProcessingJobStatus | nul
  * Clean up temporary files
  */
 export async function cleanupDocumentFiles(documentId: string): Promise<void> {
-  const job = processingJobs.get(documentId);
-  if (job && job.filePath && fs.existsSync(job.filePath)) {
-    try {
-      await unlinkAsync(job.filePath);
-    } catch (error) {
-      console.error('Error cleaning up document file:', error);
+  try {
+    const jobStatus = processingJobs.get(documentId);
+    
+    if (jobStatus && jobStatus.filePath) {
+      if (fs.existsSync(jobStatus.filePath)) {
+        await fsPromises.unlink(jobStatus.filePath);
+      }
     }
+  } catch (error) {
+    console.error('Error cleaning up document files:', error);
   }
 }

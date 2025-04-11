@@ -19,6 +19,13 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { db } from "./db";
 import { eq, count } from "drizzle-orm";
+import multer from "multer";
+import { 
+  ensureUploadDirectories, 
+  saveUploadedFile, 
+  processDocumentWithOCR,
+  getDocumentStatus
+} from "./services/document-processing";
 
 // Schema for subscription
 const subscriptionSchema = z.object({
@@ -351,6 +358,176 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to cancel subscription" });
     }
   });
+  
+  // Company document upload and OCR processing
+  
+  // Initialize multer for file uploads
+  const upload = multer({
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB max file size
+    },
+    fileFilter: (req, file, cb) => {
+      // Only accept PDF files
+      if (file.mimetype !== 'application/pdf') {
+        return cb(new Error('Only PDF files are allowed'));
+      }
+      cb(null, true);
+    }
+  });
+  
+  // Initialize upload directories
+  ensureUploadDirectories().catch(error => {
+    console.error('Failed to initialize upload directories:', error);
+  });
+  
+  // Upload company document
+  app.post(
+    "/api/upload-company-document", 
+    (req, res, next) => {
+      if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
+      next();
+    },
+    upload.single('file'),
+    async (req, res) => {
+      try {
+        if (!req.file) {
+          return res.status(400).json({ error: "No file uploaded" });
+        }
+        
+        const documentId = await saveUploadedFile(req.file, req.user.id);
+        
+        res.status(201).json({ 
+          success: true, 
+          documentId,
+          message: "Document uploaded successfully"
+        });
+        
+        // Send notification
+        (global as any).sendNotification(
+          req.user.id,
+          'Document Upload',
+          'Your document has been uploaded and is pending processing',
+          'info',
+          { documentId }
+        );
+      } catch (error) {
+        console.error('Error uploading document:', error);
+        res.status(500).json({ 
+          error: "Failed to upload document",
+          message: error.message
+        });
+      }
+    }
+  );
+  
+  // Process uploaded document with OCR
+  app.post(
+    "/api/process-company-document/:documentId",
+    async (req, res) => {
+      if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
+      
+      try {
+        const { documentId } = req.params;
+        
+        // Get document from database
+        const document = await storage.getCompanyDocument(documentId);
+        
+        if (!document) {
+          return res.status(404).json({ error: "Document not found" });
+        }
+        
+        if (document.userId !== req.user.id) {
+          return res.status(403).json({ error: "Forbidden" });
+        }
+        
+        // Start processing in the background
+        processDocumentWithOCR(documentId).catch(error => {
+          console.error('Error processing document with OCR:', error);
+        });
+        
+        res.status(202).json({ 
+          success: true, 
+          status: 'processing',
+          message: "Document processing started"
+        });
+      } catch (error) {
+        console.error('Error starting document processing:', error);
+        res.status(500).json({ 
+          error: "Failed to process document",
+          message: error.message
+        });
+      }
+    }
+  );
+  
+  // Check document processing status
+  app.get(
+    "/api/check-document-status/:documentId",
+    async (req, res) => {
+      if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
+      
+      try {
+        const { documentId } = req.params;
+        
+        // Get document from database
+        const document = await storage.getCompanyDocument(documentId);
+        
+        if (!document) {
+          return res.status(404).json({ error: "Document not found" });
+        }
+        
+        if (document.userId !== req.user.id) {
+          return res.status(403).json({ error: "Forbidden" });
+        }
+        
+        // Get processing status
+        const status = getDocumentStatus(documentId);
+        
+        // If processing is complete, send notification
+        if (status && status.status === 'completed' && !document.processedAt) {
+          // Send notification
+          (global as any).sendNotification(
+            req.user.id,
+            'Document Processing Complete',
+            'Your document has been processed successfully',
+            'success',
+            { documentId }
+          );
+        }
+        
+        res.json({ 
+          documentId,
+          status: document.status,
+          message: document.errorMessage || 'Document is being processed'
+        });
+      } catch (error) {
+        console.error('Error checking document status:', error);
+        res.status(500).json({ 
+          error: "Failed to check document status",
+          message: error.message
+        });
+      }
+    }
+  );
+  
+  // Get user company documents
+  app.get(
+    "/api/company-documents",
+    async (req, res) => {
+      if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
+      
+      try {
+        const documents = await storage.getCompanyDocumentsByUser(req.user.id);
+        res.json(documents);
+      } catch (error) {
+        console.error('Error fetching user documents:', error);
+        res.status(500).json({ 
+          error: "Failed to fetch user documents",
+          message: error.message
+        });
+      }
+    }
+  );
 
   const httpServer = createServer(app);
   

@@ -1,380 +1,304 @@
-import { useState, useRef } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { useLanguage } from "@/hooks/use-language";
-import { useAuth } from "@/hooks/use-auth";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Upload, FileText, CheckCircle, AlertCircle, Info, Loader2 } from "lucide-react";
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const MAX_PAGES = 100;
+import { useState, useRef } from 'react';
+import { useLanguage } from '@/hooks/use-language';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Loader2, Upload, File, AlertCircle, CheckCircle } from 'lucide-react';
 
 export function DocumentUpload() {
-  const { user } = useAuth();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [file, setFile] = useState<File | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [processingState, setProcessingState] = useState<
-    "idle" | "uploading" | "processing" | "analyzing" | "completed" | "error"
-  >("idle");
-  const [showAlertDialog, setShowAlertDialog] = useState(false);
-  const [alertMessage, setAlertMessage] = useState("");
+  const [uploadStatus, setUploadStatus] = useState<
+    'idle' | 'uploading' | 'processing' | 'success' | 'error'
+  >('idle');
+  const [error, setError] = useState<string | null>(null);
+  const [documentId, setDocumentId] = useState<string | null>(null);
 
-  const getFileIcon = () => {
-    if (processingState === "completed") return <CheckCircle className="h-12 w-12 text-green-500" />;
-    if (processingState === "error") return <AlertCircle className="h-12 w-12 text-red-500" />;
-    if (file) return <FileText className="h-12 w-12 text-primary-500" />;
-    return <Upload className="h-12 w-12 text-gray-400" />;
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    
+    const file = files[0];
+    
+    // Validate file type
+    if (file.type !== 'application/pdf') {
+      toast({
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: language === 'ar' 
+          ? 'يرجى تحميل ملف PDF فقط' 
+          : 'Please upload a PDF file only',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: language === 'ar' ? 'خطأ' : 'Error',
+        description: language === 'ar'
+          ? 'حجم الملف كبير جدًا. الحد الأقصى هو 10 ميغابايت'
+          : 'File is too large. Maximum size is 10MB',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    setSelectedFile(file);
+    setUploadStatus('idle');
+    setError(null);
   };
 
-  const validateFile = (file: File): { valid: boolean; message?: string } => {
-    if (file.size > MAX_FILE_SIZE) {
-      return {
-        valid: false,
-        message: language === "ar"
-          ? "حجم الملف يتجاوز الحد الأقصى (10 ميجابايت)"
-          : "File size exceeds maximum limit (10MB)",
-      };
+  const triggerFileSelect = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
     }
-
-    if (file.type !== "application/pdf") {
-      return {
-        valid: false,
-        message: language === "ar"
-          ? "يرجى تحميل ملف بتنسيق PDF فقط"
-          : "Please upload a PDF file only",
-      };
-    }
-
-    return { valid: true };
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
+  const uploadFile = async () => {
     if (!selectedFile) return;
-
-    const validation = validateFile(selectedFile);
-    if (!validation.valid) {
-      setAlertMessage(validation.message || "");
-      setShowAlertDialog(true);
-      e.target.value = "";
-      return;
-    }
-
-    setFile(selectedFile);
-    setProcessingState("idle");
+    
+    setIsUploading(true);
+    setUploadStatus('uploading');
     setUploadProgress(0);
-  };
-
-  const uploadMutation = useMutation({
-    mutationFn: async (file: File) => {
-      setProcessingState("uploading");
-
-      const formData = new FormData();
-      formData.append("file", file);
-
-      // First upload to our server
-      const uploadResponse = await apiRequest(
-        "POST",
-        "/api/upload-company-document",
+    setError(null);
+    
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    
+    try {
+      const response = await apiRequest(
+        'POST', 
+        '/api/upload-company-document',
         formData,
-        {
-          onUploadProgress: (progressEvent) => {
-            if (progressEvent.total) {
-              const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-              setUploadProgress(progress);
-            }
-          },
+        (progressEvent) => {
+          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(progress);
         }
       );
-
-      if (!uploadResponse.ok) {
-        throw new Error("Failed to upload file");
-      }
-
-      const { documentId } = await uploadResponse.json();
       
-      // Now start OCR and analysis processing
-      setProcessingState("processing");
+      const data = await response.json();
       
-      const processResponse = await apiRequest(
-        "POST", 
-        `/api/process-company-document/${documentId}`,
-        null
-      );
-      
-      if (!processResponse.ok) {
-        throw new Error("Failed to process document");
-      }
-      
-      // Wait for processing to complete
-      setProcessingState("analyzing");
-      
-      // Poll for processing status
-      let processingComplete = false;
-      while (!processingComplete) {
-        const statusResponse = await apiRequest(
-          "GET",
-          `/api/check-document-status/${documentId}`,
-          null
+      if (response.ok) {
+        setDocumentId(data.documentId);
+        setUploadStatus('processing');
+        
+        // Start processing the document
+        const processResponse = await apiRequest(
+          'POST',
+          `/api/process-company-document/${data.documentId}`
         );
         
-        if (!statusResponse.ok) {
-          throw new Error("Failed to check document status");
-        }
-        
-        const status = await statusResponse.json();
-        if (status.status === "completed") {
-          processingComplete = true;
-        } else if (status.status === "error") {
-          throw new Error(status.message || "Error processing document");
+        if (processResponse.ok) {
+          // Start checking the processing status
+          checkProcessingStatus(data.documentId);
         } else {
-          // Wait for 2 seconds before checking again
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          const processError = await processResponse.json();
+          throw new Error(processError.message || 'Failed to process document');
         }
+      } else {
+        throw new Error(data.message || 'Upload failed');
       }
-      
-      setProcessingState("completed");
-      
-      return { success: true };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/user-profile"] });
+    } catch (err: any) {
+      setUploadStatus('error');
+      setError(err.message || 'An error occurred during upload');
       toast({
-        title: language === "ar" ? "تم تحميل المستند بنجاح" : "Document uploaded successfully",
-        description: language === "ar"
-          ? "تم معالجة ملف الشركة بنجاح وإضافة البيانات إلى ملفك الشخصي"
-          : "Company document has been processed and data added to your profile",
-        variant: "default",
+        title: language === 'ar' ? 'فشل التحميل' : 'Upload Failed',
+        description: err.message || (language === 'ar' 
+          ? 'حدث خطأ أثناء تحميل المستند' 
+          : 'An error occurred during document upload'),
+        variant: 'destructive',
       });
-    },
-    onError: (error: Error) => {
-      setProcessingState("error");
-      toast({
-        title: language === "ar" ? "فشل في تحميل المستند" : "Failed to upload document",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleUpload = () => {
-    if (file) {
-      uploadMutation.mutate(file);
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const droppedFile = e.dataTransfer.files[0];
-    if (!droppedFile) return;
-
-    const validation = validateFile(droppedFile);
-    if (!validation.valid) {
-      setAlertMessage(validation.message || "");
-      setShowAlertDialog(true);
-      return;
-    }
-
-    setFile(droppedFile);
-    setProcessingState("idle");
-    setUploadProgress(0);
-  };
-
-  const renderProcessingState = () => {
-    switch (processingState) {
-      case "uploading":
-        return (
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2 rtl:space-x-reverse">
-              <Loader2 className="h-4 w-4 animate-spin text-primary" />
-              <p className="text-sm text-gray-500">
-                {language === "ar" ? "جارٍ تحميل المستند..." : "Uploading document..."}
-              </p>
-            </div>
-            <Progress value={uploadProgress} className="h-2 w-full" />
-            <p className="text-xs text-gray-500 text-right">{uploadProgress}%</p>
-          </div>
-        );
-      case "processing":
-        return (
-          <div className="flex items-center space-x-2 rtl:space-x-reverse">
-            <Loader2 className="h-4 w-4 animate-spin text-amber-500" />
-            <p className="text-sm text-gray-500">
-              {language === "ar"
-                ? "جارٍ معالجة المستند باستخدام OCR..."
-                : "Processing document with OCR..."}
-            </p>
-          </div>
-        );
-      case "analyzing":
-        return (
-          <div className="flex items-center space-x-2 rtl:space-x-reverse">
-            <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
-            <p className="text-sm text-gray-500">
-              {language === "ar"
-                ? "جارٍ تحليل المستند باستخدام الذكاء الاصطناعي..."
-                : "Analyzing document with AI..."}
-            </p>
-          </div>
-        );
-      case "completed":
-        return (
-          <div className="flex items-center space-x-2 rtl:space-x-reverse">
-            <CheckCircle className="h-4 w-4 text-green-500" />
-            <p className="text-sm text-green-600">
-              {language === "ar"
-                ? "تمت معالجة المستند بنجاح!"
-                : "Document processed successfully!"}
-            </p>
-          </div>
-        );
-      case "error":
-        return (
-          <div className="flex items-center space-x-2 rtl:space-x-reverse">
-            <AlertCircle className="h-4 w-4 text-red-500" />
-            <p className="text-sm text-red-600">
-              {language === "ar"
-                ? "حدث خطأ أثناء معالجة المستند"
-                : "Error processing document"}
-            </p>
-          </div>
-        );
-      default:
-        return null;
+  const checkProcessingStatus = async (docId: string) => {
+    try {
+      const response = await apiRequest('GET', `/api/check-document-status/${docId}`);
+      const data = await response.json();
+      
+      if (response.ok) {
+        if (data.status === 'completed') {
+          setUploadStatus('success');
+          toast({
+            title: language === 'ar' ? 'تم المعالجة بنجاح' : 'Processing Successful',
+            description: language === 'ar'
+              ? 'تمت معالجة المستند واستخراج المعلومات بنجاح'
+              : 'Document processed and information extracted successfully',
+          });
+          
+          // Refresh the page to show the extracted information
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
+        } else if (data.status === 'error') {
+          setUploadStatus('error');
+          setError(data.message || 'Processing failed');
+        } else {
+          // Still processing, check again after 5 seconds
+          setTimeout(() => checkProcessingStatus(docId), 5000);
+        }
+      } else {
+        throw new Error(data.message || 'Failed to check processing status');
+      }
+    } catch (err: any) {
+      setUploadStatus('error');
+      setError(err.message || 'An error occurred while checking processing status');
     }
   };
 
   return (
-    <>
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>
-            {language === "ar" ? "تحميل ملف الشركة" : "Upload Company Document"}
-          </CardTitle>
-          <CardDescription>
-            {language === "ar"
-              ? "قم بتحميل ملف PDF يحتوي على معلومات الشركة ونشاطاتها (الحد الأقصى: 10 ميجابايت، 100 صفحة)"
-              : "Upload a PDF containing company information and activities (Max: 10MB, 100 pages)"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div
-            className={`border-2 border-dashed rounded-lg p-8 text-center space-y-4 cursor-pointer hover:bg-gray-50 transition-colors ${
-              file ? "border-primary-300 bg-primary-50" : "border-gray-300"
-            }`}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              className="hidden"
-              accept=".pdf"
-              disabled={processingState !== "idle" && processingState !== "error"}
-            />
-            <div className="flex flex-col items-center space-y-2">
-              {getFileIcon()}
-              <div className="text-sm font-medium">
-                {file
-                  ? file.name
-                  : language === "ar"
-                  ? "انقر أو اسحب ملف PDF هنا"
-                  : "Click or drag a PDF file here"}
-              </div>
-              <div className="text-xs text-gray-500">
-                {language === "ar"
-                  ? "الحد الأقصى للحجم: 10 ميجابايت، 100 صفحة"
-                  : "Max size: 10MB, 100 pages"}
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          {language === 'ar' ? 'تحميل مستند' : 'Upload Document'}
+        </CardTitle>
+        <CardDescription>
+          {language === 'ar'
+            ? 'قم بتحميل مستندات الشركة الرسمية (PDF فقط)'
+            : 'Upload official company documents (PDF only)'}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            accept="application/pdf"
+            className="hidden"
+          />
+          
+          {uploadStatus === 'idle' && (
+            <div 
+              className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center hover:border-primary/50 cursor-pointer transition-colors"
+              onClick={triggerFileSelect}
+            >
+              {selectedFile ? (
+                <div className="flex flex-col items-center">
+                  <File className="h-10 w-10 text-primary mb-2" />
+                  <p className="text-sm font-medium">{selectedFile.name}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center">
+                  <Upload className="h-10 w-10 text-muted-foreground mb-2" />
+                  <p className="text-sm font-medium">
+                    {language === 'ar'
+                      ? 'اسحب وأفلت أو انقر للتحميل'
+                      : 'Drag and drop or click to upload'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {language === 'ar'
+                      ? 'يجب أن يكون الملف بتنسيق PDF والحجم الأقصى 10 ميغابايت'
+                      : 'File must be PDF and maximum size 10MB'}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {uploadStatus === 'uploading' && (
+            <div className="border rounded-lg p-6">
+              <div className="flex flex-col items-center">
+                <Loader2 className="h-10 w-10 text-primary animate-spin mb-2" />
+                <p className="text-sm font-medium">
+                  {language === 'ar' ? 'جاري تحميل المستند...' : 'Uploading document...'}
+                </p>
+                <div className="w-full mt-4">
+                  <Progress value={uploadProgress} className="h-2" />
+                  <p className="text-xs text-right mt-1 text-muted-foreground">
+                    {uploadProgress}%
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-
-          {renderProcessingState()}
-
-          <div className="mt-4 flex items-start space-x-2 rtl:space-x-reverse">
-            <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-gray-500">
-              {language === "ar" 
-                ? "سيتم استخدام هذا المستند لاستخراج معلومات حول نشاطات شركتك لتحسين توصيات المناقصات. المستندات المدعومة: ملفات PDF (مفضل ملفات قابلة للبحث) وأيضاً المستندات الممسوحة ضوئياً."
-                : "This document will be used to extract information about your company's activities to improve tender recommendations. Supported documents: PDF files (searchable PDFs preferred) and scanned documents."}
+          )}
+          
+          {uploadStatus === 'processing' && (
+            <div className="border rounded-lg p-6">
+              <div className="flex flex-col items-center">
+                <Loader2 className="h-10 w-10 text-primary animate-spin mb-2" />
+                <p className="text-sm font-medium">
+                  {language === 'ar' ? 'جاري معالجة المستند...' : 'Processing document...'}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {language === 'ar'
+                    ? 'يتم استخراج النص والمعلومات من المستند. قد تستغرق هذه العملية بضع دقائق.'
+                    : 'Extracting text and information from the document. This process may take a few minutes.'}
+                </p>
+              </div>
             </div>
-          </div>
-        </CardContent>
-        <CardFooter className="flex justify-end">
-          <Button
-            disabled={
-              !file ||
-              processingState === "uploading" ||
-              processingState === "processing" ||
-              processingState === "analyzing"
-            }
-            onClick={handleUpload}
-          >
-            {processingState === "uploading" ||
-            processingState === "processing" ||
-            processingState === "analyzing" ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {language === "ar" ? "جارٍ المعالجة..." : "Processing..."}
-              </>
-            ) : (
-              <>
-                <Upload className="mr-2 h-4 w-4" />
-                {language === "ar" ? "تحميل المستند" : "Upload Document"}
-              </>
+          )}
+          
+          {uploadStatus === 'success' && (
+            <div className="border rounded-lg p-6 border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-900">
+              <div className="flex flex-col items-center">
+                <CheckCircle className="h-10 w-10 text-green-500 mb-2" />
+                <p className="text-sm font-medium text-green-700 dark:text-green-300">
+                  {language === 'ar' ? 'تمت المعالجة بنجاح' : 'Processing Successful'}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {language === 'ar'
+                    ? 'تمت معالجة المستند واستخراج المعلومات بنجاح'
+                    : 'Document processed and information extracted successfully'}
+                </p>
+              </div>
+            </div>
+          )}
+          
+          {uploadStatus === 'error' && (
+            <div className="border rounded-lg p-6 border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-900">
+              <div className="flex flex-col items-center">
+                <AlertCircle className="h-10 w-10 text-red-500 mb-2" />
+                <p className="text-sm font-medium text-red-700 dark:text-red-300">
+                  {language === 'ar' ? 'حدث خطأ' : 'An Error Occurred'}
+                </p>
+                {error && (
+                  <p className="text-xs text-red-500 mt-1 text-center">{error}</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end">
+            {uploadStatus === 'idle' && selectedFile && (
+              <Button 
+                onClick={uploadFile}
+                disabled={isUploading || !selectedFile}
+              >
+                {language === 'ar' ? 'تحميل المستند' : 'Upload Document'}
+              </Button>
             )}
-          </Button>
-        </CardFooter>
-      </Card>
-
-      <AlertDialog open={showAlertDialog} onOpenChange={setShowAlertDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {language === "ar" ? "خطأ في الملف" : "File Error"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>{alertMessage}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction>
-              {language === "ar" ? "حسناً" : "OK"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+            
+            {(uploadStatus === 'error' || uploadStatus === 'success') && (
+              <Button 
+                onClick={() => {
+                  setSelectedFile(null);
+                  setUploadStatus('idle');
+                  setError(null);
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                  }
+                }}
+                variant="outline"
+              >
+                {language === 'ar' ? 'تحميل مستند آخر' : 'Upload Another Document'}
+              </Button>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

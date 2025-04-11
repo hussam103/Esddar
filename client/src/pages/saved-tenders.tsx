@@ -25,8 +25,8 @@ export default function SavedTendersPage() {
       
       <main className="flex-1 overflow-y-auto">
         <Header 
-          title="Saved Tenders" 
-          subtitle="Your bookmarked tender opportunities"
+          title="المناقصات المحفوظة" 
+          subtitle="فرص المناقصات المفضلة لديك"
           toggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
         />
         
@@ -59,9 +59,9 @@ export default function SavedTendersPage() {
               ) : (
                 <div className="text-center py-12 border rounded-lg mt-4 bg-white">
                   <BookmarkX className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-700">No saved tenders</h3>
-                  <p className="text-gray-500 mt-2">You haven't saved any tenders yet.</p>
-                  <p className="text-gray-500">Save tenders to access them quickly later.</p>
+                  <h3 className="text-lg font-medium text-gray-700">لا توجد مناقصات محفوظة</h3>
+                  <p className="text-gray-500 mt-2">لم تقم بحفظ أي مناقصات حتى الآن.</p>
+                  <p className="text-gray-500">احفظ المناقصات للوصول إليها بسرعة لاحقاً.</p>
                 </div>
               )}
             </>

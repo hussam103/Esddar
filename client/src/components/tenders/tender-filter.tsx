@@ -16,10 +16,10 @@ export default function TenderFilter({
   onSortChange
 }: TenderFilterProps) {
   const sortOptions = [
-    "Match Score",
-    "Deadline (Earliest)",
-    "Value (Highest)",
-    "Recently Added"
+    "نسبة التطابق",
+    "الموعد النهائي (الأقرب)",
+    "القيمة (الأعلى)",
+    "أضيف مؤخراً"
   ];
 
   return (
@@ -49,7 +49,7 @@ export default function TenderFilter({
           >
             {sortOptions.map((option) => (
               <option key={option} value={option}>
-                Sort by: {option}
+                ترتيب حسب: {option}
               </option>
             ))}
           </select>
@@ -59,7 +59,7 @@ export default function TenderFilter({
         </div>
       </div>
       <div className="text-sm text-gray-600 hidden md:block">
-        Showing <span className="font-medium">{categories.length - 1}</span> categories
+        عرض <span className="font-medium">{categories.length - 1}</span> فئات
       </div>
     </div>
   );

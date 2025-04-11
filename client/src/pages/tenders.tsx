@@ -38,7 +38,8 @@ export default function TendersPage() {
   });
 
   // Get unique categories for filter
-  const categories = ["All Categories", ...new Set(tenders.map(tender => tender.category))];
+  const uniqueCategories = Array.from(new Set(tenders.map(tender => tender.category)));
+  const categories = ["All Categories", ...uniqueCategories];
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
@@ -90,8 +91,8 @@ export default function TendersPage() {
               
               {sortedTenders.length === 0 && (
                 <div className="text-center py-12 border rounded-lg mt-4 bg-white">
-                  <h3 className="text-lg font-medium text-gray-700">No tenders found</h3>
-                  <p className="text-gray-500 mt-2">Try adjusting your filters</p>
+                  <h3 className="text-lg font-medium text-gray-700">لم يتم العثور على مناقصات</h3>
+                  <p className="text-gray-500 mt-2">حاول تعديل معايير التصفية</p>
                 </div>
               )}
             </>

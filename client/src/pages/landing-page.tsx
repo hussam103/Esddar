@@ -3,9 +3,13 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check } from "lucide-react";
+import { SARIcon } from "@/components/ui/sar-icon";
+import { formatSAR } from "@/components/ui/currency";
+import { useLanguage } from "@/hooks/use-language";
 
 export default function LandingPage() {
   const [, setLocation] = useLocation();
+  const { language } = useLanguage();
   
   return (
     <div className="min-h-screen flex flex-col bg-gray-50" dir="rtl">
@@ -70,7 +74,11 @@ export default function LandingPage() {
                   <div className="space-y-3">
                     <div className="bg-white/20 p-3 rounded-md">
                       <div className="text-sm font-medium">نطاق القيمة</div>
-                      <div className="text-lg">250,000 - 500,000 دولار</div>
+                      <div className="text-lg flex items-center">
+                        <span className="ml-1">{formatSAR(250000, language)}</span>
+                        <span className="mx-1">-</span>
+                        <span>{formatSAR(500000, language)}</span>
+                      </div>
                     </div>
                     <div className="bg-white/20 p-3 rounded-md">
                       <div className="text-sm font-medium">الموعد النهائي</div>
@@ -197,8 +205,10 @@ export default function LandingPage() {
                 <CardHeader>
                   <CardTitle>الباقة الأساسية</CardTitle>
                   <CardDescription>للشركات الصغيرة التي تبدأ للتو</CardDescription>
-                  <div className="mt-4">
-                    <span className="text-4xl font-bold">29$</span>
+                  <div className="mt-4 flex items-center">
+                    <div className="text-4xl font-bold flex items-center">
+                      <span>{formatSAR(29, language, false)}</span>
+                    </div>
                     <span className="text-gray-600 mr-2">/شهرياً</span>
                   </div>
                 </CardHeader>
@@ -240,8 +250,10 @@ export default function LandingPage() {
                 <CardHeader>
                   <CardTitle>الباقة الاحترافية</CardTitle>
                   <CardDescription>مثالية للشركات النامية</CardDescription>
-                  <div className="mt-4">
-                    <span className="text-4xl font-bold">79$</span>
+                  <div className="mt-4 flex items-center">
+                    <div className="text-4xl font-bold flex items-center">
+                      <span>{formatSAR(79, language, false)}</span>
+                    </div>
                     <span className="text-gray-600 mr-2">/شهرياً</span>
                   </div>
                 </CardHeader>
@@ -284,8 +296,10 @@ export default function LandingPage() {
                 <CardHeader>
                   <CardTitle>باقة المؤسسات</CardTitle>
                   <CardDescription>للمؤسسات الكبيرة ذات الاحتياجات المعقدة</CardDescription>
-                  <div className="mt-4">
-                    <span className="text-4xl font-bold">199$</span>
+                  <div className="mt-4 flex items-center">
+                    <div className="text-4xl font-bold flex items-center">
+                      <span>{formatSAR(199, language, false)}</span>
+                    </div>
                     <span className="text-gray-600 mr-2">/شهرياً</span>
                   </div>
                 </CardHeader>
@@ -374,7 +388,7 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <p className="text-gray-600 mb-4">
-                  "لقد حصلنا على أكثر من 2 مليون دولار في العقود الحكومية بفضل منصة إصدار. قوالب المقترحات وتذكيرات المواعيد النهائية هي التي غيرت قواعد اللعبة."
+                  "لقد حصلنا على أكثر من 2 مليون ريال في العقود الحكومية بفضل منصة إصدار. قوالب المقترحات وتذكيرات المواعيد النهائية هي التي غيرت قواعد اللعبة."
                 </p>
                 <div className="flex text-yellow-400">
                   {[...Array(5)].map((_, i) => (

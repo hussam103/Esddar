@@ -31,7 +31,8 @@ export function SARCurrency({
 
 // This function returns a formatted string with the SAR symbol
 // Used for string-based displays where React components can't be used
-export function formatSAR(amount: number, showDecimal = false, locale = "ar-SA") {
+export function formatSAR(amount: number, language: "ar" | "en" = "ar", showDecimal = false) {
+  const locale = language === "ar" ? "ar-SA" : "en-US";
   const formattedAmount = showDecimal 
     ? amount.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : amount.toLocaleString(locale);

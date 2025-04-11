@@ -163,19 +163,39 @@ async function saveTendersToDatabase(tendersData: any[]): Promise<void> {
 // Main function to run the scraper
 async function main(): Promise<void> {
   try {
-    // Scrape first page
     console.log('Starting tender scraping...');
-    const tendersData = await scrapeTenders(1, 50);
+    let allTenders: any[] = [];
+    const pagesToScrape = 3; // Scrape multiple pages for more tenders
     
-    if (!tendersData || tendersData.length === 0) {
-      console.log('No tenders found or could not parse the response.');
+    // Scrape multiple pages
+    for (let page = 1; page <= pagesToScrape; page++) {
+      console.log(`Scraping page ${page}...`);
+      const tendersData = await scrapeTenders(page, 50);
+      
+      if (!tendersData || tendersData.length === 0) {
+        console.log(`No tenders found on page ${page} or could not parse the response.`);
+        break; // No more tenders to scrape
+      }
+      
+      console.log(`Found ${tendersData.length} tenders on page ${page}.`);
+      allTenders = [...allTenders, ...tendersData];
+      
+      // Add a small delay between requests to avoid rate limiting
+      if (page < pagesToScrape) {
+        console.log('Waiting before next request...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
+    
+    console.log(`Total tenders found: ${allTenders.length}`);
+    
+    if (allTenders.length === 0) {
+      console.log('No tenders found across all pages.');
       return;
     }
     
-    console.log(`Found ${tendersData.length} tenders.`);
-    
-    // Save the tenders to the database
-    await saveTendersToDatabase(tendersData);
+    // Save all the tenders to the database
+    await saveTendersToDatabase(allTenders);
     
     console.log('Scraping completed successfully!');
   } catch (error) {

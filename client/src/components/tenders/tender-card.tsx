@@ -60,7 +60,13 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
       return `https://tenders.etimad.sa/Tender/DetailsForVisitor?STenderId=${encodeURIComponent(tender.etimadId)}`;
     }
     
-    // Fallback to the main Etimad tenders page if we don't have a valid ID
+    // Check if we have a bid number that we can use
+    if (tender.bidNumber && !tender.bidNumber.startsWith('T-20')) {
+      // For externally sourced tenders without STenderId, we can still link to Etimad 
+      return "https://tenders.etimad.sa/Tender/AllTendersForVisitor";
+    }
+    
+    // Fallback to the main Etimad tenders page for any other case
     return "https://tenders.etimad.sa/Tender/AllTendersForVisitor";
   };
 

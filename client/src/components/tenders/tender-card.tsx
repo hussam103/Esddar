@@ -233,12 +233,10 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
         
         {/* Action Buttons - Fixed at bottom */}
         <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3 flex justify-between items-center mt-auto flex-shrink-0">
-          <button 
-            className="text-sm text-primary-600 dark:text-primary-400 font-medium hover:text-primary-700 dark:hover:text-primary-300 rtl:text-right"
-            onClick={() => setLocation(`/tenders/${tender.id}`)}
-          >
-            {t("tenders.viewDetails")}
-          </button>
+          <TenderDetailsButton 
+            tenderId={tender.id} 
+            className="dark:text-primary-400 dark:hover:text-primary-300" 
+          />
           {tender.source === 'etimad' ? (
             // For Etimad tenders, open in a new tab to Etimad website
             <a 

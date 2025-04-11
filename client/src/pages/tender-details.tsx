@@ -329,11 +329,19 @@ export default function TenderDetailsPage() {
                     </ul>
                   </div>
 
-                  <div>
-                    <h3 className="font-medium mb-2">Status</h3>
-                    <Badge variant={tender.status === "open" ? "success" : "secondary"}>
-                      {tender.status.charAt(0).toUpperCase() + tender.status.slice(1)}
-                    </Badge>
+                  <div className="flex flex-col space-y-2">
+                    <h3 className="font-medium">Status</h3>
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <Badge variant={tender.status === "open" ? "success" : "secondary"}>
+                        {tender.status.charAt(0).toUpperCase() + tender.status.slice(1)}
+                      </Badge>
+                      
+                      {tender.source === 'etimad' && (
+                        <Badge className="bg-blue-50 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+                          منصة اعتماد
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

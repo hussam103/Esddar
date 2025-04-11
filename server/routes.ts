@@ -739,14 +739,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pageSize = parseInt(req.body.pageSize || '50');
       
       try {
+        // Show a message that we're attempting to connect to Etimad
+        console.log(`Attempting to scrape page ${pageNumber} with ${pageSize} tenders per page from Etimad...`);
+        
         // Scrape tenders
         const tendersData = await scrapeTenders(pageNumber, pageSize);
+        
+        // Log the response for debugging
+        console.log(`Scraping response received: ${tendersData.length} tenders found`);
         
         if (!tendersData || tendersData.length === 0) {
           // If no actual tenders found from the external API, return an error message
           return res.status(404).json({
             success: false,
-            message: "لم يتم العثور على مناقصات من منصة اعتماد. يرجى المحاولة مرة أخرى لاحقًا."
+            message: "لم يتم العثور على مناقصات من منصة اعتماد. يرجى المحاولة مرة أخرى لاحقًا أو تجربة تغيير رقم الصفحة وعدد المناقصات لكل صفحة."
           });
         }
         

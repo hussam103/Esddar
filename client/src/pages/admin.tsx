@@ -156,12 +156,86 @@ export default function AdminPage() {
                       <p>المناقصات المتخطاة: {result.stats.skipped}</p>
                     </div>
                   )}
+                  {!result.success && (
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        ملاحظة: منصة اعتماد قد تفرض قيودًا على الوصول إلى بياناتها أو تغير واجهة برمجة التطبيقات الخاصة بها.
+                      </p>
+                      <div className="mt-2 space-y-2">
+                        <p className="text-sm font-medium">يمكنك تجربة ما يلي:</p>
+                        <ul className="text-sm list-disc list-inside space-y-1">
+                          <li>تقليل عدد المناقصات في كل صفحة</li>
+                          <li>تجربة أرقام صفحات مختلفة (1-5)</li>
+                          <li>المحاولة لاحقًا عندما يكون الضغط أقل على منصة اعتماد</li>
+                        </ul>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           </CardContent>
         </Card>
 
+        <Card className="bg-white dark:bg-gray-800">
+          <CardHeader>
+            <CardTitle>اختبار تكامل منصة اعتماد</CardTitle>
+            <CardDescription>
+              اختبر تكامل منصة اعتماد وروابط المناقصات
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="rounded-md border p-4">
+                <h3 className="text-md font-medium mb-2">مناقصات اعتماد في النظام</h3>
+                
+                <div className="text-sm space-y-1">
+                  <p>هذه المناقصات مصدرها منصة اعتماد وتم تخزينها في قاعدة البيانات الخاصة بنا.</p>
+                  <p>يمكنك اختبار زر "تقديم طلب في منصة اعتماد" من خلال الضغط على الروابط أدناه:</p>
+                </div>
+                
+                <div className="mt-4 space-y-3">
+                  <div className="p-3 border rounded-md">
+                    <h4 className="font-medium">مناقصة #9: بناء مراكز خدمات حكومية</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      معرف اعتماد: 12345
+                    </p>
+                    <div className="mt-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setLocation('/tenders/9')}
+                      >
+                        عرض المناقصة
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 border rounded-md">
+                    <h4 className="font-medium">مناقصة #10: بناء مراكز خدمات حكومية</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      معرف اعتماد: 67890
+                    </p>
+                    <div className="mt-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setLocation('/tenders/10')}
+                      >
+                        عرض المناقصة
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                  <p>ملاحظة: معرفات اعتماد المستخدمة هنا هي للاختبار فقط. ستحتاج إلى جلب المعرفات الحقيقية من منصة اعتماد.</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
         <Card className="bg-white dark:bg-gray-800">
           <CardHeader>
             <CardTitle>إحصائيات النظام</CardTitle>

@@ -53,12 +53,9 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
   const getEtimadTenderUrl = (bidNumber: string | null | undefined): string => {
     if (!bidNumber) return "https://tenders.etimad.sa/Tender/AllTendersForVisitor";
     
-    // After looking at the screenshot and researching Etimad's website,
-    // the format to link to a tender might be slightly different
-    // Let's try both formats:
-    
-    // Format 1: Direct BidNumber link - the most likely format based on screenshot
-    return `https://tenders.etimad.sa/Tender/Details?STenderId=${bidNumber}`;
+    // Based on the exact screenshot format you provided
+    // The URL should NOT use STenderId but should just have /Details/BidNumber
+    return `https://tenders.etimad.sa/Tender/Details/${bidNumber}`;
   };
 
   // Save tender mutation

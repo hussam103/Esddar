@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
 type SidebarProps = {
   mobileMenuOpen: boolean;
@@ -73,67 +72,93 @@ export default function Sidebar({ mobileMenuOpen, closeMobileMenu, activePage = 
           <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
             <span className="text-white font-bold text-lg">E</span>
           </div>
-          <span className="text-xl font-bold text-gray-900">{t("app.name")}</span>
+          {!collapsed && <span className="text-xl font-bold text-gray-900">{t("app.name")}</span>}
         </div>
         <div className="flex items-center">
-          <LanguageSwitcher />
+          <button
+            className="hidden md:flex p-1 rounded hover:bg-gray-100 text-gray-600"
+            onClick={() => setCollapsed(!collapsed)}
+          >
+            {collapsed ? (
+              <ChevronRight className="h-5 w-5" />
+            ) : (
+              <ChevronLeft className="h-5 w-5" />
+            )}
+          </button>
           <button className="md:hidden ml-2" onClick={closeMobileMenu}>
             <X className="h-6 w-6 text-gray-600" />
           </button>
         </div>
       </div>
       
-      <nav className="p-4">
-        <ul className="space-y-2">
-          {navItems.map((item) => {
-            const isActive = activePage === item.path || location === item.path;
-            const ItemIcon = item.icon;
-            
-            return (
-              <li key={item.path}>
-                <Link href={item.path}>
-                  <a
-                    className={cn(
-                      "flex items-center space-x-3 px-3 py-2 rounded-md transition-colors duration-150",
-                      isActive
-                        ? "bg-primary-50 text-primary-700 font-medium"
-                        : "text-gray-600 hover:bg-gray-100"
-                    )}
-                  >
-                    <ItemIcon className="h-5 w-5" />
-                    <span>{item.label}</span>
-                  </a>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+      <nav className="p-4 flex flex-col h-[calc(100vh-4rem)]">
+        <div className="flex-grow">
+          <ul className="space-y-2">
+            {navItems.map((item) => {
+              const isActive = activePage === item.path || location === item.path;
+              const ItemIcon = item.icon;
+              
+              return (
+                <li key={item.path}>
+                  <Link href={item.path}>
+                    <a
+                      className={cn(
+                        "flex items-center px-3 py-2 rounded-md transition-colors duration-150",
+                        collapsed ? "justify-center" : "space-x-3",
+                        isActive
+                          ? "bg-primary-50 text-primary-700 font-medium"
+                          : "text-gray-600 hover:bg-gray-100"
+                      )}
+                      title={collapsed ? item.label : undefined}
+                    >
+                      <ItemIcon className="h-5 w-5" />
+                      {!collapsed && <span>{item.label}</span>}
+                    </a>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
         
         {user && (
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <div className="px-3 py-2">
-              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t("auth.companyName")}</div>
-              <div className="mt-2 flex items-center">
-                <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-medium">
-                  {getCompanyInitials(user.companyName)}
-                </div>
+          <div className="pt-4 border-t border-gray-200">
+            {!collapsed && (
+              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-3">
+                {t("auth.companyName")}
+              </div>
+            )}
+            <div className={cn("flex items-center", collapsed ? "justify-center" : "px-3")}>
+              <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-medium">
+                {getCompanyInitials(user.companyName)}
+              </div>
+              {!collapsed && (
                 <div className="ml-2">
                   <div className="text-sm font-medium">{user.companyName}</div>
                   <div className="text-xs text-gray-500">{user.industry || t("settings.profile")}</div>
                 </div>
-              </div>
-              
-              <Button 
-                variant="outline" 
-                className="w-full mt-4"
-                onClick={handleLogout}
-                disabled={logoutMutation.isPending}
-              >
-                {logoutMutation.isPending 
-                  ? `${t("auth.logout")}...` 
-                  : t("auth.logout")}
-              </Button>
+              )}
             </div>
+            
+            <Button 
+              variant="outline" 
+              className={cn("mt-4", collapsed ? "w-10 h-10 p-0 mx-auto flex items-center justify-center" : "w-full")}
+              onClick={handleLogout}
+              disabled={logoutMutation.isPending}
+              title={collapsed ? t("auth.logout") : undefined}
+            >
+              {collapsed ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+              ) : (
+                logoutMutation.isPending 
+                  ? `${t("auth.logout")}...` 
+                  : t("auth.logout")
+              )}
+            </Button>
           </div>
         )}
       </nav>

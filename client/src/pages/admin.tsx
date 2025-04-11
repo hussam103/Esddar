@@ -30,8 +30,12 @@ export default function AdminPage() {
   // For now, we'll just check if the user is the original admin user
   const isAdmin = user?.id === 1;
 
+  const [_, setLocation] = useLocation();
+  
   if (!user) {
-    return <Redirect to="/auth" />;
+    // Use setLocation for navigation instead of Redirect component
+    setLocation("/auth");
+    return null;
   }
 
   if (!isAdmin) {

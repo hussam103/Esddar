@@ -146,4 +146,25 @@ export function setupAuth(app: Express) {
     delete userWithoutPassword.password;
     res.json(userWithoutPassword);
   });
+
+  // Add route to update user data
+  app.put("/api/user", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      const updatedUser = await storage.updateUser(req.user.id, req.body);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Return the user without the password
+      const userWithoutPassword = { ...updatedUser };
+      delete userWithoutPassword.password;
+      
+      res.json(userWithoutPassword);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update user" });
+    }
+  });
 }

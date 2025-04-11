@@ -729,10 +729,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Scraping response received: ${tendersData.length} tenders found`);
         
         if (!tendersData || tendersData.length === 0) {
-          // If no actual tenders found from the external API, return an error message
+          // If no actual tenders found from the external API, return an error message with more details
           return res.status(404).json({
             success: false,
-            message: "لم يتم العثور على مناقصات من منصة اعتماد. يرجى المحاولة مرة أخرى لاحقًا أو تجربة تغيير رقم الصفحة وعدد المناقصات لكل صفحة."
+            message: "لم يتم العثور على مناقصات من منصة اعتماد. يرجى المحاولة مرة أخرى لاحقًا أو تجربة تغيير رقم الصفحة وعدد المناقصات لكل صفحة.",
+            details: "منصة اعتماد قد تفرض قيودًا على استدعاء واجهة البرمجة (API). جرب استخدام رقم صفحة أقل أو قم بتقليل عدد المناقصات في كل صفحة.",
+            tips: [
+              "تقليل عدد المناقصات في كل صفحة (مثل 5 أو 10)",
+              "تجربة أرقام صفحات مختلفة (1-5)",
+              "المحاولة لاحقًا عندما يكون الضغط أقل على منصة اعتماد"
+            ]
           });
         }
         

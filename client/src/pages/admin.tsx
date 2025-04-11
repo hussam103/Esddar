@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { AlertTriangle, ExternalLink, Loader2, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, AlertCircle, ExternalLink, Loader2, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -20,6 +20,8 @@ export default function AdminPage() {
   const [result, setResult] = useState<{
     success: boolean;
     message: string;
+    details?: string;
+    tips?: string[];
     stats?: {
       total: number;
       saved: number;
@@ -168,15 +170,33 @@ export default function AdminPage() {
                   )}
                   {!result.success && (
                     <div className="mt-2">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {result.details && (
+                        <Alert className="mt-2 bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800">
+                          <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                          <AlertTitle className="mr-2 text-yellow-800 dark:text-yellow-300">تفاصيل إضافية</AlertTitle>
+                          <AlertDescription className="text-yellow-700 dark:text-yellow-400">
+                            {result.details}
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                      
+                      <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
                         ملاحظة: منصة اعتماد قد تفرض قيودًا على الوصول إلى بياناتها أو تغير واجهة برمجة التطبيقات الخاصة بها.
                       </p>
+                      
                       <div className="mt-2 space-y-2">
                         <p className="text-sm font-medium">يمكنك تجربة ما يلي:</p>
                         <ul className="text-sm list-disc list-inside space-y-1">
-                          <li>تقليل عدد المناقصات في كل صفحة</li>
-                          <li>تجربة أرقام صفحات مختلفة (1-5)</li>
-                          <li>المحاولة لاحقًا عندما يكون الضغط أقل على منصة اعتماد</li>
+                          {result.tips && result.tips.length > 0 ? 
+                            result.tips.map((tip, index) => (
+                              <li key={index}>{tip}</li>
+                            )) : (
+                            <>
+                              <li>تقليل عدد المناقصات في كل صفحة</li>
+                              <li>تجربة أرقام صفحات مختلفة (1-5)</li>
+                              <li>المحاولة لاحقًا عندما يكون الضغط أقل على منصة اعتماد</li>
+                            </>
+                          )}
                         </ul>
                       </div>
                     </div>

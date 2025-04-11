@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/use-language";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Bookmark, Clock, MapPin, Tag } from "lucide-react";
+import { Bookmark, Building, Clock, MapPin, Tag } from "lucide-react";
 import { formatSAR } from "@/components/ui/currency";
 import { SARIcon } from "@/components/ui/sar-icon";
 import { TenderDetailsButton } from "@/components/ui/tender-details-button";
@@ -169,37 +169,43 @@ export default function RecommendedTenders({ loading, tenders }: RecommendedTend
                 </div>
                 <div className="p-4">
                   <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-medium text-gray-900">{tender.title}</h3>
-                      <p className="text-sm text-gray-600">{tender.agency}</p>
+                    <div className="w-5/6">
+                      <h3 className="font-medium text-gray-900 text-md line-clamp-2 h-12" title={tender.title}>
+                        {tender.title}
+                      </h3>
+                      <div className="flex items-center mt-1">
+                        <Building className={`h-3 w-3 text-gray-500 ${language === "ar" ? "ml-1" : "mr-1"} flex-shrink-0`} />
+                        <p className="text-sm text-gray-600 line-clamp-1" title={tender.agency}>
+                          {tender.agency}
+                        </p>
+                      </div>
                     </div>
                     <button 
-                      className="text-gray-400 hover:text-primary-600"
+                      className="text-gray-400 hover:text-primary-600 flex-shrink-0"
                       onClick={() => saveTenderMutation.mutate(tender.id)}
                     >
                       <Bookmark className="h-5 w-5" />
                     </button>
                   </div>
-                  <div className="mt-3 flex items-center text-xs text-gray-500">
-                    <span className="flex items-center">
-                      <MapPin className="h-3 w-3 ml-1" />
-                      {tender.location}
-                    </span>
-                    <span className="mx-2">•</span>
-                    <span className="flex items-center">
-                      <Tag className="h-3 w-3 ml-1" />
-                      {tender.category}
-                    </span>
+                  <div className={`mt-3 flex flex-wrap items-center text-xs text-gray-500 gap-2 ${language === "ar" ? "space-x-reverse" : ""}`}>
+                    <div className="flex items-center">
+                      <MapPin className={`h-3 w-3 ${language === "ar" ? "ml-1" : "mr-1"} flex-shrink-0`} />
+                      <span>{tender.location}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Tag className={`h-3 w-3 ${language === "ar" ? "ml-1" : "mr-1"} flex-shrink-0`} />
+                      <span>{tender.category}</span>
+                    </div>
                   </div>
                 </div>
                 <div className="px-4 pb-2">
                   <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center">
-                      <SARIcon className="h-4 w-4 text-primary mr-1" />
-                      <span className="font-medium text-gray-700">
+                    <div className="flex items-center w-full">
+                      <SARIcon className={`h-4 w-4 text-primary ${language === "ar" ? "ml-1" : "mr-1"} flex-shrink-0`} />
+                      <span className={`font-medium text-gray-700 ${language === "ar" ? "ml-1" : "mr-1"}`}>
                         {language === "ar" ? "القيمة:" : "Value:"}
                       </span>
-                      <span className="text-gray-900 ml-1">
+                      <span className="text-gray-900 truncate">
                         {formatSAR(Number(tender.valueMin), language)} - {formatSAR(Number(tender.valueMax), language)}
                       </span>
                     </div>
@@ -208,15 +214,15 @@ export default function RecommendedTenders({ loading, tenders }: RecommendedTend
                 <div className="px-4 pb-3">
                   <div className="flex items-center justify-between text-sm">
                     <div className={`flex items-center ${deadlineClass}`}>
-                      <Clock className={`h-3 w-3 ${language === "ar" ? "ml-1" : "mr-1"}`} />
+                      <Clock className={`h-3 w-3 ${language === "ar" ? "ml-1" : "mr-1"} flex-shrink-0`} />
                       <span>
                         {language === "ar" 
                           ? `الموعد النهائي: متبقي ${daysRemaining} يوم`
                           : `Deadline: ${daysRemaining} days remaining`}
                       </span>
                     </div>
-                    <div>
-                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                    <div className={`flex ${language === "ar" ? "space-x-2 space-x-reverse" : "space-x-2"} flex-shrink-0`}>
+                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full whitespace-nowrap">
                         {tender.status === 'open' 
                           ? (language === "ar" ? 'مفتوح' : 'Open')
                           : tender.status === 'closed' 

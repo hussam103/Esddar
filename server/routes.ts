@@ -566,101 +566,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       };
 
-      // Using arrow functions to avoid strict mode issues
+      // Using the direct API endpoint as provided by the client
       const scrapeTenders = async (pageNumber: number = 1, pageSize: number = 50): Promise<any[]> => {
         try {
-          console.log(`Scraping page ${pageNumber}...`);
-          const csrfToken = await getCSRFToken();
+          console.log(`Scraping page ${pageNumber} with pageSize ${pageSize}...`);
           
-          if (!csrfToken) {
-            throw new Error('Could not get CSRF token');
-          }
+          // Using the direct API endpoint as provided
+          const timestamp = new Date().getTime();
+          const url = `https://tenders.etimad.sa/Tender/AllSupplierTendersForVisitorAsync?PageSize=${pageSize}&PageNumber=${pageNumber}&_=${timestamp}`;
           
-          // Create a more complete set of parameters based on the website's usage
-          const searchParams = new URLSearchParams({
-            '__RequestVerificationToken': csrfToken,
-            'PublishDateId': '5', // Last 6 months
-            'TenderTypeId': '',
-            'TenderActivityId': '',
-            'TenderAreaId': '',
-            'AgencyCode': '',
-            'PageSize': pageSize.toString(),
-            'PageNumber': pageNumber.toString(),
-            'BuyerName': '',
-            'ConditionBookletPriceFrom': '',
-            'ConditionBookletPriceTo': '',
-            'EstimatedValueFrom': '',
-            'EstimatedValueTo': '',
-            'LastEnqueriesDate': '',
-            'LastOfferPresentationDate': '',
-            'TenderName': '',
-            'ReferenceNumber': '',
-            'IsActive': 'true',
-            'IsArchived': 'false',
-            'CreatedBy': '',
-            'InvitationTypeId': '',
-            'SearchIsActive': 'true',
-            'SearchIsArchived': 'false',
-            'IsSearch': 'true',
-            'SortDirection': 'DESC',
-            'Sort': 'SubmitionDate',
-            '_': new Date().getTime().toString()
-          });
+          console.log(`Fetching from URL: ${url}`);
           
-          // Add additional required headers
+          // Make the request with the correct headers
           const config = {
             headers: {
               'Accept': 'application/json, text/javascript, */*; q=0.01',
               'Accept-Language': 'ar,en;q=0.9',
-              'Cache-Control': 'no-cache',
-              'Connection': 'keep-alive',
-              'Content-Type': 'application/json',
-              'Pragma': 'no-cache',
               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
               'Referer': 'https://tenders.etimad.sa/Tender/AllTendersForVisitor',
               'X-Requested-With': 'XMLHttpRequest',
-              'Cookie': `__RequestVerificationToken=${csrfToken}`
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
             }
           };
-          
-          console.log('Sending request with params:', searchParams.toString().substring(0, 100) + '...');
-          
-          // Build the URL with parameters
-          const url = `https://tenders.etimad.sa/Tender/AllSupplierTendersForVisitorAsync?${searchParams.toString()}`;
           
           // Make the request
           const response = await axios.get(url, config);
           
           console.log('Response status:', response.status);
           
-          // Fall back to using mock data if we can't get anything from the real source
-          if (!response.data || !response.data.Data || !response.data.Data.Items || response.data.Data.Items.length === 0) {
-            // For testing purposes, use sample data from your existing database
-            console.log('No items found in the response, falling back to existing tenders in the database');
-            const existingTenders = await db.select().from(tenders).limit(10);
+          // Check if we have data in the format provided by the user
+          if (response.data && Array.isArray(response.data.data)) {
+            console.log(`Found ${response.data.data.length} tenders in the response`);
             
-            if (existingTenders.length > 0) {
-              // Convert to the format expected by the frontend
-              return existingTenders.map(tender => ({
-                TenderName: tender.title,
-                AgencyName: tender.agency,
-                TenderDescription: tender.description,
-                TenderTypeName: tender.category,
-                TenderAreaName: tender.location,
-                ConditionBookletPrice: tender.valueMin,
-                EstimatedValue: tender.valueMax, 
-                LastOfferPresentationDate: tender.deadline,
-                ReferenceNumber: tender.bidNumber
-              }));
+            // Log sample data to help with debugging
+            if (response.data.data.length > 0) {
+              console.log('Sample tender data:', JSON.stringify(response.data.data[0]).substring(0, 300) + '...');
             }
+            
+            return response.data.data;
           }
           
-          // Check if response is valid JSON
+          // If the API didn't return data in the expected format, check alternative formats
           if (typeof response.data === 'string') {
             try {
               const parsedData = JSON.parse(response.data);
               console.log('Parsed data structure:', Object.keys(parsedData));
-              return parsedData.Data?.Items || [];
+              
+              if (Array.isArray(parsedData.data)) {
+                return parsedData.data;
+              }
+              
+              return [];
             } catch (e) {
               console.error('Error parsing JSON:', e);
               console.log('Response data:', response.data.substring(0, 200) + '...');
@@ -668,11 +625,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
           
-          if (response.data.Data && response.data.Data.Items) {
-            console.log(`Found ${response.data.Data.Items.length} tenders in the response`);
-            return response.data.Data.Items;
-          }
-          
+          // Log what we received to help with debugging
           console.log('Response data structure:', Object.keys(response.data));
           console.log('Sample response data:', JSON.stringify(response.data).substring(0, 300) + '...');
           
@@ -692,41 +645,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`Saving ${tendersData.length} tenders to database...`);
           
           for (const tender of tendersData) {
-            // Check if the tender already exists in the database
-            const existingTender = await db.select().from(tenders).where(eq(tenders.bidNumber, tender.ReferenceNumber)).limit(1);
-            
-            if (existingTender.length > 0) {
-              console.log(`Tender with bid number ${tender.ReferenceNumber} already exists, skipping.`);
+            try {
+              // Log the tender data structure to understand the format
+              console.log('Processing tender:', JSON.stringify(tender).substring(0, 300) + '...');
+              
+              // Based on the sample JSON you provided, adjust the field names
+              const bidNumber = tender.referenceNumber || tender.tenderNumber || `ET-${Date.now()}`;
+              
+              // Check if the tender already exists in the database
+              const existingTender = await db.select().from(tenders).where(eq(tenders.bidNumber, bidNumber)).limit(1);
+              
+              if (existingTender.length > 0) {
+                console.log(`Tender with bid number ${bidNumber} already exists, skipping.`);
+                skipped++;
+                continue;
+              }
+              
+              // Parse dates properly
+              let deadline;
+              try {
+                deadline = new Date(tender.lastOfferPresentationDate);
+                if (isNaN(deadline.getTime())) {
+                  console.log(`Invalid date format for deadline: ${tender.lastOfferPresentationDate}, using current date + 30 days`);
+                  deadline = new Date();
+                  deadline.setDate(deadline.getDate() + 30);
+                }
+              } catch (e) {
+                console.log(`Error parsing date: ${e}, using current date + 30 days`);
+                deadline = new Date();
+                deadline.setDate(deadline.getDate() + 30);
+              }
+              
+              // Map the tender data to our schema using the updated field names
+              const tenderToInsert = {
+                title: tender.tenderName || 'مناقصة بدون عنوان',
+                agency: tender.agencyName || 'جهة غير معروفة',
+                description: tender.tenderDescription || tender.tenderName || '',
+                category: tender.tenderTypeName || tender.tenderActivityName || 'غير محدد',
+                location: tender.branchName || 'غير محدد',
+                valueMin: (tender.condetionalBookletPrice?.toString() || tender.invitationCost?.toString() || '0'),
+                valueMax: (tender.financialFees?.toString() || tender.buyingCost?.toString() || '2000'),
+                deadline: deadline,
+                status: 'open',
+                requirements: tender.tenderDescription || '',
+                bidNumber: bidNumber,
+                // Use tenderIdString for direct linking to Etimad
+                etimadId: tender.tenderIdString || null,
+                // Set source to 'etimad' for tenders from Etimad platform
+                source: 'etimad'
+              };
+              
+              // Insert the tender into the database
+              await db.insert(tenders).values(tenderToInsert);
+              console.log(`Inserted tender: ${tenderToInsert.title}`);
+              saved++;
+            } catch (error) {
+              console.error('Error processing individual tender:', error);
               skipped++;
-              continue;
             }
-            
-            // Map the tender data to our schema
-            const tenderToInsert = {
-              title: tender.TenderName,
-              agency: tender.AgencyName,
-              description: tender.TenderDescription || '',
-              category: tender.TenderTypeName || 'غير محدد',
-              location: tender.TenderAreaName || 'غير محدد',
-              valueMin: tender.ConditionBookletPrice?.toString() || '0',
-              valueMax: tender.EstimatedValue?.toString() || '0',
-              deadline: new Date(tender.LastOfferPresentationDate),
-              status: 'open',
-              requirements: tender.TenderDescription || '',
-              bidNumber: tender.ReferenceNumber,
-              // Add the Etimad IdString as etimadId for direct linking
-              etimadId: tender.IdString || null,
-              // Set source to 'etimad' for tenders from Etimad platform
-              source: 'etimad'
-            };
-            
-            // Insert the tender into the database
-            await db.insert(tenders).values(tenderToInsert);
-            console.log(`Inserted tender: ${tenderToInsert.title}`);
-            saved++;
           }
           
-          console.log('All tenders saved successfully!');
+          console.log(`All tenders processed! Saved: ${saved}, Skipped: ${skipped}`);
           return { saved, skipped };
         } catch (error) {
           console.error('Error saving tenders to database:', error);

@@ -1,5 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils";
+import { SARIcon } from "./sar-icon";
 
 interface CurrencyProps {
   amount: number;
@@ -23,15 +24,18 @@ export function SARCurrency({
       <span>
         {formattedAmount}
       </span>
-      <span className="font-bold">﷼</span>
+      <SARIcon className="text-primary" size={16} />
     </span>
   );
 }
 
+// This function returns a formatted string with the SAR symbol
+// Used for string-based displays where React components can't be used
 export function formatSAR(amount: number, showDecimal = false, locale = "ar-SA") {
   const formattedAmount = showDecimal 
     ? amount.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : amount.toLocaleString(locale);
   
+  // Using the Arabic Riyal symbol (﷼) for string contexts
   return `${formattedAmount} ﷼`;
 }

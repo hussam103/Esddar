@@ -270,44 +270,44 @@ export default function TenderDetailsPage() {
             <div className="md:col-span-2 space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Tender Overview</CardTitle>
+                  <CardTitle>{t("tenderDetails.overview")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex items-center">
                       <Calendar className="h-5 w-5 text-primary mr-2" />
                       <div>
-                        <p className="text-sm text-gray-500">Deadline</p>
+                        <p className="text-sm text-gray-500">{t("tenderDetails.deadline")}</p>
                         <p className="font-medium">{formatDate(tender.deadline)}</p>
                       </div>
                     </div>
                     <div className="flex items-center">
                       <Clock className={`h-5 w-5 mr-2 ${deadlineClass}`} />
                       <div>
-                        <p className="text-sm text-gray-500">Time Remaining</p>
+                        <p className="text-sm text-gray-500">{t("tenderDetails.timeRemaining")}</p>
                         <p className={`font-medium ${deadlineClass}`}>
-                          {daysRemaining} days left
+                          {daysRemaining} {t("tenderDetails.daysLeft")}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center">
                       <MapPin className="h-5 w-5 text-primary mr-2" />
                       <div>
-                        <p className="text-sm text-gray-500">Location</p>
+                        <p className="text-sm text-gray-500">{t("tenderDetails.location")}</p>
                         <p className="font-medium">{tender.location}</p>
                       </div>
                     </div>
                     <div className="flex items-center">
                       <Tag className="h-5 w-5 text-primary mr-2" />
                       <div>
-                        <p className="text-sm text-gray-500">Category</p>
+                        <p className="text-sm text-gray-500">{t("tenderDetails.category")}</p>
                         <p className="font-medium">{tender.category}</p>
                       </div>
                     </div>
                     <div className="flex items-center col-span-2">
                       <DollarSign className="h-5 w-5 text-primary mr-2" />
                       <div>
-                        <p className="text-sm text-gray-500">Value</p>
+                        <p className="text-sm text-gray-500">{t("tenderDetails.value")}</p>
                         <p className="font-medium">
                           ${Number(tender.valueMin).toLocaleString()} - ${Number(tender.valueMax).toLocaleString()}
                         </p>
@@ -318,12 +318,12 @@ export default function TenderDetailsPage() {
                   <Separator />
 
                   <div>
-                    <h3 className="font-medium mb-2">Description</h3>
+                    <h3 className="font-medium mb-2">{t("tenderDetails.description")}</h3>
                     <p className="text-gray-700">{tender.description}</p>
                   </div>
 
                   <div>
-                    <h3 className="font-medium mb-2">Requirements</h3>
+                    <h3 className="font-medium mb-2">{t("tenderDetails.requirements")}</h3>
                     <ul className="list-disc pl-5 text-gray-700 space-y-1">
                       {tender.requirements?.split(',').map((req, index) => (
                         <li key={index}>{req.trim()}</li>
@@ -332,7 +332,7 @@ export default function TenderDetailsPage() {
                   </div>
 
                   <div className="flex flex-col space-y-2">
-                    <h3 className="font-medium">Status</h3>
+                    <h3 className="font-medium">{t("tenderDetails.status")}</h3>
                     <div className="flex items-center space-x-2 space-x-reverse">
                       <Badge 
                         className={tender.status === "open" 
@@ -354,7 +354,7 @@ export default function TenderDetailsPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Issuing Agency</CardTitle>
+                  <CardTitle>{t("tenderDetails.issuingAgency")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center">

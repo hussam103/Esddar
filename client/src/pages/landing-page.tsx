@@ -28,7 +28,7 @@ export default function LandingPage() {
       {/* Main Content */}
       <main className="flex-1 bg-gray-50">
         {/* Hero Banner */}
-        <section className="bg-gradient-to-r from-primary-900 to-primary-800 text-white py-20">
+        <section className="hero-banner py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
               <div>
@@ -326,7 +326,7 @@ export default function LandingPage() {
         </section>
 
         {/* Testimonials Section */}
-        <section className="py-16 bg-gray-50">
+        <section className="py-16 testimonials-section">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-gray-900 mb-4">ماذا يقول عملاؤنا</h2>
@@ -406,7 +406,7 @@ export default function LandingPage() {
         </section>
 
         {/* CTA Section */}
-        <section className="py-16 bg-primary-900 text-white">
+        <section className="py-16 cta-section">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-3xl font-bold mb-6">هل أنت مستعد للعثور على المزيد من العقود الحكومية والفوز بها؟</h2>
             <p className="text-xl mb-8 max-w-3xl mx-auto">

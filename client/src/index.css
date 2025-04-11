@@ -2,6 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+html, body, #root {
+  background-color: #f9fafb !important; /* bg-gray-50 */
+  min-height: 100%;
+  color: #1f2937; /* text-gray-800 */
+}
+
+.hero-banner {
+  background: linear-gradient(to right, #1e40af, #1e3a8a) !important; /* from-primary-900 to-primary-800 */
+  color: white !important;
+}
+
+.cta-section {
+  background-color: #1e3a8a !important; /* bg-primary-900 */
+  color: white !important;
+}
+
+.testimonials-section {
+  background-color: #f9fafb !important; /* bg-gray-50 */
+}
+
 @layer base {
   * {
     @apply border-border;

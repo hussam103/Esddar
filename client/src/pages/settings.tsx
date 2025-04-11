@@ -138,14 +138,14 @@ export default function SettingsPage() {
                         name="industry"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>الصناعة</FormLabel>
+                            <FormLabel>{language === "ar" ? "الصناعة" : "Industry"}</FormLabel>
                             <Select 
                               onValueChange={field.onChange} 
                               defaultValue={field.value}
                             >
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="اختر مجال عملك" />
+                                  <SelectValue placeholder={language === "ar" ? "اختر مجال عملك" : "Select your industry"} />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
@@ -162,7 +162,10 @@ export default function SettingsPage() {
                               </SelectContent>
                             </Select>
                             <FormDescription>
-                              هذا يساعدنا على مطابقتك مع المناقصات ذات الصلة
+                              {language === "ar" 
+                                ? "هذا يساعدنا على مطابقتك مع المناقصات ذات الصلة"
+                                : "This helps us match you with relevant tenders"
+                              }
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
@@ -174,16 +177,22 @@ export default function SettingsPage() {
                         name="description"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>وصف الشركة</FormLabel>
+                            <FormLabel>{language === "ar" ? "وصف الشركة" : "Company Description"}</FormLabel>
                             <FormControl>
                               <Textarea 
-                                placeholder="صف شركتك وقدراتها بإيجاز" 
+                                placeholder={language === "ar" 
+                                  ? "صف شركتك وقدراتها بإيجاز" 
+                                  : "Briefly describe your company and its capabilities"
+                                } 
                                 className="min-h-[120px]"
                                 {...field} 
                               />
                             </FormControl>
                             <FormDescription>
-                              سيتم استخدام هذه المعلومات لتحسين المطابقة بالذكاء الاصطناعي
+                              {language === "ar"
+                                ? "سيتم استخدام هذه المعلومات لتحسين المطابقة بالذكاء الاصطناعي"
+                                : "This information will be used to improve AI matching"
+                              }
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
@@ -191,7 +200,9 @@ export default function SettingsPage() {
                       />
 
                       <div>
-                        <h3 className="text-sm font-medium mb-3">اكتمال الملف الشخصي</h3>
+                        <h3 className="text-sm font-medium mb-3">
+                          {language === "ar" ? "اكتمال الملف الشخصي" : "Profile Completion"}
+                        </h3>
                         <div className="w-full h-2 bg-gray-200 rounded-full">
                           <div 
                             className="h-2 bg-primary rounded-full" 
@@ -199,7 +210,10 @@ export default function SettingsPage() {
                           ></div>
                         </div>
                         <p className="text-sm text-gray-500 mt-2">
-                          {user?.profileCompleteness || 0}% مكتمل - املأ المزيد من التفاصيل لتحسين مطابقة المناقصات
+                          {user?.profileCompleteness || 0}% {language === "ar" 
+                            ? "مكتمل - املأ المزيد من التفاصيل لتحسين مطابقة المناقصات"
+                            : "complete - Fill in more details to improve tender matching"
+                          }
                         </p>
                       </div>
 
@@ -211,12 +225,12 @@ export default function SettingsPage() {
                         {updateProfileMutation.isPending ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            جاري التحديث...
+                            {language === "ar" ? "جاري التحديث..." : "Updating..."}
                           </>
                         ) : (
                           <>
                             <Save className="mr-2 h-4 w-4" />
-                            حفظ التغييرات
+                            {language === "ar" ? "حفظ التغييرات" : "Save Changes"}
                           </>
                         )}
                       </Button>
@@ -241,7 +255,9 @@ export default function SettingsPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div>
-                    <h3 className="text-sm font-medium mb-3">إشعارات البريد الإلكتروني</h3>
+                    <h3 className="text-sm font-medium mb-3">
+                      {language === "ar" ? "إشعارات البريد الإلكتروني" : "Email Notifications"}
+                    </h3>
                     <Separator className="mb-4" />
                     
                     <div className="space-y-4">

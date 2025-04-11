@@ -15,6 +15,7 @@ import LandingPage from "@/pages/landing-page";
 import SubscriptionPage from "@/pages/subscription-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
+import { NotificationsProvider } from "./hooks/use-notifications";
 
 function Router() {
   return (

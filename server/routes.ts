@@ -4,6 +4,7 @@ import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { insertTenderSchema, insertApplicationSchema, insertSavedTenderSchema } from "@shared/schema";
 import { z } from "zod";
+import { WebSocketServer, WebSocket } from "ws";
 
 // Schema for subscription
 const subscriptionSchema = z.object({
@@ -325,5 +326,201 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+  
+  // إنشاء خادم WebSocket مع تحديد المسار لتجنب التعارض مع HMR الخاص بـ Vite
+  const wss = new WebSocketServer({ 
+    server: httpServer,
+    path: '/ws'
+  });
+  
+  // متغير لتخزين اتصالات العملاء (connections) مع معرفات المستخدمين
+  const clients = new Map<number, Set<WebSocket>>();
+  
+  // التعامل مع اتصالات الـ websocket
+  wss.on('connection', (ws) => {
+    console.log('Client connected to WebSocket');
+    
+    // استقبال رسائل من العميل
+    ws.on('message', async (message) => {
+      try {
+        // تفسير الرسالة المستلمة
+        const data = JSON.parse(message.toString());
+        
+        // معالجة رسالة تسجيل الدخول
+        if (data.type === 'auth' && data.userId) {
+          const userId = parseInt(data.userId);
+          
+          // تخزين اتصال العميل مع معرف المستخدم
+          if (!clients.has(userId)) {
+            clients.set(userId, new Set());
+          }
+          clients.get(userId)?.add(ws);
+          
+          // إرسال إشعار تأكيد التسجيل
+          ws.send(JSON.stringify({
+            type: 'auth_success',
+            message: 'تم تسجيل الدخول إلى نظام الإشعارات بنجاح'
+          }));
+          
+          console.log(`User ${userId} connected to notifications`);
+        }
+      } catch (error) {
+        console.error('Error processing WebSocket message:', error);
+      }
+    });
+    
+    // التعامل مع إغلاق الاتصال
+    ws.on('close', () => {
+      // إزالة الاتصال من جميع قوائم المستخدمين
+      for (const [userId, userConnections] of clients.entries()) {
+        if (userConnections.has(ws)) {
+          userConnections.delete(ws);
+          if (userConnections.size === 0) {
+            clients.delete(userId);
+          }
+          console.log(`Connection closed for user ${userId}`);
+          break;
+        }
+      }
+    });
+  });
+  
+  // إضافة دالة مساعدة لإرسال الإشعارات عبر websocket
+  // يمكن استخدامها في أي مكان في التطبيق
+  (global as any).sendNotification = (
+    userId: number,
+    title: string,
+    message: string,
+    type: 'info' | 'success' | 'warning' | 'error' = 'info',
+    data?: any
+  ) => {
+    const userConnections = clients.get(userId);
+    if (!userConnections || userConnections.size === 0) {
+      console.log(`No active connections for user ${userId}`);
+      return false;
+    }
+    
+    const notification = {
+      type: 'notification',
+      title,
+      message,
+      notificationType: type,
+      timestamp: new Date(),
+      data
+    };
+    
+    // إرسال الإشعار لجميع اتصالات المستخدم
+    let sent = false;
+    for (const client of userConnections) {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify(notification));
+        sent = true;
+      }
+    }
+    
+    return sent;
+  };
+  
+  // إرسال إشعار عندما يتم حفظ مناقصة
+  const originalSaveTender = app.post.bind(app, "/api/save-tender");
+  app._router.stack = app._router.stack.filter(layer => 
+    !(layer.route && layer.route.path === "/api/save-tender" && layer.route.methods.post)
+  );
+  
+  app.post("/api/save-tender", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      const data = insertSavedTenderSchema.parse({
+        userId: req.user.id,
+        tenderId: req.body.tenderId
+      });
+      
+      const isSaved = await storage.isTenderSaved(data.userId, data.tenderId);
+      if (isSaved) {
+        return res.status(400).json({ error: "Tender already saved" });
+      }
+      
+      const savedTender = await storage.saveTender(data);
+      
+      // إرسال إشعار للمستخدم عند حفظ مناقصة جديدة
+      const tender = await storage.getTender(data.tenderId);
+      if (tender) {
+        (global as any).sendNotification(
+          req.user.id,
+          'تم حفظ المناقصة',
+          `تم حفظ المناقصة "${tender.title}" بنجاح`,
+          'success',
+          { tenderId: tender.id }
+        );
+      }
+      
+      res.status(201).json(savedTender);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to save tender" });
+    }
+  });
+  
+  // إرسال إشعار عند تقديم طلب لمناقصة
+  const originalCreateApplication = app.post.bind(app, "/api/applications");
+  app._router.stack = app._router.stack.filter(layer => 
+    !(layer.route && layer.route.path === "/api/applications" && layer.route.methods.post)
+  );
+  
+  app.post("/api/applications", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      const data = insertApplicationSchema.parse({
+        ...req.body,
+        userId: req.user.id
+      });
+      
+      const application = await storage.createApplication(data);
+      
+      // إرسال إشعار للمستخدم عند تقديم طلب جديد
+      const tender = await storage.getTender(data.tenderId);
+      if (tender) {
+        (global as any).sendNotification(
+          req.user.id,
+          'تم تقديم الطلب',
+          `تم تقديم طلبك لمناقصة "${tender.title}" بنجاح`,
+          'success',
+          { applicationId: application.id, tenderId: tender.id }
+        );
+      }
+      
+      res.status(201).json(application);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create application" });
+    }
+  });
+  
+  // API لإرسال إشعار اختباري
+  app.post("/api/send-test-notification", (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
+    
+    const { title, message, type } = req.body;
+    
+    const sent = (global as any).sendNotification(
+      req.user.id,
+      title || 'إشعار اختباري',
+      message || 'هذا إشعار اختباري من النظام',
+      type || 'info'
+    );
+    
+    if (sent) {
+      res.json({ success: true, message: 'تم إرسال الإشعار بنجاح' });
+    } else {
+      res.status(400).json({ success: false, message: 'فشل إرسال الإشعار. لا توجد اتصالات نشطة للمستخدم.' });
+    }
+  });
+  
   return httpServer;
 }

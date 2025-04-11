@@ -42,13 +42,13 @@ export default function RecommendedTenders({ loading, tenders }: RecommendedTend
       queryClient.invalidateQueries({ queryKey: [`/api/is-tender-saved/${tenderId}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/saved-tenders"] });
       toast({
-        title: "Tender saved",
-        description: "The tender has been added to your saved list",
+        title: "تم حفظ المناقصة",
+        description: "تمت إضافة المناقصة إلى قائمة المحفوظات الخاصة بك",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Failed to save tender",
+        title: "فشل في حفظ المناقصة",
         description: error.message,
         variant: "destructive",
       });
@@ -63,7 +63,7 @@ export default function RecommendedTenders({ loading, tenders }: RecommendedTend
       <section className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <Skeleton className="h-6 w-48" />
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 space-x-reverse">
             <Skeleton className="h-9 w-32" />
             <Skeleton className="h-9 w-32" />
           </div>
@@ -92,30 +92,30 @@ export default function RecommendedTenders({ loading, tenders }: RecommendedTend
   return (
     <section className="mb-8">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">Recommended Tenders</h2>
-        <div className="flex items-center space-x-2">
+        <h2 className="text-lg font-semibold text-gray-900">المناقصات الموصى بها</h2>
+        <div className="flex items-center space-x-2 space-x-reverse">
           <div className="relative">
-            <select className="pl-3 pr-8 py-1.5 bg-white border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 appearance-none">
-              <option>All Categories</option>
-              <option>IT Services</option>
-              <option>Construction</option>
-              <option>Consulting</option>
-              <option>Healthcare</option>
+            <select className="pr-3 pl-8 py-1.5 bg-white border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 appearance-none">
+              <option>جميع الفئات</option>
+              <option>خدمات تكنولوجيا المعلومات</option>
+              <option>البناء والإنشاءات</option>
+              <option>الاستشارات</option>
+              <option>الرعاية الصحية</option>
             </select>
-            <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
               <svg className="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
               </svg>
             </div>
           </div>
           <div className="relative">
-            <select className="pl-3 pr-8 py-1.5 bg-white border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 appearance-none">
-              <option>Sort by: Match Score</option>
-              <option>Deadline (Earliest)</option>
-              <option>Value (Highest)</option>
-              <option>Recently Added</option>
+            <select className="pr-3 pl-8 py-1.5 bg-white border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 appearance-none">
+              <option>ترتيب حسب: نسبة التطابق</option>
+              <option>الموعد النهائي (الأقرب)</option>
+              <option>القيمة (الأعلى)</option>
+              <option>المضافة حديثًا</option>
             </select>
-            <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
               <svg className="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
               </svg>
@@ -133,8 +133,8 @@ export default function RecommendedTenders({ loading, tenders }: RecommendedTend
           return (
             <div key={tender.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200">
               <div className="relative">
-                <div className="absolute top-0 right-0 bg-primary-600 text-white text-xs font-bold px-2 py-1 rounded-bl-md">
-                  {matchScore}% Match
+                <div className="absolute top-0 left-0 bg-primary-600 text-white text-xs font-bold px-2 py-1 rounded-br-md">
+                  تطابق {matchScore}%
                 </div>
                 <div className="p-4">
                   <div className="flex justify-between items-start">
@@ -151,12 +151,12 @@ export default function RecommendedTenders({ loading, tenders }: RecommendedTend
                   </div>
                   <div className="mt-3 flex items-center text-xs text-gray-500">
                     <span className="flex items-center">
-                      <MapPin className="h-3 w-3 mr-1" />
+                      <MapPin className="h-3 w-3 ml-1" />
                       {tender.location}
                     </span>
                     <span className="mx-2">•</span>
                     <span className="flex items-center">
-                      <Tag className="h-3 w-3 mr-1" />
+                      <Tag className="h-3 w-3 ml-1" />
                       {tender.category}
                     </span>
                   </div>
@@ -164,7 +164,7 @@ export default function RecommendedTenders({ loading, tenders }: RecommendedTend
                 <div className="px-4 pb-2">
                   <div className="flex items-center justify-between text-sm">
                     <div>
-                      <span className="font-medium text-gray-700">Value:</span>
+                      <span className="font-medium text-gray-700">القيمة:</span>
                       <span className="text-gray-900">${Number(tender.valueMin).toLocaleString()} - ${Number(tender.valueMax).toLocaleString()}</span>
                     </div>
                   </div>
@@ -172,12 +172,12 @@ export default function RecommendedTenders({ loading, tenders }: RecommendedTend
                 <div className="px-4 pb-3">
                   <div className="flex items-center justify-between text-sm">
                     <div className={`flex items-center ${deadlineClass}`}>
-                      <Clock className="h-3 w-3 mr-1" />
-                      <span>Deadline: {daysRemaining} days left</span>
+                      <Clock className="h-3 w-3 ml-1" />
+                      <span>الموعد النهائي: متبقي {daysRemaining} يوم</span>
                     </div>
                     <div>
                       <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                        {tender.status.charAt(0).toUpperCase() + tender.status.slice(1)}
+                        {tender.status === 'open' ? 'مفتوح' : tender.status === 'closed' ? 'مغلق' : tender.status}
                       </span>
                     </div>
                   </div>
@@ -187,13 +187,13 @@ export default function RecommendedTenders({ loading, tenders }: RecommendedTend
                     className="text-sm text-primary-600 font-medium hover:text-primary-700"
                     onClick={() => setLocation(`/tenders/${tender.id}`)}
                   >
-                    View Details
+                    عرض التفاصيل
                   </button>
                   <button 
                     className="px-3 py-1 bg-primary-600 text-white text-sm rounded hover:bg-primary-700 transition-colors duration-150"
                     onClick={() => setLocation(`/tenders/${tender.id}`)}
                   >
-                    Apply Now
+                    تقديم طلب
                   </button>
                 </div>
               </div>
@@ -207,7 +207,7 @@ export default function RecommendedTenders({ loading, tenders }: RecommendedTend
           variant="outline"
           onClick={() => setLocation("/tenders")}
         >
-          View All Recommended Tenders
+          عرض كل المناقصات الموصى بها
         </Button>
       </div>
     </section>

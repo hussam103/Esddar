@@ -26,7 +26,7 @@ export default function UpcomingDeadlines({ loading, applications, tenders }: Up
 
   // Format month name
   const formatMonth = (date: Date): string => {
-    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    return date.toLocaleDateString('ar-SA', { month: 'long', year: 'numeric' });
   };
 
   // Find tenders with upcoming deadlines
@@ -49,7 +49,7 @@ export default function UpcomingDeadlines({ loading, applications, tenders }: Up
     const deadlineDate = new Date(date);
     return {
       day: deadlineDate.getDate(),
-      month: deadlineDate.toLocaleDateString('en-US', { month: 'short' })
+      month: deadlineDate.toLocaleDateString('ar-SA', { month: 'short' })
     };
   };
 
@@ -146,9 +146,9 @@ export default function UpcomingDeadlines({ loading, applications, tenders }: Up
   return (
     <section className="mt-8 mb-8">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">Upcoming Deadlines</h2>
+        <h2 className="text-lg font-semibold text-gray-900">المواعيد النهائية القادمة</h2>
         <button className="text-sm text-primary-600 font-medium hover:text-primary-700">
-          View Calendar
+          عرض التقويم
         </button>
       </div>
       
@@ -157,13 +157,13 @@ export default function UpcomingDeadlines({ loading, applications, tenders }: Up
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <div className="text-center font-medium text-gray-800 mb-4">{formatMonth(currentMonth)}</div>
           <div className="grid grid-cols-7 gap-1">
-            <div className="text-center text-xs text-gray-500 py-1">Su</div>
-            <div className="text-center text-xs text-gray-500 py-1">Mo</div>
-            <div className="text-center text-xs text-gray-500 py-1">Tu</div>
-            <div className="text-center text-xs text-gray-500 py-1">We</div>
-            <div className="text-center text-xs text-gray-500 py-1">Th</div>
-            <div className="text-center text-xs text-gray-500 py-1">Fr</div>
-            <div className="text-center text-xs text-gray-500 py-1">Sa</div>
+            <div className="text-center text-xs text-gray-500 py-1">أحد</div>
+            <div className="text-center text-xs text-gray-500 py-1">إثن</div>
+            <div className="text-center text-xs text-gray-500 py-1">ثلا</div>
+            <div className="text-center text-xs text-gray-500 py-1">أرب</div>
+            <div className="text-center text-xs text-gray-500 py-1">خمي</div>
+            <div className="text-center text-xs text-gray-500 py-1">جمع</div>
+            <div className="text-center text-xs text-gray-500 py-1">سبت</div>
             
             {/* Previous month days */}
             {calendar.prevMonthDays.map((day, index) => (
@@ -192,14 +192,14 @@ export default function UpcomingDeadlines({ loading, applications, tenders }: Up
             ))}
           </div>
           
-          <div className="mt-4 text-xs flex space-x-4">
+          <div className="mt-4 text-xs flex space-x-4 space-x-reverse">
             <div className="flex items-center">
-              <div className="w-3 h-3 bg-red-100 rounded mr-1"></div>
-              <span>Deadline</span>
+              <div className="w-3 h-3 bg-red-100 rounded ml-1"></div>
+              <span>الموعد النهائي</span>
             </div>
             <div className="flex items-center">
-              <div className="w-3 h-3 bg-gray-100 rounded mr-1"></div>
-              <span>Today</span>
+              <div className="w-3 h-3 bg-gray-100 rounded ml-1"></div>
+              <span>اليوم</span>
             </div>
           </div>
         </div>
@@ -207,7 +207,7 @@ export default function UpcomingDeadlines({ loading, applications, tenders }: Up
         {/* Right Column: Deadline List */}
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-200 font-medium">
-            Next 7 Days
+            الأيام السبعة القادمة
           </div>
           <div className="divide-y divide-gray-200">
             {upcomingDeadlines.length > 0 ? (
@@ -218,26 +218,26 @@ export default function UpcomingDeadlines({ loading, applications, tenders }: Up
                 
                 return (
                   <div key={tender.id} className="p-4 flex items-start">
-                    <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-red-100 text-red-800 rounded mr-3">
+                    <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-red-100 text-red-800 rounded ml-3">
                       <span className="text-sm font-medium">{day}</span>
                     </div>
                     <div className="flex-1">
                       <div className="font-medium">{tender.title}</div>
                       <div className="text-sm text-gray-600">{tender.agency}</div>
-                      <div className={`mt-1 text-xs ${deadlineClass}`}>Due in {daysRemaining} days</div>
+                      <div className={`mt-1 text-xs ${deadlineClass}`}>متبقي {daysRemaining} يوم</div>
                     </div>
                     <Button 
                       size="sm"
                       onClick={() => setLocation(`/tenders/${tender.id}`)}
                     >
-                      Review
+                      مراجعة
                     </Button>
                   </div>
                 );
               })
             ) : (
               <div className="p-6 text-center text-gray-500">
-                No upcoming deadlines in the next 7 days
+                لا توجد مواعيد نهائية في الأيام السبعة القادمة
               </div>
             )}
           </div>

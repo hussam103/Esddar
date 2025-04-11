@@ -7,7 +7,23 @@ import MatchingScore from "@/components/dashboard/matching-score";
 import RecommendedTenders from "@/components/dashboard/recommended-tenders";
 import ActiveApplications from "@/components/dashboard/active-applications";
 import UpcomingDeadlines from "@/components/dashboard/upcoming-deadlines";
-import { Tender, Application, UserProfile } from "@shared/schema";
+import { Tender, UserProfile } from "@shared/schema";
+
+// Define a custom Application type that matches what components expect
+type ApplicationWithUndefinedDate = {
+  id: number;
+  tenderId: number;
+  status: string;
+  submittedAt?: Date;
+  tender?: {
+    title: string;
+    agency: string;
+    bidNumber: string;
+  };
+  userId: number;
+  proposalContent?: string;
+  documents?: unknown;
+};
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -24,9 +40,16 @@ export default function Dashboard() {
   });
 
   // Fetch applications
-  const { data: applications = [], isLoading: applicationsLoading } = useQuery<Application[]>({
+  const { data: fetchedApplications = [], isLoading: applicationsLoading } = useQuery<any[]>({
     queryKey: ["/api/applications"],
   });
+
+  // Transform null submittedAt to undefined to match the expected type
+  const applications: ApplicationWithUndefinedDate[] = fetchedApplications.map(app => ({
+    ...app,
+    submittedAt: app.submittedAt || undefined,
+    proposalContent: app.proposalContent || undefined
+  }));
 
   // Toggle mobile menu
   const toggleMobileMenu = () => {

@@ -26,10 +26,11 @@ type SidebarProps = {
 
 export default function Sidebar({ mobileMenuOpen, closeMobileMenu, activePage = "/" }: SidebarProps) {
   const { user, logoutMutation } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [location] = useLocation();
   const isAdmin = user?.role === 'admin';
   const [collapsed, setCollapsed] = useState(false);
+  const isRTL = language === 'ar';
 
   const navItems = [
     { path: "/dashboard", label: t("nav.dashboard"), icon: Home },
@@ -58,7 +59,8 @@ export default function Sidebar({ mobileMenuOpen, closeMobileMenu, activePage = 
   };
 
   const sidebarClassName = cn(
-    "bg-white border-r border-gray-200 md:h-screen md:sticky md:top-0",
+    "bg-white md:h-screen md:sticky md:top-0",
+    isRTL ? "border-l border-gray-200" : "border-r border-gray-200",
     "transition-all duration-300 ease-in-out",
     collapsed ? "md:w-20" : "md:w-64",
     "w-full",
@@ -66,11 +68,11 @@ export default function Sidebar({ mobileMenuOpen, closeMobileMenu, activePage = 
   );
 
   return (
-    <aside className={sidebarClassName} dir="ltr">
+    <aside className={sidebarClassName} dir={isRTL ? "rtl" : "ltr"}>
       <div className="p-4 flex justify-between items-center">
-        <div className="flex items-center space-x-2">
+        <div className={`flex items-center ${isRTL ? 'space-x-2 space-x-reverse' : 'space-x-2'}`}>
           <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
-            <span className="text-white font-bold text-lg">E</span>
+            <span className="text-white font-bold text-lg">{isRTL ? "إ" : "E"}</span>
           </div>
           {!collapsed && <span className="text-xl font-bold text-gray-900">{t("app.name")}</span>}
         </div>
@@ -80,12 +82,12 @@ export default function Sidebar({ mobileMenuOpen, closeMobileMenu, activePage = 
             onClick={() => setCollapsed(!collapsed)}
           >
             {collapsed ? (
-              <ChevronRight className="h-5 w-5" />
+              isRTL ? <ChevronLeft className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />
             ) : (
-              <ChevronLeft className="h-5 w-5" />
+              isRTL ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />
             )}
           </button>
-          <button className="md:hidden ml-2" onClick={closeMobileMenu}>
+          <button className={`md:hidden ${isRTL ? 'mr-2' : 'ml-2'}`} onClick={closeMobileMenu}>
             <X className="h-6 w-6 text-gray-600" />
           </button>
         </div>
@@ -104,7 +106,11 @@ export default function Sidebar({ mobileMenuOpen, closeMobileMenu, activePage = 
                     <a
                       className={cn(
                         "flex items-center px-3 py-2 rounded-md transition-colors duration-150",
-                        collapsed ? "justify-center" : "space-x-3",
+                        collapsed 
+                          ? "justify-center" 
+                          : isRTL 
+                            ? "space-x-3 space-x-reverse" 
+                            : "space-x-3",
                         isActive
                           ? "bg-primary-50 text-primary-700 font-medium"
                           : "text-gray-600 hover:bg-gray-100"
@@ -133,7 +139,7 @@ export default function Sidebar({ mobileMenuOpen, closeMobileMenu, activePage = 
                 {getCompanyInitials(user.companyName)}
               </div>
               {!collapsed && (
-                <div className="ml-2">
+                <div className={isRTL ? "mr-2" : "ml-2"}>
                   <div className="text-sm font-medium">{user.companyName}</div>
                   <div className="text-xs text-gray-500">{user.industry || t("settings.profile")}</div>
                 </div>

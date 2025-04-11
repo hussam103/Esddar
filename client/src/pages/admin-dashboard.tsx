@@ -454,7 +454,7 @@ export default function AdminDashboard() {
 
   // We already have useLocation defined above, just need to get logoutMutation and t
   const { logoutMutation } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   return (
     <div className="container mx-auto py-8">

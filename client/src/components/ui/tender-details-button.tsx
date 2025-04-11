@@ -11,11 +11,11 @@ type TenderDetailsButtonProps = {
  */
 export function TenderDetailsButton({ tenderId, className = "" }: TenderDetailsButtonProps) {
   const [, setLocation] = useLocation();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   
   return (
     <button 
-      className={`text-sm text-primary-600 font-medium hover:text-primary-700 rtl:text-right whitespace-nowrap ${className}`}
+      className={`text-sm text-primary-600 font-medium hover:text-primary-700 rtl:text-right whitespace-nowrap min-w-[95px] inline-flex ${language === "ar" ? "justify-end" : "justify-start"} ${className}`}
       onClick={() => setLocation(`/tenders/${tenderId}`)}
     >
       {t("tenders.viewDetails")}

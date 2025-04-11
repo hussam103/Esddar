@@ -35,7 +35,9 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
   };
 
   // Format currency with SAR
-  const formatCurrency = (value: string): string => {
+  const formatCurrency = (value: string | null | undefined): string => {
+    if (!value) return "غير محدد";
+    
     const num = Number(value);
     if (isNaN(num)) return "غير محدد";
     if (num === 0) return "غير محدد";

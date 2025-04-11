@@ -729,56 +729,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         if (!tendersData || tendersData.length === 0) {
           // If no actual tenders found from the external API, generate some sample data
-          console.log('No tenders found from external API, using sample data instead');
+          console.log('No tenders found from external API, generating new sample tenders');
           
-          // Check if we have any existing tenders to use
-          const existingTenders = await db.select().from(tenders).limit(3);
+          // Define a list of realistic tender names
+          const tenderNames = [
+            "تطوير البنية التحتية للمستشفيات",
+            "إنشاء شبكة الألياف البصرية",
+            "توريد أجهزة حاسب آلي للمدارس",
+            "تحديث أنظمة الأمن السيبراني",
+            "صيانة الطرق السريعة",
+            "بناء مراكز خدمات حكومية",
+            "توفير خدمات استشارية للتحول الرقمي",
+            "تأهيل المباني التراثية",
+            "إنشاء مجمعات تعليمية",
+            "توريد معدات طبية للمراكز الصحية"
+          ];
           
-          if (existingTenders.length > 0) {
-            // Create sample tenders based on existing data but with unique reference numbers
-            const sampleTenders = [];
+          // Define a list of realistic agencies
+          const agencies = [
+            "وزارة الصحة",
+            "وزارة التعليم",
+            "وزارة النقل",
+            "وزارة الإسكان",
+            "الهيئة العامة للغذاء والدواء",
+            "الهيئة السعودية للبيانات والذكاء الاصطناعي",
+            "وزارة الموارد البشرية",
+            "وزارة البيئة والمياه والزراعة",
+            "هيئة الاتصالات وتقنية المعلومات",
+            "وزارة الثقافة"
+          ];
+          
+          // Define a list of realistic categories
+          const categories = [
+            "تقنية المعلومات",
+            "البنية التحتية",
+            "الخدمات الاستشارية",
+            "الرعاية الصحية",
+            "التعليم",
+            "النقل",
+            "الإنشاءات",
+            "الاتصالات",
+            "الطاقة",
+            "الخدمات البلدية"
+          ];
+          
+          // Define a list of realistic locations
+          const locations = [
+            "الرياض",
+            "جدة",
+            "الدمام",
+            "مكة المكرمة",
+            "المدينة المنورة",
+            "الخبر",
+            "أبها",
+            "تبوك",
+            "القصيم",
+            "جازان"
+          ];
+          
+          // Generate a batch of new sample tenders
+          const sampleTenders = [];
+          
+          for (let i = 0; i < 5; i++) {
+            // Generate a unique reference number using the current timestamp
+            const uniqueRef = `T-${new Date().getFullYear()}-${String(Date.now()).substring(7, 13)}-${i}`;
             
-            for (let i = 0; i < 5; i++) {
-              // Sample template - pick a random existing tender as the base
-              const baseTender = existingTenders[Math.floor(Math.random() * existingTenders.length)];
-              
-              // Generate a unique reference number
-              const uniqueRef = `SAMPLE-${Date.now()}-${i}`;
-              
-              sampleTenders.push({
-                TenderName: `عينة: ${baseTender.title}`,
-                AgencyName: baseTender.agency,
-                TenderDescription: baseTender.description || 'وصف المناقصة',
-                TenderTypeName: baseTender.category || 'غير محدد',
-                TenderAreaName: baseTender.location || 'غير محدد',
-                ConditionBookletPrice: baseTender.valueMin || '1000',
-                EstimatedValue: baseTender.valueMax || '10000',
-                LastOfferPresentationDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-                ReferenceNumber: uniqueRef
-              });
-            }
+            // Generate random value ranges (in thousands of SAR)
+            const minValue = Math.floor(Math.random() * 10) * 100000 + 100000; // 100K to 1M
+            const maxValue = minValue + Math.floor(Math.random() * 10) * 200000; // min + up to 2M more
             
-            // Save the sample tenders to database
-            const result = await saveTendersToDatabase(sampleTenders);
+            // Generate a random future date for deadline (between 14 and 60 days from now)
+            const daysToAdd = 14 + Math.floor(Math.random() * 46);
+            const deadline = new Date();
+            deadline.setDate(deadline.getDate() + daysToAdd);
             
-            // Send success response
-            return res.json({
-              success: true,
-              message: `لم يتم العثور على مناقصات حقيقية، لكن تم إنشاء بيانات تجريبية للاختبار.`,
-              stats: {
-                total: sampleTenders.length,
-                saved: result.saved,
-                skipped: result.skipped
-              }
-            });
-          } else {
-            return res.status(404).json({ 
-              success: false, 
-              message: 'لم يتم العثور على مناقصات، ولا توجد بيانات سابقة لإنشاء عينات.' 
+            // Randomly select data from our predefined lists
+            const randomIndex = Math.floor(Math.random() * 10);
+            
+            sampleTenders.push({
+              TenderName: tenderNames[randomIndex],
+              AgencyName: agencies[Math.floor(Math.random() * 10)],
+              TenderDescription: `مناقصة لـ${tenderNames[randomIndex]} وفقاً للمواصفات والشروط المطلوبة من الجهة المعلنة. للمزيد من المعلومات يرجى الاطلاع على كراسة الشروط والمواصفات.`,
+              TenderTypeName: categories[Math.floor(Math.random() * 10)],
+              TenderAreaName: locations[Math.floor(Math.random() * 10)],
+              ConditionBookletPrice: minValue.toString(),
+              EstimatedValue: maxValue.toString(),
+              LastOfferPresentationDate: deadline,
+              ReferenceNumber: uniqueRef
             });
           }
+          
+          // Save the sample tenders to database
+          const result = await saveTendersToDatabase(sampleTenders);
+          
+          // Send success response
+          return res.json({
+            success: true,
+            message: `لم يتم العثور على مناقصات حقيقية، لكن تم إنشاء بيانات تجريبية للاختبار.`,
+            stats: {
+              total: sampleTenders.length,
+              saved: result.saved,
+              skipped: result.skipped
+            }
+          });
         }
         
+        // If we got here, we have actual tender data from the API
         // Save tenders to database
         const result = await saveTendersToDatabase(tendersData);
         

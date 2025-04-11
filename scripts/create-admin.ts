@@ -24,7 +24,7 @@ async function main() {
     // Update admin password if it exists
     await db.update(users)
       .set({
-        password: await hashPassword('admin'),
+        password: await hashPassword('Hm@103037'),
         role: 'admin'
       })
       .where(eq(users.username, 'admin'));
@@ -34,7 +34,7 @@ async function main() {
     // Create admin user
     await db.insert(users).values({
       username: 'admin',
-      password: await hashPassword('admin'),
+      password: await hashPassword('Hm@103037'),
       companyName: 'System Administrator',
       role: 'admin',
       profileCompleteness: 100

@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/use-language";
+import { formatSAR } from "@/components/ui/currency";
 
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
@@ -309,7 +310,7 @@ export default function TenderDetailsPage() {
                       <div>
                         <p className="text-sm text-gray-500">{t("tenderDetails.value")}</p>
                         <p className="font-medium">
-                          ${Number(tender.valueMin).toLocaleString()} - ${Number(tender.valueMax).toLocaleString()}
+                          {formatSAR(Number(tender.valueMin))} - {formatSAR(Number(tender.valueMax))}
                         </p>
                       </div>
                     </div>
@@ -397,7 +398,7 @@ export default function TenderDetailsPage() {
                       <div>
                         <h3 className="font-medium mb-2">{t("tenderDetails.value")}</h3>
                         <p className="font-medium">
-                          ${Number(tender.valueMin).toLocaleString()} - ${Number(tender.valueMax).toLocaleString()}
+                          {formatSAR(Number(tender.valueMin))} - {formatSAR(Number(tender.valueMax))}
                         </p>
                       </div>
                       <div>

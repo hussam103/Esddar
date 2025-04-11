@@ -34,10 +34,8 @@ export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [, setLocation] = useLocation();
 
-  // Redirect if already logged in
-  if (user) {
-    return <Redirect to="/dashboard" />;
-  }
+  // نقوم بإعداد متغير للتحقق من تسجيل الدخول بدلاً من العودة المبكرة
+  const isLoggedIn = !!user;
 
   // Login form
   const loginForm = useForm<LoginFormValues>({
@@ -69,6 +67,11 @@ export default function AuthPage() {
     const { confirmPassword, ...userData } = data;
     registerMutation.mutate(userData);
   };
+
+  // قم بالتحقق من تسجيل الدخول في البداية وإعادة التوجيه إلى لوحة التحكم إذا كان المستخدم مسجلاً بالفعل
+  if (isLoggedIn) {
+    return <Redirect to="/dashboard" />;
+  }
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: "#f9fafb" }}>

@@ -400,34 +400,59 @@ export default function SettingsPage() {
                         </div>
                         
                         <div>
-                          <label className="text-sm font-medium">البريد الإلكتروني</label>
-                          <Input placeholder="أضف البريد الإلكتروني" className="mt-1" />
+                          <label className="text-sm font-medium">
+                            {language === "ar" ? "البريد الإلكتروني" : "Email"}
+                          </label>
+                          <Input 
+                            placeholder={language === "ar" ? "أضف البريد الإلكتروني" : "Add your email"} 
+                            className="mt-1" 
+                          />
                         </div>
                       </div>
                     </div>
                   </div>
                   
                   <div>
-                    <h3 className="text-sm font-medium mb-3">كلمة المرور</h3>
+                    <h3 className="text-sm font-medium mb-3">
+                      {language === "ar" ? "كلمة المرور" : "Password"}
+                    </h3>
                     <Separator className="mb-4" />
                     
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="text-sm font-medium">كلمة المرور الحالية</label>
-                          <Input type="password" placeholder="أدخل كلمة المرور الحالية" className="mt-1" />
+                          <label className="text-sm font-medium">
+                            {language === "ar" ? "كلمة المرور الحالية" : "Current Password"}
+                          </label>
+                          <Input 
+                            type="password" 
+                            placeholder={language === "ar" ? "أدخل كلمة المرور الحالية" : "Enter current password"} 
+                            className="mt-1" 
+                          />
                         </div>
                         
                         <div />
                         
                         <div>
-                          <label className="text-sm font-medium">كلمة المرور الجديدة</label>
-                          <Input type="password" placeholder="أدخل كلمة المرور الجديدة" className="mt-1" />
+                          <label className="text-sm font-medium">
+                            {language === "ar" ? "كلمة المرور الجديدة" : "New Password"}
+                          </label>
+                          <Input 
+                            type="password" 
+                            placeholder={language === "ar" ? "أدخل كلمة المرور الجديدة" : "Enter new password"} 
+                            className="mt-1" 
+                          />
                         </div>
                         
                         <div>
-                          <label className="text-sm font-medium">تأكيد كلمة المرور الجديدة</label>
-                          <Input type="password" placeholder="تأكيد كلمة المرور الجديدة" className="mt-1" />
+                          <label className="text-sm font-medium">
+                            {language === "ar" ? "تأكيد كلمة المرور الجديدة" : "Confirm New Password"}
+                          </label>
+                          <Input 
+                            type="password" 
+                            placeholder={language === "ar" ? "تأكيد كلمة المرور الجديدة" : "Confirm new password"} 
+                            className="mt-1" 
+                          />
                         </div>
                       </div>
                     </div>
@@ -435,9 +460,11 @@ export default function SettingsPage() {
                 </CardContent>
                 <CardFooter className="flex justify-between">
                   <Button variant="outline" className="text-red-600 hover:text-red-700 hover:bg-red-50">
-                    حذف الحساب
+                    {language === "ar" ? "حذف الحساب" : "Delete Account"}
                   </Button>
-                  <Button>تحديث الحساب</Button>
+                  <Button>
+                    {language === "ar" ? "تحديث الحساب" : "Update Account"}
+                  </Button>
                 </CardFooter>
               </Card>
             </TabsContent>

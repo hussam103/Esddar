@@ -67,7 +67,15 @@ export async function saveUploadedFile(
     const uploadDir = path.join(process.cwd(), 'uploads', 'temp');
     const filePath = path.join(uploadDir, `${documentId}${fileExt}`);
     
-    // Write file to disk
+    // Write file to disk from memory buffer
+    if (!file.buffer) {
+      throw new Error('File buffer is missing');
+    }
+    
+    // Ensure directory exists
+    await fsPromises.mkdir(uploadDir, { recursive: true });
+    
+    console.log(`Writing file to: ${filePath} with buffer size: ${file.buffer.length}`);
     await fsPromises.writeFile(filePath, file.buffer);
     
     // Create document record in database
@@ -81,6 +89,8 @@ export async function saveUploadedFile(
       status: 'pending',
       uploadedAt: new Date()
     });
+    
+    console.log(`Created document in database: ${document.documentId}`);
     
     // Store job status
     processingJobs.set(documentId, {

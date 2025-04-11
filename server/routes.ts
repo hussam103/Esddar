@@ -408,6 +408,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           mimetype: req.file.mimetype
         });
         
+        // Ensure user exists
+        if (!req.user || !req.user.id) {
+          return res.status(401).json({ error: "User not authenticated" });
+        }
+        
         const documentId = await saveUploadedFile(req.file, req.user.id);
         
         res.status(201).json({ 
@@ -424,11 +429,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           'info',
           { documentId }
         );
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error uploading document:', error);
         res.status(500).json({ 
           error: "Failed to upload document",
-          message: error.message
+          message: error.message || 'Unknown error occurred'
         });
       }
     }
@@ -464,11 +469,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: 'processing',
           message: "Document processing started"
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error starting document processing:', error);
         res.status(500).json({ 
           error: "Failed to process document",
-          message: error.message
+          message: error.message || 'Unknown error occurred'
         });
       }
     }
@@ -514,11 +519,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: document.status,
           message: document.errorMessage || 'Document is being processed'
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error checking document status:', error);
         res.status(500).json({ 
           error: "Failed to check document status",
-          message: error.message
+          message: error.message || 'Unknown error occurred'
         });
       }
     }
@@ -533,11 +538,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const documents = await storage.getCompanyDocumentsByUser(req.user.id);
         res.json(documents);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching user documents:', error);
         res.status(500).json({ 
           error: "Failed to fetch user documents",
-          message: error.message
+          message: error.message || 'Unknown error occurred'
         });
       }
     }

@@ -530,7 +530,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/scrape-tenders", async (req, res) => {
     // Check if user is authenticated and is an admin
     if (!req.isAuthenticated()) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ 
+        success: false, 
+        message: "لم يتم التعرف على المستخدم" 
+      });
+    }
+    
+    // Check if the user is an admin (ID 1)
+    if (req.user.id !== 1) {
+      return res.status(403).json({
+        success: false, 
+        message: "ليس لديك الصلاحيات الكافية للقيام بهذا الإجراء"
+      });
     }
     
     try {
@@ -702,7 +713,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               deadline: new Date(tender.LastOfferPresentationDate),
               status: 'open',
               requirements: tender.TenderDescription || '',
-              bidNumber: tender.ReferenceNumber
+              bidNumber: tender.ReferenceNumber,
+              // Add the Etimad IdString as etimadId for direct linking
+              etimadId: tender.IdString || null,
+              // Set source to 'etimad' for tenders from Etimad platform
+              source: 'etimad'
             };
             
             // Insert the tender into the database

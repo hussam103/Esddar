@@ -28,7 +28,10 @@ export default function UpcomingDeadlines({ loading, applications, tenders }: Up
 
   // Format month name
   const formatMonth = (date: Date): string => {
-    return date.toLocaleDateString('ar-SA', { month: 'long', year: 'numeric' });
+    return date.toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', { 
+      month: 'long', 
+      year: 'numeric' 
+    });
   };
 
   // Find tenders with upcoming deadlines
@@ -51,7 +54,7 @@ export default function UpcomingDeadlines({ loading, applications, tenders }: Up
     const deadlineDate = new Date(date);
     return {
       day: deadlineDate.getDate(),
-      month: deadlineDate.toLocaleDateString('ar-SA', { month: 'short' })
+      month: deadlineDate.toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', { month: 'short' })
     };
   };
 
@@ -148,9 +151,11 @@ export default function UpcomingDeadlines({ loading, applications, tenders }: Up
   return (
     <section className="mt-8 mb-8">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">المواعيد النهائية القادمة</h2>
+        <h2 className="text-lg font-semibold text-gray-900">
+          {language === "ar" ? "المواعيد النهائية القادمة" : "Upcoming Deadlines"}
+        </h2>
         <button className="text-sm text-primary-600 font-medium hover:text-primary-700">
-          عرض التقويم
+          {language === "ar" ? "عرض التقويم" : "View Calendar"}
         </button>
       </div>
       
@@ -159,13 +164,27 @@ export default function UpcomingDeadlines({ loading, applications, tenders }: Up
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <div className="text-center font-medium text-gray-800 mb-4">{formatMonth(currentMonth)}</div>
           <div className="grid grid-cols-7 gap-1">
-            <div className="text-center text-xs text-gray-500 py-1">أحد</div>
-            <div className="text-center text-xs text-gray-500 py-1">إثن</div>
-            <div className="text-center text-xs text-gray-500 py-1">ثلا</div>
-            <div className="text-center text-xs text-gray-500 py-1">أرب</div>
-            <div className="text-center text-xs text-gray-500 py-1">خمي</div>
-            <div className="text-center text-xs text-gray-500 py-1">جمع</div>
-            <div className="text-center text-xs text-gray-500 py-1">سبت</div>
+            <div className="text-center text-xs text-gray-500 py-1">
+              {language === "ar" ? "أحد" : "Sun"}
+            </div>
+            <div className="text-center text-xs text-gray-500 py-1">
+              {language === "ar" ? "إثن" : "Mon"}
+            </div>
+            <div className="text-center text-xs text-gray-500 py-1">
+              {language === "ar" ? "ثلا" : "Tue"}
+            </div>
+            <div className="text-center text-xs text-gray-500 py-1">
+              {language === "ar" ? "أرب" : "Wed"}
+            </div>
+            <div className="text-center text-xs text-gray-500 py-1">
+              {language === "ar" ? "خمي" : "Thu"}
+            </div>
+            <div className="text-center text-xs text-gray-500 py-1">
+              {language === "ar" ? "جمع" : "Fri"}
+            </div>
+            <div className="text-center text-xs text-gray-500 py-1">
+              {language === "ar" ? "سبت" : "Sat"}
+            </div>
             
             {/* Previous month days */}
             {calendar.prevMonthDays.map((day, index) => (
@@ -194,14 +213,14 @@ export default function UpcomingDeadlines({ loading, applications, tenders }: Up
             ))}
           </div>
           
-          <div className="mt-4 text-xs flex space-x-4 space-x-reverse">
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-red-100 rounded ml-1"></div>
-              <span>الموعد النهائي</span>
+          <div className={`mt-4 text-xs flex space-x-4 ${language === "ar" ? "space-x-reverse" : ""}`}>
+            <div className={`flex items-center ${language === "ar" ? "" : "flex-row-reverse space-x-1 space-x-reverse"}`}>
+              <div className={`w-3 h-3 bg-red-100 rounded ${language === "ar" ? "ml-1" : "mr-1"}`}></div>
+              <span>{language === "ar" ? "الموعد النهائي" : "Deadline"}</span>
             </div>
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-gray-100 rounded ml-1"></div>
-              <span>اليوم</span>
+            <div className={`flex items-center ${language === "ar" ? "" : "flex-row-reverse space-x-1 space-x-reverse"}`}>
+              <div className={`w-3 h-3 bg-gray-100 rounded ${language === "ar" ? "ml-1" : "mr-1"}`}></div>
+              <span>{language === "ar" ? "اليوم" : "Today"}</span>
             </div>
           </div>
         </div>
@@ -209,7 +228,7 @@ export default function UpcomingDeadlines({ loading, applications, tenders }: Up
         {/* Right Column: Deadline List */}
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-200 font-medium">
-            الأيام السبعة القادمة
+            {language === "ar" ? "الأيام السبعة القادمة" : "Next Seven Days"}
           </div>
           <div className="divide-y divide-gray-200">
             {upcomingDeadlines.length > 0 ? (
@@ -226,20 +245,28 @@ export default function UpcomingDeadlines({ loading, applications, tenders }: Up
                     <div className="flex-1">
                       <div className="font-medium">{tender.title}</div>
                       <div className="text-sm text-gray-600">{tender.agency}</div>
-                      <div className={`mt-1 text-xs ${deadlineClass}`}>متبقي {daysRemaining} يوم</div>
+                      <div className={`mt-1 text-xs ${deadlineClass}`}>
+                        {language === "ar" 
+                          ? `متبقي ${daysRemaining} يوم` 
+                          : `${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} remaining`
+                        }
+                      </div>
                     </div>
                     <Button 
                       size="sm"
                       onClick={() => setLocation(`/tenders/${tender.id}`)}
                     >
-                      مراجعة
+                      {language === "ar" ? "مراجعة" : "Review"}
                     </Button>
                   </div>
                 );
               })
             ) : (
               <div className="p-6 text-center text-gray-500">
-                لا توجد مواعيد نهائية في الأيام السبعة القادمة
+                {language === "ar" 
+                  ? "لا توجد مواعيد نهائية في الأيام السبعة القادمة"
+                  : "No deadlines in the next seven days"
+                }
               </div>
             )}
           </div>

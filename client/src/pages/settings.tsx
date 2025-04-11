@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/hooks/use-language";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -31,6 +32,7 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function SettingsPage() {
   const { user } = useAuth();
+  const { language } = useLanguage();
   const { toast } = useToast();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -82,25 +84,36 @@ export default function SettingsPage() {
       
       <main className="flex-1 overflow-y-auto">
         <Header 
-          title="الإعدادات" 
-          subtitle="إدارة ملف الشركة والتفضيلات"
+          title={language === "ar" ? "الإعدادات" : "Settings"} 
+          subtitle={language === "ar" ? "إدارة ملف الشركة والتفضيلات" : "Manage company profile and preferences"}
           toggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
         />
         
         <div className="p-4 md:p-6 max-w-7xl mx-auto">
           <Tabs defaultValue="profile" className="space-y-4">
             <TabsList>
-              <TabsTrigger value="profile">ملف الشركة</TabsTrigger>
-              <TabsTrigger value="notifications">الإشعارات</TabsTrigger>
-              <TabsTrigger value="account">الحساب</TabsTrigger>
+              <TabsTrigger value="profile">
+                {language === "ar" ? "ملف الشركة" : "Company Profile"}
+              </TabsTrigger>
+              <TabsTrigger value="notifications">
+                {language === "ar" ? "الإشعارات" : "Notifications"}
+              </TabsTrigger>
+              <TabsTrigger value="account">
+                {language === "ar" ? "الحساب" : "Account"}
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="profile">
               <Card>
                 <CardHeader>
-                  <CardTitle>ملف الشركة</CardTitle>
+                  <CardTitle>
+                    {language === "ar" ? "ملف الشركة" : "Company Profile"}
+                  </CardTitle>
                   <CardDescription>
-                    تحديث معلومات شركتك لتحسين مطابقة المناقصات
+                    {language === "ar" 
+                      ? "تحديث معلومات شركتك لتحسين مطابقة المناقصات"
+                      : "Update your company information to improve tender matching"
+                    }
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -111,7 +124,7 @@ export default function SettingsPage() {
                         name="companyName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>اسم الشركة</FormLabel>
+                            <FormLabel>{language === "ar" ? "اسم الشركة" : "Company Name"}</FormLabel>
                             <FormControl>
                               <Input {...field} />
                             </FormControl>
@@ -216,9 +229,14 @@ export default function SettingsPage() {
             <TabsContent value="notifications">
               <Card>
                 <CardHeader>
-                  <CardTitle>تفضيلات الإشعارات</CardTitle>
+                  <CardTitle>
+                    {language === "ar" ? "تفضيلات الإشعارات" : "Notification Preferences"}
+                  </CardTitle>
                   <CardDescription>
-                    اختر متى وكيف ترغب في تلقي الإشعارات
+                    {language === "ar"
+                      ? "اختر متى وكيف ترغب في تلقي الإشعارات"
+                      : "Choose when and how you want to receive notifications"
+                    }
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -293,9 +311,14 @@ export default function SettingsPage() {
             <TabsContent value="account">
               <Card>
                 <CardHeader>
-                  <CardTitle>إعدادات الحساب</CardTitle>
+                  <CardTitle>
+                    {language === "ar" ? "إعدادات الحساب" : "Account Settings"}
+                  </CardTitle>
                   <CardDescription>
-                    إدارة معلومات حسابك والأمان
+                    {language === "ar"
+                      ? "إدارة معلومات حسابك والأمان"
+                      : "Manage your account information and security"
+                    }
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">

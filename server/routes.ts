@@ -794,8 +794,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
     
-    // Check if the user is an admin (ID 1)
-    if (req.user.id !== 1) {
+    // Check if the user is an admin
+    if (req.user.role !== 'admin') {
       return res.status(403).json({
         success: false, 
         message: "ليس لديك الصلاحيات الكافية للقيام بهذا الإجراء"
@@ -1043,8 +1043,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
     
-    // Check if the user is an admin (ID 1)
-    if (req.user.id !== 1) {
+    // Check if the user is an admin
+    if (req.user.role !== 'admin') {
       return res.status(403).json({
         success: false, 
         message: "ليس لديك الصلاحيات الكافية للقيام بهذا الإجراء"

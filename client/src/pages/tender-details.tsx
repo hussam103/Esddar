@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/hooks/use-language";
 
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
@@ -35,6 +36,7 @@ export default function TenderDetailsPage() {
   const tenderId = parseInt(id);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t, language } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [, setLocation] = useLocation();
 
@@ -155,7 +157,7 @@ export default function TenderDetailsPage() {
 
   // Format date for display
   const formatDate = (date: Date): string => {
-    return new Date(date).toLocaleDateString('en-US', {
+    return new Date(date).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
@@ -168,8 +170,8 @@ export default function TenderDetailsPage() {
         <Sidebar mobileMenuOpen={mobileMenuOpen} closeMobileMenu={() => setMobileMenuOpen(false)} />
         <main className="flex-1 overflow-y-auto">
           <Header 
-            title="Tender Details" 
-            subtitle="Loading tender information..."
+            title={t("tenderDetails.title")} 
+            subtitle={t("tenderDetails.loading")}
             toggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
           />
           <div className="p-4 md:p-6 flex justify-center items-center">
@@ -186,8 +188,8 @@ export default function TenderDetailsPage() {
         <Sidebar mobileMenuOpen={mobileMenuOpen} closeMobileMenu={() => setMobileMenuOpen(false)} />
         <main className="flex-1 overflow-y-auto">
           <Header 
-            title="Tender Not Found" 
-            subtitle="The requested tender could not be found"
+            title={t("tenderDetails.notFound")} 
+            subtitle={t("tenderDetails.notFoundDesc")}
             toggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
           />
           <div className="p-4 md:p-6 max-w-7xl mx-auto">
@@ -195,13 +197,13 @@ export default function TenderDetailsPage() {
               <CardContent className="pt-6">
                 <div className="flex mb-4 gap-2 text-destructive">
                   <AlertCircle className="h-8 w-8" />
-                  <h1 className="text-2xl font-bold">Tender Not Found</h1>
+                  <h1 className="text-2xl font-bold">{t("tenderDetails.notFound")}</h1>
                 </div>
                 <p className="mt-4 text-gray-600">
-                  The tender you're looking for doesn't exist or has been removed.
+                  {t("tenderDetails.notFoundMessage")}
                 </p>
                 <Button className="mt-6" onClick={() => setLocation("/tenders")}>
-                  Back to Tenders
+                  {t("tenderDetails.backToTenders")}
                 </Button>
               </CardContent>
             </Card>
@@ -228,7 +230,7 @@ export default function TenderDetailsPage() {
       
       <main className="flex-1 overflow-y-auto">
         <Header 
-          title="Tender Details" 
+          title={t("tenderDetails.title")} 
           subtitle={tender.title}
           toggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
         />

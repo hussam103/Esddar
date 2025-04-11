@@ -32,7 +32,7 @@ export default function TendersPage() {
   });
 
   // Filter tenders by category
-  const filteredTenders = category === "كل الفئات"
+  const filteredTenders = category === allCategoriesText
     ? tenders
     : tenders.filter(tender => tender.category === category);
 
@@ -61,16 +61,13 @@ export default function TendersPage() {
   const sortedTenders = [...filteredTenders].sort((a, b) => {
     switch (sortBy) {
       case deadlineClosestText:
-      case "الموعد النهائي (الأقرب)": // Fallback for compatibility
         return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
       case valueHighestText:
-      case "القيمة (الأعلى)": // Fallback for compatibility
         // If valueMax is not a valid number, use 0
         const aValue = Number(a.valueMax) || 0;
         const bValue = Number(b.valueMax) || 0;
         return bValue - aValue;
       case recentlyAddedText:
-      case "أضيف مؤخراً": // Fallback for compatibility
         // For this implementation, we'll use ID as a proxy for "recently added"
         // Higher ID means more recently added
         return b.id - a.id;

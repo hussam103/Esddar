@@ -71,12 +71,12 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex" style={{ backgroundColor: "#f9fafb" }}>
       {/* Left column with forms */}
-      <div className="flex-1 p-8 flex items-center justify-center">
-        <div className="w-full max-w-md">
-          <div className="mb-8 flex items-center space-x-2">
-            <div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center ml-2">
+      <div className="flex-1 p-8 flex items-center justify-center" style={{ backgroundColor: "#ffffff" }}>
+        <div className="w-full max-w-md" style={{ backgroundColor: "#ffffff" }}>
+          <div className="mb-8 flex items-center gap-2" dir="rtl">
+            <div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center">
               <span className="text-white font-bold text-xl">إ</span>
             </div>
             <span className="text-2xl font-bold text-gray-900">إصدار</span>
@@ -246,10 +246,10 @@ export default function AuthPage() {
       </div>
 
       {/* Right column with hero content */}
-      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-primary-600 to-primary-800 text-white p-12 flex-col justify-center" dir="rtl">
+      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-primary-600 to-primary-800 text-white p-12 flex-col justify-center shadow-lg" dir="rtl" style={{ backgroundColor: '#1e40af' }}>
         <div className="max-w-lg">
-          <h1 className="text-4xl font-bold mb-4">ابحث عن المناقصات الحكومية المثالية لشركتك</h1>
-          <p className="text-xl mb-6">تقوم منصة إصدار بمطابقة ملف شركتك مع العقود الحكومية ذات الصلة باستخدام توصيات مدعومة بالذكاء الاصطناعي.</p>
+          <h1 className="text-4xl font-bold mb-4 text-white" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.3)' }}>ابحث عن المناقصات الحكومية المثالية لشركتك</h1>
+          <p className="text-xl mb-6 text-white" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.2)' }}>تقوم منصة إصدار بمطابقة ملف شركتك مع العقود الحكومية ذات الصلة باستخدام توصيات مدعومة بالذكاء الاصطناعي.</p>
           
           <div className="space-y-4">
             <div className="flex items-start">
@@ -259,8 +259,8 @@ export default function AuthPage() {
                 </svg>
               </div>
               <div>
-                <h3 className="font-semibold text-lg">مطابقة ذكية</h3>
-                <p>يقوم الذكاء الاصطناعي لدينا بتحليل ملف شركتك للعثور على فرص المناقصات الأكثر صلة.</p>
+                <h3 className="font-semibold text-lg text-white">مطابقة ذكية</h3>
+                <p className="text-white">يقوم الذكاء الاصطناعي لدينا بتحليل ملف شركتك للعثور على فرص المناقصات الأكثر صلة.</p>
               </div>
             </div>
             
@@ -271,8 +271,8 @@ export default function AuthPage() {
                 </svg>
               </div>
               <div>
-                <h3 className="font-semibold text-lg">توفير الوقت</h3>
-                <p>لا مزيد من البحث اليدوي. احصل على توصيات مناقصات مخصصة يتم تسليمها إلى لوحة المعلومات الخاصة بك.</p>
+                <h3 className="font-semibold text-lg text-white">توفير الوقت</h3>
+                <p className="text-white">لا مزيد من البحث اليدوي. احصل على توصيات مناقصات مخصصة يتم تسليمها إلى لوحة المعلومات الخاصة بك.</p>
               </div>
             </div>
             
@@ -283,8 +283,8 @@ export default function AuthPage() {
                 </svg>
               </div>
               <div>
-                <h3 className="font-semibold text-lg">زيادة معدل النجاح</h3>
-                <p>تقدم بثقة باستخدام قوالب المقترحات واقتراحات مدعومة بالذكاء الاصطناعي.</p>
+                <h3 className="font-semibold text-lg text-white">زيادة معدل النجاح</h3>
+                <p className="text-white">تقدم بثقة باستخدام قوالب المقترحات واقتراحات مدعومة بالذكاء الاصطناعي.</p>
               </div>
             </div>
           </div>

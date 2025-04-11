@@ -1,4 +1,5 @@
 import { Link, useLocation } from "wouter";
+import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
 import { cn } from "@/lib/utils";
@@ -7,13 +8,12 @@ import {
   Home, 
   ListFilter, 
   Bookmark, 
-  FileText, 
-  BarChart2, 
-  Bell, 
   Settings, 
   X, 
   MenuIcon,
-  ShieldAlert
+  ShieldAlert,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ export default function Sidebar({ mobileMenuOpen, closeMobileMenu, activePage = 
   const { t } = useLanguage();
   const [location] = useLocation();
   const isAdmin = user?.role === 'admin';
+  const [collapsed, setCollapsed] = useState(false);
 
   const navItems = [
     { path: "/dashboard", label: t("nav.dashboard"), icon: Home },
@@ -58,9 +59,11 @@ export default function Sidebar({ mobileMenuOpen, closeMobileMenu, activePage = 
   };
 
   const sidebarClassName = cn(
-    "w-full md:w-64 bg-white border-r border-gray-200 md:h-screen md:sticky md:top-0",
-    "transition-transform duration-300 ease-in-out",
-    mobileMenuOpen ? "absolute inset-0 z-50" : "hidden md:block"
+    "bg-white border-r border-gray-200 md:h-screen md:sticky md:top-0",
+    "transition-all duration-300 ease-in-out",
+    collapsed ? "md:w-20" : "md:w-64",
+    "w-full",
+    mobileMenuOpen ? "absolute inset-0 z-50" : "hidden md:flex md:flex-col"
   );
 
   return (

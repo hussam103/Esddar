@@ -38,9 +38,8 @@ export default function AdminPage() {
   const [pageSize, setPageSize] = useState("50");
   const [tenderId, setTenderId] = useState("");
 
-  // Check if user is admin (you may want to add an isAdmin field to your user model)
-  // For now, we'll just check if the user is the original admin user
-  const isAdmin = user?.id === 1;
+  // Check if user has admin role
+  const isAdmin = user?.role === 'admin';
 
   const [_, setLocation] = useLocation();
   

@@ -65,7 +65,7 @@ export default function NotificationsDropdown() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[350px]" dir="rtl">
+      <DropdownMenuContent align="end" className="w-[350px] text-right">
         <div className="flex items-center justify-between p-2">
           <DropdownMenuLabel className="text-lg font-bold">الإشعارات</DropdownMenuLabel>
           {connected ? (

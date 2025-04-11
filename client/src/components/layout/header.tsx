@@ -1,5 +1,5 @@
-import { Bell } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import NotificationsDropdown from "./notifications-dropdown";
 
 type HeaderProps = {
   title: string;
@@ -28,12 +28,7 @@ export default function Header({ title, subtitle, toggleMobileMenu }: HeaderProp
           {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
         </div>
         <div className="flex items-center space-x-4 space-x-reverse">
-          <div className="relative">
-            <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors duration-150">
-              <Bell className="h-5 w-5" />
-            </button>
-            <span className="absolute top-1 left-1 w-2 h-2 rounded-full bg-primary"></span>
-          </div>
+          <NotificationsDropdown />
           
           {user && (
             <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-medium cursor-pointer">

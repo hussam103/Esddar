@@ -372,16 +372,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // التعامل مع إغلاق الاتصال
     ws.on('close', () => {
       // إزالة الاتصال من جميع قوائم المستخدمين
-      for (const [userId, userConnections] of clients.entries()) {
+      clients.forEach((userConnections, userId) => {
         if (userConnections.has(ws)) {
           userConnections.delete(ws);
           if (userConnections.size === 0) {
             clients.delete(userId);
           }
           console.log(`Connection closed for user ${userId}`);
-          break;
         }
-      }
+      });
     });
   });
   
@@ -411,19 +410,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     // إرسال الإشعار لجميع اتصالات المستخدم
     let sent = false;
-    for (const client of userConnections) {
+    userConnections.forEach(client => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify(notification));
         sent = true;
       }
-    }
+    });
     
     return sent;
   };
   
   // إرسال إشعار عندما يتم حفظ مناقصة
   const originalSaveTender = app.post.bind(app, "/api/save-tender");
-  app._router.stack = app._router.stack.filter(layer => 
+  app._router.stack = app._router.stack.filter((layer: any) => 
     !(layer.route && layer.route.path === "/api/save-tender" && layer.route.methods.post)
   );
   
@@ -466,7 +465,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // إرسال إشعار عند تقديم طلب لمناقصة
   const originalCreateApplication = app.post.bind(app, "/api/applications");
-  app._router.stack = app._router.stack.filter(layer => 
+  app._router.stack = app._router.stack.filter((layer: any) => 
     !(layer.route && layer.route.path === "/api/applications" && layer.route.methods.post)
   );
   

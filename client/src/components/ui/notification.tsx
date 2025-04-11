@@ -28,7 +28,7 @@ export interface NotificationProps
   onClose?: () => void;
 }
 
-const getIcon = (variant: NonNullable<VariantProps<typeof notificationVariants>["variant"]>) => {
+const getIcon = (variant: VariantProps<typeof notificationVariants>["variant"] = "default") => {
   const iconClasses = "h-5 w-5 mt-0.5";
   switch (variant) {
     case "info":

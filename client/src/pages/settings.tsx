@@ -82,8 +82,8 @@ export default function SettingsPage() {
       
       <main className="flex-1 overflow-y-auto">
         <Header 
-          title="Settings" 
-          subtitle="Manage your company profile and preferences"
+          title="الإعدادات" 
+          subtitle="إدارة ملف الشركة والتفضيلات"
           toggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
         />
         

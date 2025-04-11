@@ -50,8 +50,8 @@ export default function TendersPage() {
       
       <main className="flex-1 overflow-y-auto">
         <Header 
-          title="All Tenders" 
-          subtitle="Browse all available government tenders"
+          title="كل المناقصات" 
+          subtitle="تصفح جميع المناقصات الحكومية المتاحة"
           toggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
         />
         

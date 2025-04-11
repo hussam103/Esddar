@@ -1,0 +1,79 @@
+Pasted-Example-Curl-Request-curl-X-GET-location-https-llmwhisperer-api-us-central-unstract-com-api-v-1744415277016.txt
+Example Curl Request
+curl -X GET --location 'https://llmwhisperer-api.us-central.unstract.com/api/v2/whisper-retrieve?whisper_hash=XXXXXXXXXXXXXXXXXXX' \
+-H 'unstract-key: <Your API Key>'
+
+
+info
+To include the headers in the response use curl -i in the request.
+
+Response
+HTTP Status	Content-Type	Headers	Description
+200	application/json		Extracted text and metadata
+400	application/json		Error while retrieveing. Refer below for JSON format
+404	application/json		If invalid whisper_hash is provided
+Example 400 Response
+{
+    "message": "<Error Message>"
+}
+
+Example 404 Response
+{
+    "message": "Whisper job unknown"
+}
+
+Possible Error Messages
+Whisper not ready : status
+Whisper already delivered
+Note: The extracted text can be retrieved only once. Make sure to store the text in your system if you need to access it multiple times. This is for security and privacy reasons. This behaviour can be controlled in on-prem installations.
+
+Response data (text_only=false)
+{
+    "confidence_metadata" : [],    
+    "metadata" : {},
+    "result_text" : "<Extracted Text>",
+    "webhook_metadata" : ""
+}
+
+Confidence Metadata
+The confidence metadata contains the confidence score for each line of text extracted from the document. For each line, an array of JSONs is provided with words and their confidence scores. Words with confidence of >= 0.9 are ignored. The confidence score is a value between 0 and 1, where 1 indicates high confidence and 0 indicates low confidence.
+
+  # Each element represents confidence scores for a line
+  confidence_metadata = [
+    [],                             # Line 1 
+    [],                             # Line 2
+    [],                             # Line 3
+    [],                             # Line 4
+    [],                             # Line 5
+    [],                             # Line 6
+    [                               # Line 7
+      {
+        "confidence": "0.801",
+        "text": "Please"
+      },
+      {
+        "confidence": "0.852",
+        "text": "find"
+      }
+    ],
+    [                               # Line 8
+      {
+        "confidence": "0.767",
+        "text": "payment"
+      }
+    ],
+    [],                             # Line 9
+
+In the above example, the confidence score for the words "Please" and "find" in line 7 is 0.801 and 0.852 respectively. The confidence score for the word "payment" in line 8 is 0.767.
+
+Metadata
+Metadata about the document. Currently, the metadata is empty. This field is reserved for future use.
+
+Result Text
+The extracted text from the document.
+
+Webhook Metadata
+Metadata sent to the webhook after the document is processed.
+
+Response data (text_only=true)
+Return only the extracted text from the document.

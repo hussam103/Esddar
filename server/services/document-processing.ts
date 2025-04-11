@@ -140,32 +140,34 @@ export async function processDocumentWithOCR(documentId: string): Promise<void> 
     
     // Call WhisperLLM API for OCR
     try {
-      // Create form data with the file
-      const form = new FormData();
-      form.append('file', fs.createReadStream(document.filePath));
+      // Read file as binary data
+      const fileData = fs.readFileSync(document.filePath);
       
-      // Call WhisperLLM API
+      // Call WhisperLLM API with binary data (not using FormData)
       const whisperResponse = await axios.post(
-        'https://llmwhisperer-api.us-central.unstract.com/api/v2/whisper',
-        form,
+        'https://llmwhisperer-api.us-central.unstract.com/api/v2/whisper?mode=form&output_mode=layout_preserving',
+        fileData,
         {
           headers: {
-            ...form.getHeaders(),
+            'Content-Type': 'application/octet-stream',
             'unstract-key': process.env.UNSTRACT_API_KEY
           },
           timeout: 180000 // 3 minutes timeout
         }
       );
       
-      if (whisperResponse.status === 200 && whisperResponse.data.hash) {
+      // Per the API docs, successful response is 202 with whisper_hash
+      if (whisperResponse.status === 202 && whisperResponse.data.whisper_hash) {
+        console.log("Whisper job accepted, hash:", whisperResponse.data.whisper_hash);
+        
         // Update job status with whisper hash
         const jobStatus = processingJobs.get(documentId);
         if (jobStatus) {
-          jobStatus.whisperHash = whisperResponse.data.hash;
+          jobStatus.whisperHash = whisperResponse.data.whisper_hash;
         }
         
         // Poll for OCR results
-        await getOCRResults(documentId, whisperResponse.data.hash);
+        await getOCRResults(documentId, whisperResponse.data.whisper_hash);
       } else {
         throw new Error(whisperResponse.data?.message || 'Failed to process document with OCR');
       }
@@ -220,7 +222,7 @@ async function getOCRResults(documentId: string, whisperHash: string): Promise<v
       try {
         // Check OCR status
         const ocrStatusResponse = await axios.get(
-          `https://llmwhisperer-api.us-central.unstract.com/api/v2/whisper/${whisperHash}`,
+          `https://llmwhisperer-api.us-central.unstract.com/api/v2/whisper-status?whisper_hash=${whisperHash}`,
           {
             headers: {
               'unstract-key': process.env.UNSTRACT_API_KEY
@@ -228,44 +230,67 @@ async function getOCRResults(documentId: string, whisperHash: string): Promise<v
           }
         );
         
-        // If OCR is complete, extract text and process with GPT-4o
-        if (ocrStatusResponse.status === 200 && ocrStatusResponse.data.status === 'complete') {
-          extractedText = ocrStatusResponse.data.text;
-          
-          // Update job status
-          const jobStatus = processingJobs.get(documentId);
-          if (jobStatus) {
-            jobStatus.extractedText = extractedText;
-          }
-          
-          // Process extracted text with OpenAI to identify company information
-          if (extractedText) {
-            const document = await storage.getCompanyDocument(documentId);
-            if (document) {
-              const extractedData = await extractCompanyInformation(extractedText, document.userId);
-              
-              // Update document with extracted text and data
-              await storage.updateCompanyDocument(documentId, {
-                status: 'completed',
-                extractedText,
-                extractedData,
-                processedAt: new Date()
-              });
-              
-              // Update user profile with extracted company information
-              await updateUserProfileWithExtractedData(document.userId, extractedData);
+        // If OCR is complete (processed status), retrieve the text
+        if (ocrStatusResponse.status === 200 && ocrStatusResponse.data.status === 'processed') {
+          try {
+            // Get the extracted text via the retrieve endpoint
+            const retrieveResponse = await axios.get(
+              `https://llmwhisperer-api.us-central.unstract.com/api/v2/whisper-retrieve?whisper_hash=${whisperHash}`,
+              {
+                headers: {
+                  'unstract-key': process.env.UNSTRACT_API_KEY
+                }
+              }
+            );
+            
+            if (retrieveResponse.status === 200) {
+              // Check if we have result_text in the response or if text_only=true was used
+              extractedText = retrieveResponse.data.result_text || retrieveResponse.data;
               
               // Update job status
               const jobStatus = processingJobs.get(documentId);
               if (jobStatus) {
-                jobStatus.status = 'completed';
-                jobStatus.extractedData = extractedData;
+                jobStatus.extractedText = extractedText;
               }
+              
+              // Process extracted text with OpenAI to identify company information
+              if (extractedText) {
+                try {
+                  const document = await storage.getCompanyDocument(documentId);
+                  if (document) {
+                    const extractedData = await extractCompanyInformation(extractedText, document.userId);
+                    
+                    // Update document with extracted text and data
+                    await storage.updateCompanyDocument(documentId, {
+                      status: 'completed',
+                      extractedText,
+                      extractedData,
+                      processedAt: new Date()
+                    });
+                    
+                    // Update user profile with extracted company information
+                    await updateUserProfileWithExtractedData(document.userId, extractedData);
+                    
+                    // Update job status
+                    const jobStatus = processingJobs.get(documentId);
+                    if (jobStatus) {
+                      jobStatus.status = 'completed';
+                      jobStatus.extractedData = extractedData;
+                    }
+                  }
+                } catch (err) {
+                  console.error('Error processing extracted text:', err);
+                  throw err;
+                }
+              }
+              
+              // Processing complete, exit loop
+              break;
             }
+          } catch (retrievalError) {
+            console.error('Error retrieving OCR results:', retrievalError);
+            throw retrievalError;
           }
-          
-          // Processing complete, exit loop
-          break;
         } else if (ocrStatusResponse.data.status === 'error') {
           throw new Error(ocrStatusResponse.data.message || 'Error processing document with OCR');
         }

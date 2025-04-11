@@ -64,6 +64,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to fetch tenders by category" });
     }
   });
+  
+  // Get recommended tenders based on user profile
+  app.get("/api/recommended-tenders", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 3;
+      const recommendedTenders = await storage.getRecommendedTenders(req.user.id, limit);
+      res.json(recommendedTenders);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch recommended tenders" });
+    }
+  });
 
   // Saved tenders
   app.get("/api/saved-tenders", async (req, res) => {

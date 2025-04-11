@@ -53,6 +53,9 @@ export interface IStorage {
   createUserProfile(profile: InsertUserProfile): Promise<UserProfile>;
   updateUserProfile(userId: number, profile: Partial<UserProfile>): Promise<UserProfile | undefined>;
   
+  // Recommended tenders
+  getRecommendedTenders(userId: number, limit?: number): Promise<Tender[]>;
+  
   // Session store
   sessionStore: any;
 }
@@ -267,6 +270,83 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return result[0];
+  }
+  
+  // Recommended tenders based on matching algorithm
+  async getRecommendedTenders(userId: number, limit: number = 3): Promise<Tender[]> {
+    try {
+      // Get user profile to match against tenders
+      const userProfile = await this.getUserProfile(userId);
+      if (!userProfile) {
+        // If no profile exists, return general tenders sorted by deadline
+        return await db.select()
+          .from(tenders)
+          .where(eq(tenders.status, 'open'))
+          .orderBy(tenders.deadline)
+          .limit(limit);
+      }
+      
+      // Get all available tenders
+      const allTenders = await this.getTenders();
+      
+      // Simplified matching algorithm
+      // In a real implementation, this would use the vector database and RAG
+      const scoredTenders = allTenders
+        .filter(tender => tender.status === 'open')
+        .map(tender => {
+          // Initialize with a base score
+          let matchScore = 50;
+          
+          // Consider user profile attributes
+          if (userProfile.preferredSectors && 
+              userProfile.preferredSectors.includes(tender.category)) {
+            matchScore += 20;
+          }
+          
+          // Consider company description match with tender description
+          if (userProfile.companyDescription && tender.description) {
+            // Simplified keyword matching
+            const companyKeywords = userProfile.companyDescription.toLowerCase().split(/\s+/);
+            const tenderKeywords = tender.description.toLowerCase().split(/\s+/);
+            
+            // Count matching keywords
+            const matchingKeywords = companyKeywords.filter(word => 
+              tenderKeywords.includes(word) && word.length > 3
+            ).length;
+            
+            matchScore += matchingKeywords * 2;
+          }
+          
+          // Consider skills match
+          if (userProfile.skills && tender.requirements) {
+            const skills = userProfile.skills.toLowerCase().split(/\s+/);
+            const requirements = tender.requirements.toLowerCase().split(/\s+/);
+            
+            const matchingSkills = skills.filter(skill => 
+              requirements.includes(skill) && skill.length > 3
+            ).length;
+            
+            matchScore += matchingSkills * 3;
+          }
+          
+          // Add a random factor to simulate AI-driven matching
+          matchScore += Math.floor(Math.random() * 10);
+          
+          // Cap at 100
+          matchScore = Math.min(matchScore, 100);
+          
+          return { tender, matchScore };
+        });
+      
+      // Sort by match score (highest first) and return top matches
+      return scoredTenders
+        .sort((a, b) => b.matchScore - a.matchScore)
+        .slice(0, limit)
+        .map(item => item.tender);
+    } catch (error) {
+      console.error('Error getting recommended tenders:', error);
+      return [];
+    }
   }
   
   // Initialize sample data for demonstration purposes

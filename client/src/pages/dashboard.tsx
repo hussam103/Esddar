@@ -15,15 +15,16 @@ type ApplicationWithUndefinedDate = {
   id: number;
   tenderId: number;
   status: string;
-  submittedAt?: Date;
+  submittedAt: Date | null;
   tender?: {
     title: string;
     agency: string;
     bidNumber: string;
   };
   userId: number;
-  proposalContent?: string;
-  documents?: unknown;
+  proposalContent: string | null;
+  documents: unknown;
+  matchScore: number | null;
 };
 
 export default function Dashboard() {
@@ -31,9 +32,14 @@ export default function Dashboard() {
   const { t, language } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Fetch tenders
+  // Fetch all tenders (still needed for other components)
   const { data: tenders = [], isLoading: tendersLoading } = useQuery<Tender[]>({
     queryKey: ["/api/tenders"],
+  });
+  
+  // Fetch recommended tenders (top matches)
+  const { data: recommendedTenders = [], isLoading: recommendedTendersLoading } = useQuery<Tender[]>({
+    queryKey: ["/api/recommended-tenders"],
   });
 
   // Fetch user profile
@@ -46,11 +52,13 @@ export default function Dashboard() {
     queryKey: ["/api/applications"],
   });
 
-  // Transform null submittedAt to undefined to match the expected type
+  // Transform application data to match the expected type
   const applications: ApplicationWithUndefinedDate[] = fetchedApplications.map(app => ({
     ...app,
-    submittedAt: app.submittedAt || undefined,
-    proposalContent: app.proposalContent || undefined
+    submittedAt: app.submittedAt || null,
+    proposalContent: app.proposalContent || null,
+    documents: app.documents || {},
+    matchScore: app.matchScore || null
   }));
 
   // Toggle mobile menu
@@ -78,7 +86,7 @@ export default function Dashboard() {
             profileCompleteness={user?.profileCompleteness || 0} 
           />
           
-          <RecommendedTenders loading={tendersLoading} tenders={tenders} />
+          <RecommendedTenders loading={recommendedTendersLoading} tenders={recommendedTenders} />
           
           <ActiveApplications loading={applicationsLoading} applications={applications} />
           

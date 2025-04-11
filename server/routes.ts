@@ -5,6 +5,11 @@ import { storage } from "./storage";
 import { insertTenderSchema, insertApplicationSchema, insertSavedTenderSchema } from "@shared/schema";
 import { z } from "zod";
 import { WebSocketServer, WebSocket } from "ws";
+import axios from 'axios';
+import * as cheerio from 'cheerio';
+import { db } from "./db";
+import { tenders } from "../shared/schema";
+import { eq } from "drizzle-orm";
 
 // Schema for subscription
 const subscriptionSchema = z.object({
@@ -518,6 +523,174 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, message: 'تم إرسال الإشعار بنجاح' });
     } else {
       res.status(400).json({ success: false, message: 'فشل إرسال الإشعار. لا توجد اتصالات نشطة للمستخدم.' });
+    }
+  });
+  
+  // API endpoint for scraping tenders from Etimad platform
+  app.post("/api/scrape-tenders", async (req, res) => {
+    // Check if user is authenticated and is an admin
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    
+    try {
+      // Function to get the CSRF token
+      async function getCSRFToken(): Promise<string | null> {
+        try {
+          console.log('Getting CSRF token...');
+          const response = await axios.get('https://tenders.etimad.sa/Tender/AllTendersForVisitor', {
+            headers: {
+              'Accept-Language': 'ar',
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+            }
+          });
+          
+          const $ = cheerio.load(response.data);
+          const csrfToken = $('input[name="__RequestVerificationToken"]').val() as string;
+          console.log('CSRF Token:', csrfToken);
+          return csrfToken;
+        } catch (error) {
+          console.error('Error getting CSRF token:', error);
+          return null;
+        }
+      }
+
+      // Function to scrape the tenders
+      async function scrapeTenders(pageNumber: number = 1, pageSize: number = 50): Promise<any[]> {
+        try {
+          console.log(`Scraping page ${pageNumber}...`);
+          const csrfToken = await getCSRFToken();
+          
+          if (!csrfToken) {
+            throw new Error('Could not get CSRF token');
+          }
+          
+          // Build the URL with parameters
+          const url = `https://tenders.etimad.sa/Tender/AllSupplierTendersForVisitorAsync`;
+          
+          // Make the request
+          const response = await axios.get(url, {
+            params: {
+              '__RequestVerificationToken': csrfToken,
+              'PublishDateId': 5,
+              'PageSize': pageSize,
+              'PageNumber': pageNumber,
+              'IsSearch': true,
+              'SortDirection': 'DESC',
+              'Sort': 'SubmitionDate',
+              '_': new Date().getTime()
+            },
+            headers: {
+              'Accept-Language': 'ar',
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+              'Referer': 'https://tenders.etimad.sa/Tender/AllTendersForVisitor',
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          });
+          
+          console.log('Response status:', response.status);
+          
+          // Check if response is valid JSON
+          if (typeof response.data === 'string') {
+            try {
+              const parsedData = JSON.parse(response.data);
+              return parsedData.Data?.Items || [];
+            } catch (e) {
+              console.error('Error parsing JSON:', e);
+              console.log('Response data:', response.data.substring(0, 200) + '...');
+              return [];
+            }
+          }
+          
+          return response.data.Data?.Items || [];
+        } catch (error) {
+          console.error('Error scraping tenders:', error);
+          return [];
+        }
+      }
+
+      // Function to save tenders to the database
+      async function saveTendersToDatabase(tendersData: any[]): Promise<{saved: number, skipped: number}> {
+        let saved = 0;
+        let skipped = 0;
+        
+        try {
+          console.log(`Saving ${tendersData.length} tenders to database...`);
+          
+          for (const tender of tendersData) {
+            // Check if the tender already exists in the database
+            const existingTender = await db.select().from(tenders).where(eq(tenders.bidNumber, tender.ReferenceNumber)).limit(1);
+            
+            if (existingTender.length > 0) {
+              console.log(`Tender with bid number ${tender.ReferenceNumber} already exists, skipping.`);
+              skipped++;
+              continue;
+            }
+            
+            // Map the tender data to our schema
+            const tenderToInsert = {
+              title: tender.TenderName,
+              agency: tender.AgencyName,
+              description: tender.TenderDescription || '',
+              category: tender.TenderTypeName || 'غير محدد',
+              location: tender.TenderAreaName || 'غير محدد',
+              valueMin: tender.ConditionBookletPrice?.toString() || '0',
+              valueMax: tender.EstimatedValue?.toString() || '0',
+              deadline: new Date(tender.LastOfferPresentationDate),
+              status: 'open',
+              requirements: tender.TenderDescription || '',
+              bidNumber: tender.ReferenceNumber
+            };
+            
+            // Insert the tender into the database
+            await db.insert(tenders).values(tenderToInsert);
+            console.log(`Inserted tender: ${tenderToInsert.title}`);
+            saved++;
+          }
+          
+          console.log('All tenders saved successfully!');
+          return { saved, skipped };
+        } catch (error) {
+          console.error('Error saving tenders to database:', error);
+          throw error;
+        }
+      }
+
+      // Main function to scrape
+      const pageNumber = parseInt(req.body.pageNumber || '1');
+      const pageSize = parseInt(req.body.pageSize || '50');
+      
+      // Scrape tenders
+      const tendersData = await scrapeTenders(pageNumber, pageSize);
+      
+      if (!tendersData || tendersData.length === 0) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'No tenders found or could not parse the response.' 
+        });
+      }
+      
+      // Save tenders to database
+      const result = await saveTendersToDatabase(tendersData);
+      
+      // Send success response
+      res.json({
+        success: true,
+        message: `Successfully scraped and processed tenders.`,
+        stats: {
+          total: tendersData.length,
+          saved: result.saved,
+          skipped: result.skipped
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error in scrape-tenders endpoint:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to scrape tenders',
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
   

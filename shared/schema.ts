@@ -99,6 +99,15 @@ export const userProfiles = pgTable("user_profiles", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().unique(),
   companyDescription: text("company_description"),
+  // New fields from document extraction
+  businessType: text("business_type"),
+  companyActivities: jsonb("company_activities").default([]),
+  mainIndustries: jsonb("main_industries").default([]),
+  specializations: jsonb("specializations").default([]),
+  targetMarkets: jsonb("target_markets").default([]),
+  certifications: jsonb("certifications").default([]),
+  keywords: jsonb("keywords").default([]),
+  // Original fields
   skills: text("skills"),
   pastExperience: text("past_experience"),
   preferredSectors: text("preferred_sectors").array(),
@@ -127,20 +136,27 @@ export const insertUserProfileSchema = createInsertSchema(userProfiles).omit({
 export const companyDocuments = pgTable("company_documents", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
-  documentType: text("document_type").notNull(), // 'license', 'certificate', etc.
+  documentId: text("document_id").notNull().unique(), // Unique identifier for processing
   fileName: text("file_name").notNull(),
   filePath: text("file_path").notNull(),
+  fileSize: integer("file_size").notNull(),
+  documentType: text("document_type").default("company_profile"), // 'company_profile', 'license', 'certificate', etc.
+  status: text("status").notNull().default("pending"), // 'pending', 'processing', 'completed', 'error'
   extractedText: text("extracted_text"),
-  metaData: jsonb("meta_data"),
-  processingStatus: text("processing_status").default("pending"), // 'pending', 'processed', 'failed'
+  extractedData: jsonb("extracted_data"),
+  errorMessage: text("error_message"),
+  whisperHash: text("whisper_hash"),
   uploadedAt: timestamp("uploaded_at").defaultNow(),
+  processedAt: timestamp("processed_at"),
 });
 
 export const insertCompanyDocumentSchema = createInsertSchema(companyDocuments).omit({
   id: true,
   extractedText: true,
-  processingStatus: true,
-  uploadedAt: true,
+  extractedData: true,
+  errorMessage: true,
+  whisperHash: true,
+  processedAt: true,
 });
 
 // External sources for tender scraping

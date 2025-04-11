@@ -13,7 +13,10 @@ import {
   type InsertApplication,
   userProfiles,
   type UserProfile,
-  type InsertUserProfile
+  type InsertUserProfile,
+  companyDocuments,
+  type CompanyDocument,
+  type InsertCompanyDocument
 } from "@shared/schema";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
@@ -55,6 +58,12 @@ export interface IStorage {
   
   // Recommended tenders
   getRecommendedTenders(userId: number, limit?: number): Promise<Tender[]>;
+  
+  // Company documents
+  getCompanyDocument(documentId: string): Promise<CompanyDocument | undefined>;
+  getCompanyDocumentsByUser(userId: number): Promise<CompanyDocument[]>;
+  createCompanyDocument(document: InsertCompanyDocument): Promise<CompanyDocument>;
+  updateCompanyDocument(documentId: string, document: Partial<CompanyDocument>): Promise<CompanyDocument | undefined>;
   
   // Session store
   sessionStore: any;
@@ -329,6 +338,30 @@ export class DatabaseStorage implements IStorage {
             matchScore += matchingSkills * 3;
           }
           
+          // Use company activities (from document extraction) for matching
+          if (userProfile.companyActivities && tender.description) {
+            try {
+              // We know companyActivities is a JSON array from our schema
+              const activities = Array.isArray(userProfile.companyActivities) 
+                ? userProfile.companyActivities 
+                : [];
+              
+              const tenderDesc = tender.description.toLowerCase();
+              
+              // Count how many activities match the tender description
+              let activityMatches = 0;
+              for (const activity of activities) {
+                if (typeof activity === 'string' && tenderDesc.includes(activity.toLowerCase())) {
+                  activityMatches++;
+                }
+              }
+              
+              matchScore += activityMatches * 5;
+            } catch (err) {
+              console.error('Error processing company activities for matching:', err);
+            }
+          }
+          
           // Add a random factor to simulate AI-driven matching
           matchScore += Math.floor(Math.random() * 10);
           
@@ -347,6 +380,39 @@ export class DatabaseStorage implements IStorage {
       console.error('Error getting recommended tenders:', error);
       return [];
     }
+  }
+  
+  // Company document methods
+  async getCompanyDocument(documentId: string): Promise<CompanyDocument | undefined> {
+    const result = await db.select()
+      .from(companyDocuments)
+      .where(eq(companyDocuments.documentId, documentId));
+    
+    return result[0];
+  }
+  
+  async getCompanyDocumentsByUser(userId: number): Promise<CompanyDocument[]> {
+    return await db.select()
+      .from(companyDocuments)
+      .where(eq(companyDocuments.userId, userId))
+      .orderBy(companyDocuments.uploadedAt, 'desc');
+  }
+  
+  async createCompanyDocument(document: InsertCompanyDocument): Promise<CompanyDocument> {
+    const result = await db.insert(companyDocuments)
+      .values(document)
+      .returning();
+    
+    return result[0];
+  }
+  
+  async updateCompanyDocument(documentId: string, documentData: Partial<CompanyDocument>): Promise<CompanyDocument | undefined> {
+    const result = await db.update(companyDocuments)
+      .set(documentData)
+      .where(eq(companyDocuments.documentId, documentId))
+      .returning();
+    
+    return result[0];
   }
   
   // Initialize sample data for demonstration purposes

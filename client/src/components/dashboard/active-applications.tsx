@@ -19,9 +19,10 @@ type Application = {
 type ActiveApplicationsProps = {
   loading: boolean;
   applications: Application[];
+  className?: string;
 };
 
-export default function ActiveApplications({ loading, applications }: ActiveApplicationsProps) {
+export default function ActiveApplications({ loading, applications, className = '' }: ActiveApplicationsProps) {
   const [, setLocation] = useLocation();
   const { t, language } = useLanguage();
 
@@ -149,7 +150,7 @@ export default function ActiveApplications({ loading, applications }: ActiveAppl
   );
 
   return (
-    <section className="mt-8">
+    <section className={`mt-8 ${className}`}>
       <h2 className="text-lg font-semibold text-gray-900 mb-4">
         {language === "ar" ? "الطلبات النشطة" : "Active Applications"}
       </h2>

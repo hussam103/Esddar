@@ -14,9 +14,10 @@ import { TenderDetailsButton } from "@/components/ui/tender-details-button";
 type RecommendedTendersProps = {
   loading: boolean;
   tenders: Tender[];
+  className?: string;
 };
 
-export default function RecommendedTenders({ loading, tenders }: RecommendedTendersProps) {
+export default function RecommendedTenders({ loading, tenders, className = '' }: RecommendedTendersProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { t, language } = useLanguage();
@@ -96,7 +97,7 @@ export default function RecommendedTenders({ loading, tenders }: RecommendedTend
   };
 
   return (
-    <section className="mb-8">
+    <section className={`mb-8 ${className}`}>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-gray-900">
           {language === "ar" ? "المناقصات الموصى بها" : "Recommended Tenders"}

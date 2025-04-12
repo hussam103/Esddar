@@ -479,11 +479,21 @@ export function DocumentUpload({ onSuccess }: DocumentUploadProps) {
                       {error}
                     </p>
                   )}
-                  <p className="text-xs text-muted-foreground mt-4">
-                    {language === 'ar'
-                      ? 'يرجى المحاولة مرة أخرى أو الاتصال بالدعم إذا استمرت المشكلة'
-                      : 'Please try again or contact support if the problem persists'}
-                  </p>
+                  
+                  {/* Show specific guidance if the error is about API limits */}
+                  {error && error.includes('processing limit') ? (
+                    <div className="mt-3 border border-amber-200 bg-amber-50 p-3 rounded-md text-sm text-amber-800">
+                      {language === 'ar'
+                        ? 'تم الوصول إلى الحد اليومي لمعالجة المستندات. يرجى المحاولة مرة أخرى غدًا أو الاتصال بفريق الدعم للحصول على حل فوري.'
+                        : 'The daily document processing limit has been reached. Please try again tomorrow or contact our support team for an immediate solution.'}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground mt-4">
+                      {language === 'ar'
+                        ? 'يرجى المحاولة مرة أخرى أو الاتصال بالدعم إذا استمرت المشكلة'
+                        : 'Please try again or contact support if the problem persists'}
+                    </p>
+                  )}
                 </motion.div>
               </div>
             </div>

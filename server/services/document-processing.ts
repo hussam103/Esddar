@@ -174,17 +174,39 @@ export async function processDocumentWithOCR(documentId: string): Promise<void> 
     } catch (error: any) {
       console.error('Error calling WhisperLLM API:', error);
       
+      // Check for specific error codes
+      let errorMessage = error.message || 'Error calling WhisperLLM API';
+      
+      // Handle 402 Payment Required (API limit reached)
+      if (error.response && error.response.status === 402) {
+        const responseMessage = error.response.data?.message || '';
+        console.log('WhisperLLM API payment required error:', responseMessage);
+        
+        if (responseMessage.includes('free processing limit')) {
+          errorMessage = 'Daily processing limit reached: ' + responseMessage;
+        } else {
+          errorMessage = 'API usage limit reached. Please try again tomorrow or contact support.';
+        }
+        
+        // Log the detailed error for debugging
+        console.error('WhisperLLM API limit error details:', {
+          status: error.response.status,
+          data: error.response.data,
+          message: responseMessage
+        });
+      }
+      
       // Update processing status to error
       await storage.updateCompanyDocument(documentId, {
         status: 'error',
-        errorMessage: error.message || 'Error calling WhisperLLM API',
+        errorMessage: errorMessage,
         processedAt: new Date()
       });
       
       const jobStatus = processingJobs.get(documentId);
       if (jobStatus) {
         jobStatus.status = 'error';
-        jobStatus.message = error.message || 'Error calling WhisperLLM API';
+        jobStatus.message = errorMessage;
       }
     }
   } catch (error: any) {

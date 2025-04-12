@@ -1,6 +1,8 @@
 import { useAuth } from "@/hooks/use-auth";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Redirect, Route } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
 
 export function ProtectedRoute({
   path,
@@ -10,8 +12,27 @@ export function ProtectedRoute({
   component: React.ComponentType<any>;
 }) {
   const { user, isLoading } = useAuth();
+  const [onboardingStatus, setOnboardingStatus] = useState<any>(null);
+  const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(false);
 
-  if (isLoading) {
+  useEffect(() => {
+    // Skip onboarding check for the onboarding page itself
+    if (user && path !== "/onboarding") {
+      setIsCheckingOnboarding(true);
+      
+      apiRequest("GET", "/api/onboarding-status")
+        .then(res => res.json())
+        .then(data => {
+          setOnboardingStatus(data);
+          setIsCheckingOnboarding(false);
+        })
+        .catch(() => {
+          setIsCheckingOnboarding(false);
+        });
+    }
+  }, [user, path]);
+
+  if (isLoading || isCheckingOnboarding) {
     return (
       <Route path={path}>
         <div className="flex items-center justify-center min-h-screen">
@@ -25,6 +46,20 @@ export function ProtectedRoute({
     return (
       <Route path={path}>
         <Redirect to="/auth" />
+      </Route>
+    );
+  }
+
+  // If we're not on the onboarding page and onboarding is not completed,
+  // redirect to the onboarding page
+  if (
+    path !== "/onboarding" &&
+    onboardingStatus && 
+    !onboardingStatus.completed
+  ) {
+    return (
+      <Route path={path}>
+        <Redirect to="/onboarding" />
       </Route>
     );
   }

@@ -62,10 +62,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
-      toast({
-        title: "Registration successful",
-        description: `Welcome to Esddar, ${user.companyName}!`,
-      });
+      // Don't show a toast here as we'll redirect to onboarding
+      
+      // Redirect to onboarding flow
+      window.location.href = "/onboarding";
     },
     onError: (error: Error) => {
       toast({

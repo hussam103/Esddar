@@ -28,13 +28,29 @@ export default function LandingPage() {
       {/* Hero Section */}
       <header className="bg-primary-50 border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex justify-between items-center">
-          <div className="flex items-center space-x-2 space-x-reverse rtl:space-x-reverse">
+          <div 
+            className="flex items-center space-x-2 space-x-reverse rtl:space-x-reverse cursor-pointer" 
+            onClick={() => setLocation("/")}
+            title={language === "ar" ? "العودة إلى الصفحة الرئيسية" : "Return to homepage"}
+          >
             <div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center mr-2 rtl:ml-2 rtl:mr-0">
               <span className="text-white font-bold text-xl">{language === "ar" ? "إ" : "E"}</span>
             </div>
             <span className="text-2xl font-bold text-gray-900">{language === "ar" ? "إصدار" : "Esddar"}</span>
           </div>
           <div className="flex items-center space-x-4 rtl:space-x-reverse">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => setLocation("/dashboard")}
+              className="flex items-center gap-2"
+              title={language === "ar" ? "العودة إلى لوحة التحكم" : "Return to Dashboard"}
+            >
+              {language === "ar" 
+                ? <ArrowRight className="h-5 w-5" /> 
+                : <ArrowLeft className="h-5 w-5" />
+              }
+            </Button>
             <Button 
               variant="ghost" 
               size="icon"

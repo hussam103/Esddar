@@ -2,10 +2,12 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
 
-interface StepsProps extends React.HTMLAttributes<HTMLDivElement> {
+interface StepsProps {
   value: number;
   onChange?: (value: number) => void;
   readOnly?: boolean;
+  className?: string;
+  children?: React.ReactNode;
 }
 
 export function Steps({ value, onChange, readOnly = false, className, ...props }: StepsProps) {

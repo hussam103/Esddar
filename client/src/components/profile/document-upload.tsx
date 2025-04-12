@@ -5,7 +5,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, Upload, File, AlertCircle, CheckCircle, CheckCircle2 } from 'lucide-react';
+import { Loader2, Upload, File, AlertCircle, CheckCircle, CheckCircle2, XCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface DocumentUploadProps {
@@ -455,15 +455,26 @@ export function DocumentUpload({ onSuccess }: DocumentUploadProps) {
           )}
           
           {uploadStatus === 'error' && (
-            <div className="border rounded-lg p-8 border-red-200 bg-red-50/70 dark:bg-red-950/20 dark:border-red-900">
+            <div className={`border rounded-lg p-8 ${
+              error && error.includes('processing limit') 
+                ? 'border-amber-200 bg-amber-50/70 dark:bg-amber-950/20 dark:border-amber-900/60' 
+                : 'border-red-200 bg-red-50/70 dark:bg-red-950/20 dark:border-red-900'
+            }`}>
               <div className="flex flex-col items-center">
                 <motion.div 
                   initial={{ scale: 0.5, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.3 }}
-                  className="bg-red-100 dark:bg-red-900/30 p-3 rounded-full mb-4"
+                  className={`p-3 rounded-full mb-4 ${
+                    error && error.includes('processing limit')
+                      ? 'bg-amber-100 dark:bg-amber-900/30'
+                      : 'bg-red-100 dark:bg-red-900/30'
+                  }`}
                 >
-                  <AlertCircle className="h-12 w-12 text-red-500" />
+                  {error && error.includes('processing limit')
+                    ? <AlertCircle className="h-12 w-12 text-amber-500" />
+                    : <AlertCircle className="h-12 w-12 text-red-500" />
+                  }
                 </motion.div>
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
@@ -471,28 +482,59 @@ export function DocumentUpload({ onSuccess }: DocumentUploadProps) {
                   transition={{ delay: 0.2 }}
                   className="text-center"
                 >
-                  <p className="text-lg font-medium text-red-700 dark:text-red-300 mb-2">
-                    {language === 'ar' ? 'حدث خطأ أثناء المعالجة' : 'Error Processing Document'}
-                  </p>
-                  {error && (
-                    <p className="text-sm text-red-600 mt-1 text-center max-w-md">
-                      {error}
-                    </p>
-                  )}
-                  
-                  {/* Show specific guidance if the error is about API limits */}
+                  {/* API Limit Error */}
                   {error && error.includes('processing limit') ? (
-                    <div className="mt-3 border border-amber-200 bg-amber-50 p-3 rounded-md text-sm text-amber-800">
-                      {language === 'ar'
-                        ? 'تم الوصول إلى الحد اليومي لمعالجة المستندات. يرجى المحاولة مرة أخرى غدًا أو الاتصال بفريق الدعم للحصول على حل فوري.'
-                        : 'The daily document processing limit has been reached. Please try again tomorrow or contact our support team for an immediate solution.'}
-                    </div>
+                    <>
+                      <p className="text-lg font-medium text-amber-700 dark:text-amber-300 mb-2">
+                        {language === 'ar' ? 'تم الوصول إلى حد المعالجة اليومي' : 'Daily Processing Limit Reached'}
+                      </p>
+                      
+                      <p className="text-sm text-amber-600 mt-1 text-center max-w-md">
+                        {language === 'ar'
+                          ? 'تم الوصول إلى الحد اليومي لمعالجة المستندات (100 صفحة كحد أقصى يوميًا). مستندك لم يتم معالجته.'
+                          : 'The daily document processing limit has been reached (maximum 100 pages per day). Your document was not processed.'}
+                      </p>
+                      
+                      <div className="mt-4 border border-amber-200 bg-amber-100/50 p-4 rounded-md text-sm text-amber-800">
+                        <h4 className="font-medium mb-2">
+                          {language === 'ar' ? 'الخيارات المتاحة:' : 'Available Options:'}
+                        </h4>
+                        <ul className="list-disc text-left text-sm space-y-1 pl-5 rtl:pr-5 rtl:pl-0">
+                          <li>
+                            {language === 'ar'
+                              ? 'حاول مرة أخرى غدًا عندما يتم تجديد الحد اليومي'
+                              : 'Try again tomorrow when the daily limit resets'}
+                          </li>
+                          <li>
+                            {language === 'ar'
+                              ? 'حمل مستندًا أصغر حجمًا (مع عدد صفحات أقل)'
+                              : 'Upload a smaller document (with fewer pages)'}
+                          </li>
+                          <li>
+                            {language === 'ar'
+                              ? 'اتصل بفريق الدعم لحل فوري'
+                              : 'Contact our support team for an immediate solution'}
+                          </li>
+                        </ul>
+                      </div>
+                    </>
                   ) : (
-                    <p className="text-xs text-muted-foreground mt-4">
-                      {language === 'ar'
-                        ? 'يرجى المحاولة مرة أخرى أو الاتصال بالدعم إذا استمرت المشكلة'
-                        : 'Please try again or contact support if the problem persists'}
-                    </p>
+                    /* General Error */
+                    <>
+                      <p className="text-lg font-medium text-red-700 dark:text-red-300 mb-2">
+                        {language === 'ar' ? 'حدث خطأ أثناء المعالجة' : 'Error Processing Document'}
+                      </p>
+                      {error && (
+                        <p className="text-sm text-red-600 mt-1 text-center max-w-md">
+                          {error}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-4">
+                        {language === 'ar'
+                          ? 'يرجى المحاولة مرة أخرى أو الاتصال بالدعم إذا استمرت المشكلة'
+                          : 'Please try again or contact support if the problem persists'}
+                      </p>
+                    </>
                   )}
                 </motion.div>
               </div>

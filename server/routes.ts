@@ -1394,12 +1394,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log scraping activity
       await db.insert(scrapeLogs).values({
-        source: requestSource,
-        success: result.success,
-        message: result.message,
-        tendersCount: result.tenders_count || 0,
-        userId: req.user?.id || 0,
-        createdAt: new Date()
+        sourceId: 1, // Etimad source ID
+        status: result.success ? 'completed' : 'failed',
+        totalTenders: result.tenders_count || 0,
+        newTenders: result.tenders?.length || 0,
+        errorMessage: result.success ? null : result.message,
+        startTime: new Date(Date.now() - 30000), // 30 seconds ago
+        endTime: new Date(),
+        details: { 
+          source: requestSource,
+          userId: req.user?.id || 0,
+          message: result.message,
+          apiResponse: result.success 
+        }
       });
       
       res.json(result);

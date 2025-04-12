@@ -42,6 +42,17 @@ import {
   getTenderById 
 } from './services/etimad-service';
 
+// Middleware to check if user is authenticated and has admin role
+const isAdmin = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Unauthorized: Please log in" });
+  }
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: "Forbidden: Admin access required" });
+  }
+  next();
+};
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Sets up authentication routes
   setupAuth(app);

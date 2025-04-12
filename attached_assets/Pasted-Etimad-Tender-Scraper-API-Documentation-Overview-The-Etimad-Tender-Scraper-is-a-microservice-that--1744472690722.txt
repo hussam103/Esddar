@@ -1,0 +1,274 @@
+Etimad Tender Scraper API Documentation
+Overview
+The Etimad Tender Scraper is a microservice that scrapes tender data from the Etimad platform, stores it in a PostgreSQL database, and provides REST APIs for accessing and managing the data. The service also includes scheduled scraping functionality to automatically update the database with new tenders.
+
+Base URL
+All API endpoints are relative to the base URL:
+
+http://your-server-address:5000
+API Endpoints
+1. Scrape Tenders
+Manually trigger scraping of tenders from Etimad platform and save to database.
+
+Endpoint: GET /api/scrape-tenders
+
+Query Parameters:
+
+page (integer, optional): Page number to scrape from Etimad platform. Default: 1
+page_size (integer, optional): Number of tenders per page to scrape. Default: 10, Maximum: 100
+Response:
+
+{
+  "success": true,
+  "message": "Successfully scraped 10 tenders",
+  "tenders_count": 10,
+  "errors": null
+}
+Error Response:
+
+{
+  "success": false,
+  "message": "Failed to scrape tenders",
+  "tenders_count": 0,
+  "errors": ["Error message 1", "Error message 2"]
+}
+Status Codes:
+
+200 OK: Successful operation
+400 Bad Request: Failed to scrape tenders
+500 Internal Server Error: Server error
+2. Scrape Tender Details
+Scrape detailed information for a specific tender by its ID string.
+
+Endpoint: GET /api/tender-details/{tender_id_string}
+
+Path Parameters:
+
+tender_id_string (string, required): Encrypted tender ID string from Etimad platform
+Response:
+
+{
+  "success": true,
+  "message": "Successfully updated tender 123456 with details",
+  "tenders_count": 1
+}
+Error Response:
+
+{
+  "success": false,
+  "message": "Failed to fetch details for tender 123456",
+  "tenders_count": 0
+}
+Status Codes:
+
+200 OK: Successful operation
+400 Bad Request: Failed to scrape tender details
+500 Internal Server Error: Server error
+3. Get Tenders
+Get a paginated list of tenders with optional filtering.
+
+Endpoint: GET /api/tenders
+
+Query Parameters:
+
+page (integer, optional): Page number. Default: 1
+page_size (integer, optional): Number of tenders per page. Default: 10, Maximum: 100
+tender_type (string, optional): Filter by tender type
+agency_name (string, optional): Filter by agency name
+Response:
+
+{
+  "tenders": [
+    {
+      "id": 1,
+      "tender_id": 123456789,
+      "reference_number": "REF-12345",
+      "tender_name": "Construction of a new hospital",
+      "tender_number": "TNO-12345",
+      "agency_name": "Ministry of Health",
+      "branch_name": "Riyadh Branch",
+      "tender_type_name": "Construction",
+      "tender_activity_name": "Building Construction",
+      "conditional_booklet_price": 500.0,
+      "financial_fees": 1000.0,
+      "buying_cost": 1500.0,
+      "submission_date": "2025-05-01T00:00:00+00:00",
+      "last_enquiries_date": "2025-04-15T00:00:00+00:00",
+      "last_offer_presentation_date": "2025-04-20T00:00:00+00:00",
+      "offers_opening_date": "2025-05-02T00:00:00+00:00",
+      "tender_purpose": "Construction of a new hospital in Riyadh",
+      "tender_value": 10000000.0,
+      "execution_location": "Riyadh",
+      "place_to_submit_offers": "Ministry of Health Headquarters",
+      "tender_status_id": 1,
+      "created_at": "2025-04-12T15:30:00+00:00"
+    }
+  ],
+  "total": 100,
+  "page": 1,
+  "page_size": 10
+}
+Error Response:
+
+{
+  "error": "Server error: Invalid filter parameter"
+}
+Status Codes:
+
+200 OK: Successful operation
+500 Internal Server Error: Server error
+4. Get Specific Tender
+Get detailed information about a specific tender by its database ID.
+
+Endpoint: GET /api/tenders/{tender_id}
+
+Path Parameters:
+
+tender_id (integer, required): Database ID of the tender
+Response:
+
+{
+  "id": 1,
+  "tender_id": 123456789,
+  "reference_number": "REF-12345",
+  "tender_name": "Construction of a new hospital",
+  "tender_number": "TNO-12345",
+  "agency_name": "Ministry of Health",
+  "branch_name": "Riyadh Branch",
+  "tender_type_name": "Construction",
+  "tender_activity_name": "Building Construction",
+  "conditional_booklet_price": 500.0,
+  "financial_fees": 1000.0,
+  "buying_cost": 1500.0,
+  "submission_date": "2025-05-01T00:00:00+00:00",
+  "last_enquiries_date": "2025-04-15T00:00:00+00:00",
+  "last_offer_presentation_date": "2025-04-20T00:00:00+00:00",
+  "offers_opening_date": "2025-05-02T00:00:00+00:00",
+  "tender_purpose": "Construction of a new hospital in Riyadh",
+  "tender_value": 10000000.0,
+  "execution_location": "Riyadh",
+  "place_to_submit_offers": "Ministry of Health Headquarters",
+  "tender_status_id": 1,
+  "created_at": "2025-04-12T15:30:00+00:00"
+}
+Error Response:
+
+{
+  "error": "Tender not found"
+}
+Status Codes:
+
+200 OK: Successful operation
+404 Not Found: Tender not found
+500 Internal Server Error: Server error
+5. Get Scheduler Status
+Get status of the scheduler and its scheduled jobs.
+
+Endpoint: GET /api/scheduler/status
+
+Response:
+
+{
+  "status": "running",
+  "jobs": [
+    {
+      "id": "hourly_scrape",
+      "name": "scheduled_scrape_tenders",
+      "next_run_time": "2025-04-12T16:42:15.872806+00:00",
+      "trigger": "interval[1:00:00]"
+    },
+    {
+      "id": "daily_scrape",
+      "name": "scheduled_scrape_tenders",
+      "next_run_time": "2025-04-13T00:00:00+00:00",
+      "trigger": "cron[hour='0', minute='0']"
+    }
+  ]
+}
+Error Response:
+
+{
+  "status": "error",
+  "message": "Error getting scheduler status: Details of the error"
+}
+Status Codes:
+
+200 OK: Successful operation
+500 Internal Server Error: Server error
+6. Control Scheduler
+Start or stop the scheduler.
+
+Endpoint: POST /api/scheduler/control
+
+Request Body:
+
+{
+  "action": "stop"  // or "start"
+}
+Response:
+
+{
+  "success": true,
+  "message": "Scheduler stopped successfully"
+}
+Error Response:
+
+{
+  "success": false,
+  "message": "Invalid action. Use 'start' or 'stop'."
+}
+Status Codes:
+
+200 OK: Successful operation
+400 Bad Request: Invalid action
+500 Internal Server Error: Server error
+Scheduled Jobs
+The service includes two scheduled jobs to automatically scrape tenders:
+
+Hourly Scrape (ID: hourly_scrape):
+
+Runs every hour
+Scrapes the first page of tenders (20 tenders)
+Primarily for keeping the database updated with recent changes
+Daily Scrape (ID: daily_scrape):
+
+Runs at midnight (00:00) every day
+Scrapes 100 tenders
+For more comprehensive updates to ensure the database has all recent tenders
+Error Handling
+The API implements robust error handling:
+
+Rate Limiting: The scraper includes an exponential backoff mechanism to handle rate limiting from the Etimad platform
+Connection Issues: Retry mechanism for connection issues with configurable max retries
+API Errors: Proper error messages for different types of API errors
+Database Errors: Transaction management to ensure database consistency
+Response Format
+All API responses follow a consistent format:
+
+For successful operations with data:
+
+{
+  "param1": value1,
+  "param2": value2,
+  ...
+}
+For operations with success/failure status:
+
+{
+  "success": true|false,
+  "message": "Description of result",
+  ...additional data
+}
+For error responses:
+
+{
+  "success": false,
+  "message": "Error description",
+  "errors": ["Detailed error 1", "Detailed error 2"]
+}
+Web Interface
+A basic documentation HTML interface is available at:
+
+Endpoint: GET /docs
+
+This provides an interactive documentation page with descriptions of all available endpoints.

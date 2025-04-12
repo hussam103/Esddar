@@ -40,6 +40,14 @@ export async function scrapeTenders(page: number = 1, pageSize: number = 10): Pr
   try {
     log(`Fetching tenders from Etimad API - page ${page}, pageSize ${pageSize}`, 'etimad-service');
     
+    // Check if we're in test mode
+    if (process.env.ETIMAD_API_MODE === 'test') {
+      log(`Using test mode for Etimad API`, 'etimad-service');
+      const mockData = getMockPaginatedTenders(page, pageSize);
+      await saveTendersToDatabase(mockData.tenders);
+      return mockData.tenders;
+    }
+    
     const response = await axios.get(`${ETIMAD_API_BASE_URL}/api/scrape-tenders`, {
       params: {
         page,
@@ -61,6 +69,15 @@ export async function scrapeTenders(page: number = 1, pageSize: number = 10): Pr
   } catch (error: any) {
     const errorMessage = error?.message || 'Unknown error';
     log(`Error scraping tenders from Etimad: ${errorMessage}`, 'etimad-service');
+    
+    // If in development or test mode, provide mock data
+    if (process.env.NODE_ENV === 'development' || process.env.ETIMAD_API_MODE === 'test') {
+      log(`Providing mock data for scraping tenders`, 'etimad-service');
+      const mockData = getMockPaginatedTenders(page, pageSize);
+      await saveTendersToDatabase(mockData.tenders);
+      return mockData.tenders;
+    }
+    
     throw new Error(`Failed to scrape tenders from Etimad: ${errorMessage}`);
   }
 }

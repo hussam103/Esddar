@@ -125,6 +125,13 @@ export async function getPaginatedTenders(
   try {
     log(`Fetching paginated tenders - page ${page}, pageSize ${pageSize}`, 'etimad-service');
     
+    // Check if we're in test mode
+    if (process.env.ETIMAD_API_MODE === 'test') {
+      log(`Using test mode for Etimad API`, 'etimad-service');
+      // Return mock data for testing
+      return getMockPaginatedTenders(page, pageSize, tenderType, agencyName);
+    }
+    
     const params: any = {
       page,
       page_size: pageSize,
@@ -145,6 +152,13 @@ export async function getPaginatedTenders(
   } catch (error: any) {
     const errorMessage = error?.message || 'Unknown error';
     log(`Error fetching paginated tenders: ${errorMessage}`, 'etimad-service');
+    
+    // If in development or test mode, provide mock data
+    if (process.env.NODE_ENV === 'development' || process.env.ETIMAD_API_MODE === 'test') {
+      log(`Providing mock data for paginated tenders`, 'etimad-service');
+      return getMockPaginatedTenders(page, pageSize, tenderType, agencyName);
+    }
+    
     throw new Error(`Failed to get paginated tenders: ${errorMessage}`);
   }
 }
@@ -274,4 +288,78 @@ async function updateTenderDetails(tenderIdString: string, details: any): Promis
     log(`Error updating tender details: ${errorMessage}`, 'etimad-service');
     throw new Error(`Failed to update tender details: ${errorMessage}`);
   }
+}
+
+/**
+ * Gets mock tender details for testing
+ * @param tenderIdString Tender ID
+ * @returns Mock tender details
+ */
+function getMockTenderDetails(tenderIdString: string): any {
+  return {
+    tenderIdString,
+    title: `Test Tender ${tenderIdString}`,
+    agency: "Ministry of Testing",
+    description: "This is a test tender from the mock API",
+    category: "Information Technology",
+    value: 1000000,
+    lastEnrollDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    lastOfferDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+    submissionDetails: "Submit your proposal through the platform",
+    requirements: "Must have experience in government projects",
+    location: "Riyadh",
+    industry: "Technology",
+    keywords: ["software", "IT", "development"]
+  };
+}
+
+/**
+ * Gets mock paginated tenders for testing
+ * @param page Page number
+ * @param pageSize Number of items per page
+ * @param tenderType Optional tender type filter
+ * @param agencyName Optional agency name filter
+ * @returns Mock paginated tenders
+ */
+function getMockPaginatedTenders(
+  page: number = 1,
+  pageSize: number = 10,
+  tenderType?: string,
+  agencyName?: string
+): any {
+  // Generate mock tenders
+  const mockTenders = [];
+  const startIndex = (page - 1) * pageSize;
+  const totalCount = 150; // Mock total count
+  
+  const endIndex = Math.min(startIndex + pageSize, totalCount);
+  
+  for (let i = startIndex; i < endIndex; i++) {
+    const tenderId = `tender_${i + 1}`;
+    mockTenders.push({
+      tenderIdString: tenderId,
+      tenderTitle: `Test Tender ${i + 1}`,
+      entityName: agencyName || ['Ministry of Testing', 'Ministry of Technology', 'Ministry of Infrastructure'][i % 3],
+      tenderType: tenderType || ['IT Services', 'Construction', 'Consulting'][i % 3],
+      tenderValue: Math.floor(Math.random() * 1000000) + 500000,
+      lastEnrollDate: new Date(Date.now() + (7 + i) * 24 * 60 * 60 * 1000).toISOString(),
+      lastOfferDate: new Date(Date.now() + (14 + i) * 24 * 60 * 60 * 1000).toISOString(),
+      submissionDetails: "Submit through platform",
+      details: {
+        description: `Detailed description for tender ${i + 1}`,
+        requirements: "Vendor requirements go here",
+        location: ["Riyadh", "Jeddah", "Dammam"][i % 3],
+        industry: "Technology",
+        keywords: ["software", "IT", "development"]
+      }
+    });
+  }
+  
+  return {
+    tenders: mockTenders,
+    totalCount,
+    currentPage: page,
+    pageSize,
+    totalPages: Math.ceil(totalCount / pageSize)
+  };
 }

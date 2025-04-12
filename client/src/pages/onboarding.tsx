@@ -543,7 +543,7 @@ const Onboarding = () => {
                   if (
                     (value === 0) || // Always allow going to email verification
                     (value === 1 && onboardingStatus.emailVerified) || // Allow document upload if email verified
-                    (value === 2 && !!onboardingStatus.documentStatus) || // Allow plan selection if document uploaded
+                    (value === 2 && !!onboardingStatus.documentStatus && onboardingStatus.documentStatus.status === 'completed') || // Allow plan selection if document uploaded and processed
                     (value === 3 && activeStep >= 2) || // Allow payment if past plan selection
                     (value === 4 && onboardingStatus.completed) // Allow completed if onboarding is done
                   ) {
@@ -569,7 +569,7 @@ const Onboarding = () => {
                 </Step>
                 
                 <Step value={1}>
-                  <StepStatus complete={!!onboardingStatus.documentStatus} />
+                  <StepStatus complete={!!onboardingStatus.documentStatus && onboardingStatus.documentStatus.status === 'completed'} />
                   <div className="ml-3 flex flex-col">
                     <StepLabel>{t("Upload Document")}</StepLabel>
                     <StepDescription>{t("Company profile")}</StepDescription>

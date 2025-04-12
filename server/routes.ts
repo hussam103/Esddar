@@ -27,7 +27,7 @@ import {
   getDocumentStatus,
   cleanupDocumentFiles
 } from "./services/document-processing";
-import { sendWelcomeEmail, sendSubscriptionConfirmationEmail } from "./services/email-service";
+import { sendWelcomeEmail, sendSubscriptionConfirmationEmail, verifyEmailConfirmationToken, sendConfirmationEmail } from "./services/email-service";
 
 // Schema for subscription
 const subscriptionSchema = z.object({
@@ -562,6 +562,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   );
 
+  // Email Verification Endpoints
+  
+  // Email confirmation route
+  app.get("/api/confirm-email", async (req, res) => {
+    try {
+      const { token } = req.query;
+      
+      if (!token || typeof token !== 'string') {
+        return res.status(400).json({ error: "Invalid or missing token. Please request a new confirmation email." });
+      }
+      
+      const verified = await verifyEmailConfirmationToken(token);
+      
+      if (verified) {
+        // Get the user info for the welcome email
+        const user = await storage.getUserByUsername(req.user?.username || '');
+        
+        if (user && user.email) {
+          // Send welcome email
+          await sendWelcomeEmail(user.username, user.email);
+        }
+        
+        return res.json({ 
+          success: true, 
+          message: "Email confirmed successfully. You can now continue with the onboarding process." 
+        });
+      } else {
+        return res.status(400).json({ 
+          error: "Invalid or expired token. Please request a new confirmation email." 
+        });
+      }
+    } catch (error: any) {
+      console.error("Error confirming email:", error);
+      return res.status(500).json({ 
+        error: "An error occurred while confirming your email. Please try again later." 
+      });
+    }
+  });
+  
+  // Resend confirmation email
+  app.post("/api/resend-confirmation", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    
+    try {
+      const user = await storage.getUser(req.user.id);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      if (user.emailVerified) {
+        return res.status(400).json({ 
+          error: "Email is already verified" 
+        });
+      }
+      
+      if (!user.email) {
+        return res.status(400).json({ 
+          error: "No email address associated with this account" 
+        });
+      }
+      
+      // Get the protocol and host from headers
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+      const host = req.headers.host;
+      const baseUrl = `${protocol}://${host}`;
+      
+      // Send confirmation email
+      const emailSent = await sendConfirmationEmail(
+        user.id, 
+        user.username, 
+        user.email, 
+        baseUrl
+      );
+      
+      if (emailSent) {
+        return res.json({ 
+          success: true, 
+          message: "Confirmation email sent successfully" 
+        });
+      } else {
+        return res.status(500).json({ 
+          error: "Failed to send confirmation email. Please try again later." 
+        });
+      }
+    } catch (error: any) {
+      console.error("Error resending confirmation email:", error);
+      return res.status(500).json({ 
+        error: "An error occurred. Please try again later." 
+      });
+    }
+  });
+  
   // Onboarding Flow Endpoints
   
   // Get user's current onboarding status

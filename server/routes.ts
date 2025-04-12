@@ -35,6 +35,13 @@ const subscriptionSchema = z.object({
   price: z.number().positive()
 });
 
+import { 
+  scrapeTenders, 
+  getTenderDetails, 
+  getPaginatedTenders, 
+  getTenderById 
+} from './services/etimad-service';
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Sets up authentication routes
   setupAuth(app);
@@ -1196,6 +1203,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching achievements:", error);
       res.status(500).json({ error: "Failed to fetch achievements" });
+    }
+  });
+
+  // Etimad API Integration
+  app.get("/api/scrape-etimad-tenders", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== 'admin') {
+      return res.status(401).json({ error: "Unauthorized - Admin access required" });
+    }
+
+    try {
+      const page = req.query.page ? parseInt(req.query.page as string) : 1;
+      const pageSize = req.query.page_size ? parseInt(req.query.page_size as string) : 10;
+      
+      if (pageSize > 100) {
+        return res.status(400).json({ error: "Page size cannot exceed 100" });
+      }
+      
+      const tenders = await scrapeTenders(page, pageSize);
+      res.json({ success: true, count: tenders.length, tenders });
+    } catch (error: any) {
+      res.status(500).json({ 
+        error: "Failed to scrape tenders from Etimad",
+        message: error.message
+      });
+    }
+  });
+
+  app.get("/api/tender-details/:tenderIdString", async (req, res) => {
+    try {
+      const { tenderIdString } = req.params;
+      const details = await getTenderDetails(tenderIdString);
+      
+      if (!details) {
+        return res.status(404).json({ error: "Tender details not found" });
+      }
+      
+      res.json(details);
+    } catch (error: any) {
+      res.status(500).json({ 
+        error: "Failed to get tender details",
+        message: error.message
+      });
+    }
+  });
+
+  app.get("/api/etimad-tenders", async (req, res) => {
+    try {
+      const page = req.query.page ? parseInt(req.query.page as string) : 1;
+      const pageSize = req.query.page_size ? parseInt(req.query.page_size as string) : 10;
+      const tenderType = req.query.tender_type as string | undefined;
+      const agencyName = req.query.agency_name as string | undefined;
+      
+      if (pageSize > 100) {
+        return res.status(400).json({ error: "Page size cannot exceed 100" });
+      }
+      
+      const results = await getPaginatedTenders(page, pageSize, tenderType, agencyName);
+      res.json(results);
+    } catch (error: any) {
+      res.status(500).json({ 
+        error: "Failed to get paginated tenders",
+        message: error.message
+      });
+    }
+  });
+
+  app.get("/api/etimad-tenders/:tenderId", async (req, res) => {
+    try {
+      const tenderId = parseInt(req.params.tenderId);
+      
+      if (isNaN(tenderId)) {
+        return res.status(400).json({ error: "Invalid tender ID" });
+      }
+      
+      const tender = await getTenderById(tenderId);
+      
+      if (!tender) {
+        return res.status(404).json({ error: "Tender not found" });
+      }
+      
+      res.json(tender);
+    } catch (error: any) {
+      res.status(500).json({ 
+        error: "Failed to get tender by ID",
+        message: error.message
+      });
     }
   });
 

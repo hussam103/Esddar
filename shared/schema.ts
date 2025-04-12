@@ -8,24 +8,32 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  email: text("email"),
+  emailVerified: boolean("email_verified").default(false),
   companyName: text("company_name").notNull(),
   industry: text("industry"),
   description: text("description"),
   services: text("services").array(),
   profileCompleteness: integer("profile_completeness").default(0),
   role: text("role").default("user"), // 'user' or 'admin'
+  // Onboarding flow tracking
+  onboardingStep: text("onboarding_step").default("email_verification"), // email_verification, upload_document, choose_plan, payment, completed
+  onboardingCompleted: boolean("onboarding_completed").default(false),
   // Subscription fields
   subscriptionPlan: text("subscription_plan"),
   subscriptionPrice: numeric("subscription_price"),
   subscriptionStatus: text("subscription_status"),
   subscriptionStartDate: timestamp("subscription_start_date"),
   subscriptionEndDate: timestamp("subscription_end_date"),
+  // Tutorial and welcome flow
+  hasSeenTutorial: boolean("has_seen_tutorial").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
+  email: true,
   companyName: true,
   industry: true,
   role: true,

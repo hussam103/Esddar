@@ -6,6 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+import { sendConfirmationEmail, verifyEmailConfirmationToken, sendWelcomeEmail } from "./services/email-service";
 
 declare global {
   namespace Express {
@@ -73,13 +74,34 @@ export function setupAuth(app: Express) {
     try {
       const existingUser = await storage.getUserByUsername(req.body.username);
       if (existingUser) {
-        return res.status(400).send("Username already exists");
+        return res.status(400).json({ error: "Username already exists" });
       }
 
+      // Make sure email is provided
+      if (!req.body.email) {
+        return res.status(400).json({ error: "Email is required" });
+      }
+
+      // Create the user with email verification pending
       const user = await storage.createUser({
         ...req.body,
         password: await hashPassword(req.body.password),
+        emailVerified: false,
+        onboardingStep: 'email_verification',
+        onboardingCompleted: false
       });
+
+      // Generate base URL for email links
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+      const baseUrl = `${protocol}://${req.get('host')}`;
+      
+      // Send confirmation email
+      await sendConfirmationEmail(
+        user.id, 
+        user.username, 
+        user.email, 
+        baseUrl
+      );
 
       req.login(user, (err) => {
         if (err) return next(err);
@@ -121,6 +143,84 @@ export function setupAuth(app: Express) {
       });
     } catch (error) {
       next(error);
+    }
+  });
+  
+  // Email confirmation endpoint
+  app.get("/api/confirm-email", async (req, res) => {
+    const { token } = req.query;
+    
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({ error: "Invalid token" });
+    }
+    
+    const verified = await verifyEmailConfirmationToken(token);
+    
+    if (!verified) {
+      return res.status(400).json({ 
+        error: "Invalid or expired token. Please request a new confirmation email." 
+      });
+    }
+    
+    // If the user is logged in, update their session
+    if (req.isAuthenticated()) {
+      req.user.emailVerified = true;
+      req.user.onboardingStep = 'upload_document';
+    }
+    
+    // Send welcome email to the user
+    const user = await storage.getUser(req.user?.id);
+    if (user && user.email) {
+      await sendWelcomeEmail(user.username, user.email);
+    }
+    
+    return res.status(200).json({ 
+      success: true, 
+      message: "Email confirmed successfully" 
+    });
+  });
+  
+  // Resend confirmation email endpoint
+  app.post("/api/resend-confirmation", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    
+    const user = req.user;
+    
+    if (user.emailVerified) {
+      return res.status(400).json({ 
+        error: "Email is already verified" 
+      });
+    }
+    
+    if (!user.email) {
+      return res.status(400).json({ 
+        error: "No email address associated with this account" 
+      });
+    }
+    
+    // Generate base URL for email links
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const baseUrl = `${protocol}://${req.get('host')}`;
+    
+    // Send confirmation email
+    const sent = await sendConfirmationEmail(
+      user.id, 
+      user.username, 
+      user.email, 
+      baseUrl
+    );
+    
+    if (sent) {
+      return res.status(200).json({ 
+        success: true, 
+        message: "Confirmation email sent successfully" 
+      });
+    } else {
+      return res.status(500).json({ 
+        error: "Failed to send confirmation email" 
+      });
     }
   });
 

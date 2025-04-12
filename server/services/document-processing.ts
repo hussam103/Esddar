@@ -380,31 +380,96 @@ ${text.substring(0, 10000)} // Limit to first 10k characters for API limit
  */
 async function updateUserProfileWithExtractedData(userId: number, extractedData: any): Promise<void> {
   try {
+    console.log(`Updating user profile for userId: ${userId} with extracted data:`, extractedData);
+    
     // Get existing user profile
     const existingProfile = await storage.getUserProfile(userId);
+
+    // Make sure the data has the expected format
+    const normalizedData = {
+      companyDescription: extractedData.companyDescription || null,
+      companyActivities: Array.isArray(extractedData.companyActivities) ? extractedData.companyActivities : [],
+      businessType: extractedData.businessType || null,
+      mainIndustries: Array.isArray(extractedData.mainIndustries) ? extractedData.mainIndustries : [],
+      specializations: Array.isArray(extractedData.specializations) ? extractedData.specializations : []
+    };
+    
+    // For debugging, log the profile before update
+    console.log('Existing profile:', existingProfile);
     
     if (existingProfile) {
       // Update existing profile with extracted data
-      await storage.updateUserProfile(userId, {
-        companyDescription: extractedData.companyDescription || existingProfile.companyDescription,
-        companyActivities: extractedData.companyActivities || existingProfile.companyActivities,
-        businessType: extractedData.businessType || existingProfile.businessType,
-        mainIndustries: extractedData.mainIndustries || existingProfile.mainIndustries,
-        specializations: extractedData.specializations || existingProfile.specializations,
+      const updatedProfile = await storage.updateUserProfile(userId, {
+        companyDescription: normalizedData.companyDescription || existingProfile.companyDescription,
+        companyActivities: normalizedData.companyActivities.length > 0 ? normalizedData.companyActivities : existingProfile.companyActivities,
+        businessType: normalizedData.businessType || existingProfile.businessType,
+        mainIndustries: normalizedData.mainIndustries.length > 0 ? normalizedData.mainIndustries : existingProfile.mainIndustries,
+        specializations: normalizedData.specializations.length > 0 ? normalizedData.specializations : existingProfile.specializations,
       });
+      
+      console.log('Profile updated successfully:', updatedProfile);
+      
+      // Update the user's profileCompleteness score
+      const user = await storage.getUser(userId);
+      if (user) {
+        let completeness = 30; // Base score for having uploaded a document
+        
+        // Add scores for each filled field
+        if (normalizedData.companyDescription) completeness += 15;
+        if (normalizedData.businessType) completeness += 15;
+        if (normalizedData.companyActivities.length > 0) completeness += 15;
+        if (normalizedData.mainIndustries.length > 0) completeness += 15;
+        if (normalizedData.specializations.length > 0) completeness += 10;
+        
+        // Cap at 100%
+        completeness = Math.min(completeness, 100);
+        
+        // Update user profile completeness
+        await storage.updateUser(userId, {
+          profileCompleteness: completeness
+        });
+        
+        console.log(`Updated user profile completeness to ${completeness}%`);
+      }
     } else {
       // Create new profile with extracted data
-      await storage.createUserProfile({
+      const newProfile = await storage.createUserProfile({
         userId,
-        companyDescription: extractedData.companyDescription,
-        companyActivities: extractedData.companyActivities || [],
-        businessType: extractedData.businessType,
-        mainIndustries: extractedData.mainIndustries || [],
-        specializations: extractedData.specializations || []
+        companyDescription: normalizedData.companyDescription,
+        companyActivities: normalizedData.companyActivities,
+        businessType: normalizedData.businessType,
+        mainIndustries: normalizedData.mainIndustries,
+        specializations: normalizedData.specializations
       });
+      
+      console.log('New profile created successfully:', newProfile);
+      
+      // Update the user's profileCompleteness score for a new profile
+      const user = await storage.getUser(userId);
+      if (user) {
+        let completeness = 30; // Base score for having uploaded a document
+        
+        // Add scores for each filled field
+        if (normalizedData.companyDescription) completeness += 15;
+        if (normalizedData.businessType) completeness += 15;
+        if (normalizedData.companyActivities.length > 0) completeness += 15;
+        if (normalizedData.mainIndustries.length > 0) completeness += 15;
+        if (normalizedData.specializations.length > 0) completeness += 10;
+        
+        // Cap at 100%
+        completeness = Math.min(completeness, 100);
+        
+        // Update user profile completeness
+        await storage.updateUser(userId, {
+          profileCompleteness: completeness
+        });
+        
+        console.log(`Set initial user profile completeness to ${completeness}%`);
+      }
     }
   } catch (error) {
     console.error('Error updating user profile with extracted data:', error);
+    throw error; // Re-throw so we can track this error
   }
 }
 

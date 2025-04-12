@@ -565,9 +565,9 @@ const ProfilePage = () => {
                       <h3 className="font-medium text-sm text-muted-foreground mb-1">
                         {language === "ar" ? "تاريخ الانضمام" : "Join Date"}
                       </h3>
-                      <p className="text-base">{new Date(user.createdAt).toLocaleDateString(
+                      <p className="text-base">{user.createdAt ? new Date(user.createdAt).toLocaleDateString(
                         language === "ar" ? "ar-SA" : "en-US"
-                      )}</p>
+                      ) : "-"}</p>
                     </div>
                     
                     <div>

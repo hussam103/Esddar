@@ -233,6 +233,8 @@ async function getOCRResults(documentId: string, whisperHash: string): Promise<v
         // If OCR is complete (processed status), retrieve the text
         if (ocrStatusResponse.status === 200 && ocrStatusResponse.data.status === 'processed') {
           try {
+            console.log(`OCR processing completed for document ${documentId}, retrieving text...`);
+            
             // Get the extracted text via the retrieve endpoint
             const retrieveResponse = await axios.get(
               `https://llmwhisperer-api.us-central.unstract.com/api/v2/whisper-retrieve?whisper_hash=${whisperHash}`,
@@ -247,18 +249,26 @@ async function getOCRResults(documentId: string, whisperHash: string): Promise<v
               // Check if we have result_text in the response or if text_only=true was used
               extractedText = retrieveResponse.data.result_text || retrieveResponse.data;
               
+              console.log(`Retrieved text length: ${extractedText ? extractedText.length : 0} characters`);
+              
               // Update job status
               const jobStatus = processingJobs.get(documentId);
               if (jobStatus) {
                 jobStatus.extractedText = extractedText;
+                console.log(`Updated job status with extracted text for document ${documentId}`);
               }
               
               // Process extracted text with OpenAI to identify company information
               if (extractedText) {
                 try {
+                  console.log(`Getting document details for processing company information...`);
                   const document = await storage.getCompanyDocument(documentId);
+                  
                   if (document) {
+                    console.log(`Processing company information for userId ${document.userId}...`);
                     const extractedData = await extractCompanyInformation(extractedText, document.userId);
+                    
+                    console.log(`Company information extracted:`, extractedData);
                     
                     // Update document with extracted text and data
                     await storage.updateCompanyDocument(documentId, {
@@ -268,7 +278,10 @@ async function getOCRResults(documentId: string, whisperHash: string): Promise<v
                       processedAt: new Date()
                     });
                     
+                    console.log(`Document updated with extracted data in database`);
+                    
                     // Update user profile with extracted company information
+                    console.log(`Updating user profile with extracted data for userId ${document.userId}...`);
                     await updateUserProfileWithExtractedData(document.userId, extractedData);
                     
                     // Update job status
@@ -276,6 +289,7 @@ async function getOCRResults(documentId: string, whisperHash: string): Promise<v
                     if (jobStatus) {
                       jobStatus.status = 'completed';
                       jobStatus.extractedData = extractedData;
+                      console.log(`Job status updated to completed for document ${documentId}`);
                     }
                   }
                 } catch (err) {
@@ -331,6 +345,12 @@ async function getOCRResults(documentId: string, whisperHash: string): Promise<v
  */
 async function extractCompanyInformation(text: string, userId: number): Promise<any> {
   try {
+    console.log(`Starting company information extraction for userId: ${userId}`);
+    console.log(`Text length: ${text.length} characters`);
+    
+    // Limit text to a reasonable size to avoid token limits
+    const truncatedText = text.length > 10000 ? text.substring(0, 10000) + "..." : text;
+    
     const prompt = `
 You are an expert AI assistant for extracting structured company information from documents.
 Analyze the following text extracted from a company document and identify key information about the business.
@@ -338,17 +358,19 @@ Analyze the following text extracted from a company document and identify key in
 Extract the following information in JSON format:
 1. companyDescription: A concise description of the company (max 200 words)
 2. businessType: The type of business (e.g., LLC, Corporation, etc.)
-3. companyActivities: An array of specific business activities/services the company offers
-4. mainIndustries: An array of the main industries the company operates in
-5. specializations: An array of specialized services or capabilities
+3. companyActivities: An array of primary business activities or services (provide at least 3-5 if possible)
+4. mainIndustries: An array of the main industries the company operates in (provide at least 2-3 if possible)
+5. specializations: An array of specialized areas or expertise (provide at least 2-3 if possible)
 
-Only include fields if you can extract them with high confidence. If information is not available, use null.
-Output in valid JSON format with these fields.
+If you cannot find specific information for a field, use null for singular values or an empty array [] for array values.
+IMPORTANT: Always return a valid JSON object with all the requested fields, even if some values are null or empty arrays.
 
-Here is the extracted text:
-${text.substring(0, 10000)} // Limit to first 10k characters for API limit
+Here's the text from the document:
+${truncatedText}
 `;
 
+    console.log('Sending extraction request to OpenAI...');
+    
     const completion = await openai.chat.completions.create({
       model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [
@@ -356,22 +378,46 @@ ${text.substring(0, 10000)} // Limit to first 10k characters for API limit
         { role: "user", content: prompt }
       ],
       temperature: 0.2,
-      response_format: { type: "json_object" }
+      response_format: { type: "json_object" },
+      max_tokens: 1000
     });
 
-    // Parse the extracted information
-    const extractedInfo = JSON.parse(completion.choices[0].message.content || "{}");
+    const content = completion.choices[0].message.content || "{}";
+    console.log('Received response from OpenAI:', content);
     
-    return extractedInfo;
+    try {
+      // Parse the extracted information
+      const extractedInfo = JSON.parse(content);
+      
+      // Validate the extracted information has the expected structure
+      const validatedInfo = {
+        companyDescription: typeof extractedInfo.companyDescription === 'string' ? extractedInfo.companyDescription : null,
+        businessType: typeof extractedInfo.businessType === 'string' ? extractedInfo.businessType : null,
+        companyActivities: Array.isArray(extractedInfo.companyActivities) ? extractedInfo.companyActivities : [],
+        mainIndustries: Array.isArray(extractedInfo.mainIndustries) ? extractedInfo.mainIndustries : [],
+        specializations: Array.isArray(extractedInfo.specializations) ? extractedInfo.specializations : []
+      };
+      
+      console.log('Validated extraction result:', validatedInfo);
+      return validatedInfo;
+    } catch (parseError) {
+      console.error('Error parsing OpenAI response:', parseError);
+      throw new Error('Failed to parse extracted information from OpenAI');
+    }
   } catch (error) {
     console.error('Error extracting company information:', error);
-    return {
+    
+    // Return default values
+    const defaultValues = {
       companyDescription: null,
       businessType: null,
       companyActivities: [],
       mainIndustries: [],
       specializations: []
     };
+    
+    console.log('Returning default values due to extraction error:', defaultValues);
+    return defaultValues;
   }
 }
 

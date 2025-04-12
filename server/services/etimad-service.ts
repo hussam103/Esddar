@@ -35,18 +35,39 @@ interface EtimadTender {
  * Scrapes tenders from Etimad platform and saves to the database
  * @param page Page number (default: 1)
  * @param pageSize Number of tenders per page (default: 10, max: 100)
- * @returns An array of tender data objects
+ * @returns Response with success status, message, and tenders data
  */
-export async function scrapeTenders(page: number = 1, pageSize: number = 10): Promise<any[]> {
+export async function scrapeTenders(page: number = 1, pageSize: number = 10): Promise<{
+  success: boolean,
+  message: string,
+  tenders_count: number,
+  tenders?: any[],
+  errors?: string[]
+}> {
   try {
     log(`Fetching tenders from Etimad API - page ${page}, pageSize ${pageSize}`, 'etimad-service');
+    
+    // Check if pageSize exceeds maximum
+    if (pageSize > 100) {
+      return {
+        success: false,
+        message: "Page size cannot exceed 100",
+        tenders_count: 0,
+        errors: ["Page size limit exceeded. Maximum allowed is 100."]
+      };
+    }
     
     // Check if we're in test mode
     if (process.env.ETIMAD_API_MODE === 'test') {
       log(`Using test mode for Etimad API`, 'etimad-service');
       const mockData = getMockPaginatedTenders(page, pageSize);
       await saveTendersToDatabase(mockData.tenders);
-      return mockData.tenders;
+      return {
+        success: true,
+        message: `Successfully scraped ${mockData.tenders.length} tenders (test mode)`,
+        tenders_count: mockData.tenders.length,
+        tenders: mockData.tenders
+      };
     }
     
     const response = await axios.get(`${ETIMAD_API_BASE_URL}/api/scrape-tenders`, {
@@ -56,16 +77,27 @@ export async function scrapeTenders(page: number = 1, pageSize: number = 10): Pr
       }
     });
     
-    if (response.data && Array.isArray(response.data)) {
-      log(`Successfully fetched ${response.data.length} tenders from Etimad`, 'etimad-service');
+    if (response.data && response.data.success) {
+      const tenders = response.data.tenders || [];
+      log(`Successfully fetched ${tenders.length} tenders from Etimad`, 'etimad-service');
       
       // Save tenders to the database
-      await saveTendersToDatabase(response.data);
+      await saveTendersToDatabase(tenders);
       
-      return response.data;
+      return {
+        success: true,
+        message: `Successfully scraped ${tenders.length} tenders`,
+        tenders_count: tenders.length,
+        tenders: tenders
+      };
     } else {
       log(`Invalid response from Etimad API: ${JSON.stringify(response.data)}`, 'etimad-service');
-      return [];
+      return {
+        success: false,
+        message: "Failed to scrape tenders: Invalid response format",
+        tenders_count: 0,
+        errors: ["Invalid API response format"]
+      };
     }
   } catch (error: any) {
     const errorMessage = error?.message || 'Unknown error';
@@ -76,10 +108,20 @@ export async function scrapeTenders(page: number = 1, pageSize: number = 10): Pr
       log(`Providing mock data for scraping tenders`, 'etimad-service');
       const mockData = getMockPaginatedTenders(page, pageSize);
       await saveTendersToDatabase(mockData.tenders);
-      return mockData.tenders;
+      return {
+        success: true,
+        message: `Successfully scraped ${mockData.tenders.length} tenders (mock data)`,
+        tenders_count: mockData.tenders.length,
+        tenders: mockData.tenders
+      };
     }
     
-    throw new Error(`Failed to scrape tenders from Etimad: ${errorMessage}`);
+    return {
+      success: false,
+      message: `Failed to scrape tenders from Etimad: ${errorMessage}`,
+      tenders_count: 0,
+      errors: [errorMessage]
+    };
   }
 }
 
@@ -88,7 +130,12 @@ export async function scrapeTenders(page: number = 1, pageSize: number = 10): Pr
  * @param tenderIdString Encrypted tender ID string
  * @returns Detailed tender information
  */
-export async function getTenderDetails(tenderIdString: string): Promise<any> {
+export async function getTenderDetails(tenderIdString: string): Promise<{
+  success: boolean,
+  message: string,
+  tender_details?: any,
+  errors?: string[]
+}> {
   try {
     log(`Fetching tender details for ID ${tenderIdString}`, 'etimad-service');
     
@@ -96,21 +143,36 @@ export async function getTenderDetails(tenderIdString: string): Promise<any> {
     if (process.env.ETIMAD_API_MODE === 'test') {
       log(`Using test mode for Etimad API`, 'etimad-service');
       // Return mock data for testing
-      return getMockTenderDetails(tenderIdString);
+      const mockData = getMockTenderDetails(tenderIdString);
+      return {
+        success: true,
+        message: `Successfully retrieved tender details (test mode)`,
+        tender_details: mockData
+      };
     }
     
     const response = await axios.get(`${ETIMAD_API_BASE_URL}/api/tender-details/${tenderIdString}`);
     
-    if (response.data) {
+    if (response.data && response.data.success) {
       log(`Successfully fetched details for tender ${tenderIdString}`, 'etimad-service');
       
       // Update the tender in the database with the new details
-      await updateTenderDetails(tenderIdString, response.data);
+      if (response.data.tender_details) {
+        await updateTenderDetails(tenderIdString, response.data.tender_details);
+      }
       
-      return response.data;
+      return {
+        success: true,
+        message: `Successfully retrieved tender details`,
+        tender_details: response.data.tender_details
+      };
     } else {
       log(`Invalid response for tender details: ${JSON.stringify(response.data)}`, 'etimad-service');
-      return null;
+      return {
+        success: false,
+        message: "Failed to get tender details: Invalid response format",
+        errors: ["Invalid API response format"]
+      };
     }
   } catch (error: any) {
     const errorMessage = error?.message || 'Unknown error';
@@ -119,10 +181,19 @@ export async function getTenderDetails(tenderIdString: string): Promise<any> {
     // If in development or test mode, provide mock data
     if (process.env.NODE_ENV === 'development' || process.env.ETIMAD_API_MODE === 'test') {
       log(`Providing mock data for tender details`, 'etimad-service');
-      return getMockTenderDetails(tenderIdString);
+      const mockData = getMockTenderDetails(tenderIdString);
+      return {
+        success: true,
+        message: `Successfully retrieved tender details (mock data)`,
+        tender_details: mockData
+      };
     }
     
-    throw new Error(`Failed to get tender details: ${errorMessage}`);
+    return {
+      success: false,
+      message: `Failed to get tender details: ${errorMessage}`,
+      errors: [errorMessage]
+    };
   }
 }
 
@@ -139,15 +210,42 @@ export async function getPaginatedTenders(
   pageSize: number = 10,
   tenderType?: string,
   agencyName?: string
-): Promise<any> {
+): Promise<{
+  success: boolean,
+  message: string,
+  tenders?: any[],
+  total_count?: number,
+  current_page?: number,
+  total_pages?: number,
+  page_size?: number,
+  errors?: string[]
+}> {
   try {
     log(`Fetching paginated tenders - page ${page}, pageSize ${pageSize}`, 'etimad-service');
+    
+    // Check if pageSize exceeds maximum
+    if (pageSize > 100) {
+      return {
+        success: false,
+        message: "Page size cannot exceed 100",
+        errors: ["Page size limit exceeded. Maximum allowed is 100."]
+      };
+    }
     
     // Check if we're in test mode
     if (process.env.ETIMAD_API_MODE === 'test') {
       log(`Using test mode for Etimad API`, 'etimad-service');
       // Return mock data for testing
-      return getMockPaginatedTenders(page, pageSize, tenderType, agencyName);
+      const mockData = getMockPaginatedTenders(page, pageSize, tenderType, agencyName);
+      return {
+        success: true,
+        message: `Successfully retrieved tenders (test mode)`,
+        tenders: mockData.tenders,
+        total_count: mockData.totalCount,
+        current_page: mockData.currentPage,
+        total_pages: mockData.totalPages,
+        page_size: mockData.pageSize
+      };
     }
     
     const params: any = {
@@ -160,12 +258,24 @@ export async function getPaginatedTenders(
     
     const response = await axios.get(`${ETIMAD_API_BASE_URL}/api/tenders`, { params });
     
-    if (response.data) {
+    if (response.data && response.data.success) {
       log(`Successfully fetched paginated tenders`, 'etimad-service');
-      return response.data;
+      return {
+        success: true,
+        message: `Successfully retrieved tenders`,
+        tenders: response.data.tenders || [],
+        total_count: response.data.total_count || 0,
+        current_page: response.data.current_page || page,
+        total_pages: response.data.total_pages || 0,
+        page_size: response.data.page_size || pageSize
+      };
     } else {
       log(`Invalid response for paginated tenders: ${JSON.stringify(response.data)}`, 'etimad-service');
-      return { tenders: [], totalCount: 0 };
+      return {
+        success: false,
+        message: "Failed to retrieve tenders: Invalid response format",
+        errors: ["Invalid API response format"]
+      };
     }
   } catch (error: any) {
     const errorMessage = error?.message || 'Unknown error';
@@ -174,10 +284,23 @@ export async function getPaginatedTenders(
     // If in development or test mode, provide mock data
     if (process.env.NODE_ENV === 'development' || process.env.ETIMAD_API_MODE === 'test') {
       log(`Providing mock data for paginated tenders`, 'etimad-service');
-      return getMockPaginatedTenders(page, pageSize, tenderType, agencyName);
+      const mockData = getMockPaginatedTenders(page, pageSize, tenderType, agencyName);
+      return {
+        success: true,
+        message: `Successfully retrieved tenders (mock data)`,
+        tenders: mockData.tenders,
+        total_count: mockData.totalCount,
+        current_page: mockData.currentPage,
+        total_pages: mockData.totalPages,
+        page_size: mockData.pageSize
+      };
     }
     
-    throw new Error(`Failed to get paginated tenders: ${errorMessage}`);
+    return {
+      success: false,
+      message: `Failed to get paginated tenders: ${errorMessage}`,
+      errors: [errorMessage]
+    };
   }
 }
 
@@ -186,23 +309,42 @@ export async function getPaginatedTenders(
  * @param tenderId Tender ID
  * @returns Tender data
  */
-export async function getTenderById(tenderId: number): Promise<any> {
+export async function getTenderById(tenderId: number): Promise<{
+  success: boolean,
+  message: string,
+  tender?: any,
+  errors?: string[]
+}> {
   try {
     log(`Fetching tender by ID ${tenderId}`, 'etimad-service');
     
     const response = await axios.get(`${ETIMAD_API_BASE_URL}/api/tenders/${tenderId}`);
     
-    if (response.data) {
+    if (response.data && response.data.success) {
       log(`Successfully fetched tender ${tenderId}`, 'etimad-service');
-      return response.data;
+      return {
+        success: true,
+        message: `Successfully retrieved tender`,
+        tender: response.data.tender
+      };
     } else {
       log(`Invalid response for tender ${tenderId}: ${JSON.stringify(response.data)}`, 'etimad-service');
-      return null;
+      return {
+        success: false,
+        message: "Failed to retrieve tender: Invalid response format",
+        errors: ["Invalid API response format"]
+      };
     }
   } catch (error: any) {
     const errorMessage = error?.message || 'Unknown error';
     log(`Error fetching tender by ID: ${errorMessage}`, 'etimad-service');
-    throw new Error(`Failed to get tender by ID: ${errorMessage}`);
+    
+    // Provide a more useful error response
+    return {
+      success: false,
+      message: `Failed to get tender by ID: ${errorMessage}`,
+      errors: [errorMessage]
+    };
   }
 }
 

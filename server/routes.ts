@@ -2048,22 +2048,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // API endpoint for testing a specific Etimad tender ID
-  app.post("/api/test-etimad-tender", async (req, res) => {
-    // Check if user is authenticated and is an admin
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ 
-        success: false, 
-        message: "لم يتم التعرف على المستخدم" 
-      });
-    }
-    
-    // Check if the user is an admin
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false, 
-        message: "ليس لديك الصلاحيات الكافية للقيام بهذا الإجراء"
-      });
-    }
+  app.post("/api/test-etimad-tender", isAdmin, async (req, res) => {
     
     const { tenderId } = req.body;
     

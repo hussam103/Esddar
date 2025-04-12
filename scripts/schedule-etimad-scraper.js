@@ -1,6 +1,8 @@
 import cron from 'node-cron';
 import axios from 'axios';
 import { log } from '../server/vite.js';
+import { db } from '../server/db.js';
+import { scrapeLogs } from '../shared/schema.js';
 
 // Function to scrape tenders from Etimad API
 async function scrapeTendersFromEtimad() {
@@ -32,6 +34,28 @@ async function scrapeTendersFromEtimad() {
     console.log(`Message: ${scrapingResult.message}`);
     console.log(`Tenders Count: ${scrapingResult.tendersCount}`);
     console.log('============================================');
+    
+    // Log to database
+    try {
+      await db.insert(scrapeLogs).values({
+        sourceId: 1, // Assuming Etimad is source ID 1
+        status: scrapingResult.success ? 'completed' : 'failed',
+        totalTenders: scrapingResult.tendersCount,
+        newTenders: scrapingResult.tendersCount, // Assume all are new for now
+        errorMessage: !scrapingResult.success ? scrapingResult.message : null,
+        details: { 
+          automated: true,
+          scheduler: true,
+          message: scrapingResult.message,
+          timestamp: scrapingResult.timestamp
+        },
+        startTime: new Date(Date.now() - 60000), // 1 minute ago
+        endTime: new Date()
+      });
+      console.log('Scraping result logged to database');
+    } catch (dbError) {
+      console.error('Failed to log scraping result to database:', dbError.message);
+    }
     
     return scrapingResult;
   } catch (error) {

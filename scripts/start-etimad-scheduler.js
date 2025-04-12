@@ -6,10 +6,10 @@
  */
 
 // Register required environment variables
-require('dotenv').config();
+import 'dotenv/config';
 
 // Import the scheduler
-require('./schedule-etimad-scraper');
+import './schedule-etimad-scraper.js';
 
 console.log('Etimad Tender Scraper Scheduler started');
 console.log('Press Ctrl+C to stop the scheduler');

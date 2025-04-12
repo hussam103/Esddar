@@ -423,10 +423,10 @@ export default function TenderDetailsPage() {
                       <div className="flex justify-center py-4">
                         <Loader2 className="h-6 w-6 animate-spin text-primary" />
                       </div>
-                    ) : etimadDetails?.success ? (
+                    ) : etimadDetails && etimadDetails.success ? (
                       <>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {etimadDetails?.tender_details?.lastEnrollDate && (
+                          {etimadDetails.tender_details?.lastEnrollDate && (
                             <div className="flex items-start">
                               <Calendar className="h-5 w-5 text-primary mt-0.5 mr-2" />
                               <div>
@@ -441,7 +441,7 @@ export default function TenderDetailsPage() {
                             </div>
                           )}
                           
-                          {etimadDetails?.tender_details?.lastOfferDate && (
+                          {etimadDetails.tender_details?.lastOfferDate && (
                             <div className="flex items-start">
                               <Clock className="h-5 w-5 text-primary mt-0.5 mr-2" />
                               <div>
@@ -456,7 +456,7 @@ export default function TenderDetailsPage() {
                             </div>
                           )}
                           
-                          {etimadDetails?.tender_details?.tenderType && (
+                          {etimadDetails.tender_details?.tenderType && (
                             <div className="flex items-start">
                               <Tag className="h-5 w-5 text-primary mt-0.5 mr-2" />
                               <div>
@@ -466,7 +466,7 @@ export default function TenderDetailsPage() {
                             </div>
                           )}
                           
-                          {etimadDetails?.tender_details?.tenderValue && (
+                          {etimadDetails.tender_details?.tenderValue && (
                             <div className="flex items-start">
                               <SARIcon className="h-5 w-5 text-primary mt-0.5 mr-2" />
                               <div>
@@ -477,7 +477,7 @@ export default function TenderDetailsPage() {
                           )}
                         </div>
                         
-                        {etimadDetails?.tender_details?.submissionDetails && (
+                        {etimadDetails.tender_details?.submissionDetails && (
                           <div className="mt-4">
                             <h3 className="font-medium mb-2 flex items-center">
                               <FileCheck className="h-5 w-5 mr-2 text-primary" />
@@ -493,7 +493,7 @@ export default function TenderDetailsPage() {
                           <Button 
                             variant="outline" 
                             className="flex items-center"
-                            onClick={() => window.open(`https://tenders.etimad.sa/Tender/Details/${tender.externalId}`, '_blank')}
+                            onClick={() => window.open(`https://tenders.etimad.sa/Tender/Details/${tender.bidNumber}`, '_blank')}
                           >
                             <ExternalLink className="h-4 w-4 mr-2" />
                             {t("tenderDetails.viewOnEtimad")}
@@ -514,7 +514,7 @@ export default function TenderDetailsPage() {
                                 variant="outline" 
                                 size="sm"
                                 className="text-amber-600 border-amber-300 hover:bg-amber-50"
-                                onClick={() => queryClient.invalidateQueries({ queryKey: [`/api/etimad/tender-details/${tender.externalId}`] })}
+                                onClick={() => queryClient.invalidateQueries({ queryKey: [`/api/etimad/tender-details/${tender.bidNumber}`] })}
                               >
                                 {t("tenderDetails.refreshDetails")}
                               </Button>
@@ -606,7 +606,7 @@ export default function TenderDetailsPage() {
                   {tender.source === 'etimad' ? (
                     // For Etimad tenders, we provide a link to apply on Etimad platform
                     <a 
-                      href={`https://tenders.etimad.sa/Tender/OpenTenderDetailsReportForVisitor?tenderIdString=${encodeURIComponent(tender.externalId || '')}`}
+                      href={`https://tenders.etimad.sa/Tender/OpenTenderDetailsReportForVisitor?tenderIdString=${encodeURIComponent(tender.bidNumber || '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="px-4 py-2 rounded bg-gradient-to-l from-primary-600 to-primary-500 text-white hover:from-primary-700 hover:to-primary-600 transition-colors duration-150"

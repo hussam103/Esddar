@@ -64,73 +64,57 @@ export const Achievements = ({ userId }: AchievementsProps) => {
     fetchAchievements();
   }, [userId]);
 
-  // Sample achievements if API doesn't return any data yet
+  // Add icons to achievements based on their ID
   useEffect(() => {
-    if (achievements.length === 0 && !loading) {
-      const sampleAchievements: Achievement[] = [
-        {
-          id: 'first_login',
-          name: {
-            en: 'First Login',
-            ar: 'الدخول الأول'
-          },
-          description: {
-            en: 'You logged in for the first time',
-            ar: 'لقد قمت بتسجيل الدخول لأول مرة'
-          },
-          icon: <LightbulbIcon className="h-6 w-6 text-yellow-500" />,
-          points: 10,
-          isUnlocked: true,
-          dateUnlocked: new Date().toISOString()
-        },
-        {
-          id: 'profile_completed',
-          name: {
-            en: 'Profile Expert',
-            ar: 'خبير الملف الشخصي'
-          },
-          description: {
-            en: 'Complete your profile information',
-            ar: 'أكمل معلومات ملفك الشخصي'
-          },
-          icon: <Award className="h-6 w-6 text-purple-500" />,
-          points: 25,
-          isUnlocked: false,
-          progress: 40
-        },
-        {
-          id: 'first_application',
-          name: {
-            en: 'First Application',
-            ar: 'الطلب الأول'
-          },
-          description: {
-            en: 'Apply for your first tender',
-            ar: 'تقدم بطلب للمناقصة الأولى'
-          },
-          icon: <Medal className="h-6 w-6 text-blue-500" />,
-          points: 50,
-          isUnlocked: false
-        },
-        {
-          id: 'tutorial_completed',
-          name: {
-            en: 'Tutorial Graduate',
-            ar: 'خريج البرنامج التعليمي'
-          },
-          description: {
-            en: 'Complete the platform tutorial',
-            ar: 'أكمل البرنامج التعليمي للمنصة'
-          },
-          icon: <Trophy className="h-6 w-6 text-amber-500" />,
-          points: 30,
-          isUnlocked: false
+    if (achievements.length > 0) {
+      const achievementsWithIcons = achievements.map(achievement => {
+        let icon;
+        
+        // Assign appropriate icon based on achievement ID
+        switch (achievement.id) {
+          case 'first_login':
+            icon = <LightbulbIcon className="h-6 w-6 text-yellow-500" />;
+            break;
+          case 'email_verified':
+            icon = <Medal className="h-6 w-6 text-green-500" />;
+            break;
+          case 'profile_completed':
+            icon = <Award className="h-6 w-6 text-purple-500" />;
+            break;
+          case 'document_uploaded':
+            icon = <Award className="h-6 w-6 text-blue-500" />;
+            break;
+          case 'first_saved_tender':
+            icon = <Star className="h-6 w-6 text-yellow-500" />;
+            break;
+          case 'first_application':
+            icon = <Medal className="h-6 w-6 text-blue-500" />;
+            break;
+          case 'subscription_started':
+            icon = <Award className="h-6 w-6 text-amber-500" />;
+            break;
+          case 'tutorial_completed':
+            icon = <Trophy className="h-6 w-6 text-amber-500" />;
+            break;
+          case 'tender_explorer':
+            icon = <Medal className="h-6 w-6 text-green-500" />;
+            break;
+          case 'profile_master':
+            icon = <Award className="h-6 w-6 text-purple-500" />;
+            break;
+          default:
+            icon = <Star className="h-6 w-6 text-blue-500" />;
         }
-      ];
+        
+        return {
+          ...achievement,
+          icon
+        };
+      });
       
-      setAchievements(sampleAchievements);
+      setAchievements(achievementsWithIcons);
     }
-  }, [achievements, loading]);
+  }, [achievements.length]);
 
   // Calculate level-based information
   const calculateNextLevelPoints = (level: number) => level * 100;

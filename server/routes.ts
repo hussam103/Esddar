@@ -860,6 +860,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Achievement endpoints defined below
+  
   // Skip tutorial endpoint
   app.post("/api/onboarding/skip-tutorial", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });

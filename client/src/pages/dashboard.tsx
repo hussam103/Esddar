@@ -131,23 +131,24 @@ export default function Dashboard() {
             profileCompleteness={user?.profileCompleteness || 0} 
           />
           
-          <div className="dashboard-overview">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
             <RecommendedTenders 
               loading={recommendedTendersLoading} 
               tenders={recommendedTenders} 
-              className="recommended-tenders" 
+              className="lg:col-span-2" 
             />
             
             <ActiveApplications 
               loading={applicationsLoading} 
               applications={applications}
-              className="applications-tracking" 
+              className="lg:col-span-1" 
             />
             
             <UpcomingDeadlines 
               loading={applicationsLoading} 
               applications={applications} 
               tenders={tenders} 
+              className="lg:col-span-1"
             />
           </div>
           

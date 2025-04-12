@@ -23,11 +23,12 @@ type UpcomingDeadlinesProps = {
   loading: boolean;
   applications: Application[];
   tenders: Tender[];
+  className?: string;
 };
 
 type CalendarType = "gregorian" | "hijri";
 
-export default function UpcomingDeadlines({ loading, applications, tenders }: UpcomingDeadlinesProps) {
+export default function UpcomingDeadlines({ loading, applications, tenders, className = '' }: UpcomingDeadlinesProps) {
   const [, setLocation] = useLocation();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [calendarType, setCalendarType] = useState<CalendarType>("gregorian");
@@ -209,7 +210,7 @@ export default function UpcomingDeadlines({ loading, applications, tenders }: Up
 
   if (loading) {
     return (
-      <section className="mt-8 mb-8">
+      <section className={`mt-8 mb-8 ${className}`}>
         <div className="flex items-center justify-between mb-4">
           <Skeleton className="h-6 w-48" />
           <Skeleton className="h-4 w-24" />
@@ -224,7 +225,7 @@ export default function UpcomingDeadlines({ loading, applications, tenders }: Up
   }
 
   return (
-    <section className="mt-8 mb-8">
+    <section className={`mt-8 mb-8 ${className}`}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
           <CalendarClock className="h-5 w-5 text-primary-600 mr-2" />

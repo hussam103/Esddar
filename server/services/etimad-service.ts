@@ -128,9 +128,10 @@ export async function getPaginatedTenders(
       log(`Invalid response for paginated tenders: ${JSON.stringify(response.data)}`, 'etimad-service');
       return { tenders: [], totalCount: 0 };
     }
-  } catch (error) {
-    log(`Error fetching paginated tenders: ${error.message}`, 'etimad-service');
-    throw new Error(`Failed to get paginated tenders: ${error.message}`);
+  } catch (error: any) {
+    const errorMessage = error?.message || 'Unknown error';
+    log(`Error fetching paginated tenders: ${errorMessage}`, 'etimad-service');
+    throw new Error(`Failed to get paginated tenders: ${errorMessage}`);
   }
 }
 
@@ -152,9 +153,10 @@ export async function getTenderById(tenderId: number): Promise<any> {
       log(`Invalid response for tender ${tenderId}: ${JSON.stringify(response.data)}`, 'etimad-service');
       return null;
     }
-  } catch (error) {
-    log(`Error fetching tender by ID: ${error.message}`, 'etimad-service');
-    throw new Error(`Failed to get tender by ID: ${error.message}`);
+  } catch (error: any) {
+    const errorMessage = error?.message || 'Unknown error';
+    log(`Error fetching tender by ID: ${errorMessage}`, 'etimad-service');
+    throw new Error(`Failed to get tender by ID: ${errorMessage}`);
   }
 }
 
@@ -170,7 +172,7 @@ async function saveTendersToDatabase(tendersData: EtimadTender[]): Promise<void>
       // Check if the tender already exists in the database by tenderIdString
       const existingTender = await db.select()
         .from(tenders)
-        .where(sql => sql`${tenders.externalId} = ${tenderData.tenderIdString}`)
+        .where(eq(tenders.externalId, tenderData.tenderIdString))
         .limit(1);
       
       if (existingTender.length === 0) {
@@ -208,9 +210,10 @@ async function saveTendersToDatabase(tendersData: EtimadTender[]): Promise<void>
     }
     
     log(`Completed saving tenders to database`, 'etimad-service');
-  } catch (error) {
-    log(`Error saving tenders to database: ${error.message}`, 'etimad-service');
-    throw new Error(`Failed to save tenders to database: ${error.message}`);
+  } catch (error: any) {
+    const errorMessage = error?.message || 'Unknown error';
+    log(`Error saving tenders to database: ${errorMessage}`, 'etimad-service');
+    throw new Error(`Failed to save tenders to database: ${errorMessage}`);
   }
 }
 
@@ -226,7 +229,7 @@ async function updateTenderDetails(tenderIdString: string, details: any): Promis
     // Find the tender by externalId
     const existingTenders = await db.select()
       .from(tenders)
-      .where(sql => sql`${tenders.externalId} = ${tenderIdString}`)
+      .where(eq(tenders.externalId, tenderIdString))
       .limit(1);
     
     if (existingTenders.length === 0) {
@@ -249,11 +252,12 @@ async function updateTenderDetails(tenderIdString: string, details: any): Promis
     // Update in the database
     await db.update(tenders)
       .set(updateData)
-      .where(sql => sql`${tenders.id} = ${existingTender.id}`);
+      .where(eq(tenders.id, existingTender.id));
     
     log(`Successfully updated tender details for ${tenderIdString}`, 'etimad-service');
-  } catch (error) {
-    log(`Error updating tender details: ${error.message}`, 'etimad-service');
-    throw new Error(`Failed to update tender details: ${error.message}`);
+  } catch (error: any) {
+    const errorMessage = error?.message || 'Unknown error';
+    log(`Error updating tender details: ${errorMessage}`, 'etimad-service');
+    throw new Error(`Failed to update tender details: ${errorMessage}`);
   }
 }

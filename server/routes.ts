@@ -779,6 +779,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
     
     try {
+      const { tutorialKey, pointsEarned, achievementsEarned } = req.body;
+      const user = await storage.getUser(req.user.id);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Get current user profile or create if doesn't exist
+      let userProfile = await storage.getUserProfile(user.id);
+      if (!userProfile) {
+        userProfile = await storage.createUserProfile({
+          userId: user.id,
+          companyDescription: '',
+          achievements: [],
+          points: 0,
+          level: 1,
+          completedTutorials: []
+        });
+      }
+
+      // Update user points and completed tutorials
+      const currentPoints = userProfile.points || 0;
+      const newPoints = currentPoints + (pointsEarned || 0);
+      
+      // Calculate level based on points
+      const calculateLevel = (points: number) => {
+        return Math.floor(Math.sqrt(points / 25)) + 1;
+      };
+      
+      const newLevel = calculateLevel(newPoints);
+      
+      // Get existing achievements and add new ones
+      const currentAchievements = userProfile.achievements || [];
+      const completedTutorials = userProfile.completedTutorials || [];
+      
+      // Add new achievements if they don't already exist
+      const newAchievements = (achievementsEarned || [])
+        .filter(id => !currentAchievements.some(a => a.id === id))
+        .map(achievementId => ({
+          id: achievementId,
+          dateUnlocked: new Date().toISOString()
+        }));
+      
+      const updatedAchievements = [...currentAchievements, ...newAchievements];
+      
+      // Add completed tutorial if not already completed
+      let updatedTutorials = completedTutorials;
+      if (tutorialKey && !completedTutorials.includes(tutorialKey)) {
+        updatedTutorials = [...completedTutorials, tutorialKey];
+      }
+      
+      // Update user profile
+      await storage.updateUserProfile(user.id, {
+        points: newPoints,
+        level: newLevel,
+        achievements: updatedAchievements,
+        completedTutorials: updatedTutorials
+      });
+      
+      // Update user hasSeenTutorial flag
+      const updatedUser = await storage.updateUser(user.id, {
+        hasSeenTutorial: true
+      });
+      
+      if (!updatedUser) {
+        return res.status(500).json({ error: "Failed to update tutorial status" });
+      }
+      
+      res.json({
+        success: true,
+        hasSeenTutorial: true,
+        points: newPoints,
+        level: newLevel,
+        achievements: updatedAchievements
+      });
+    } catch (error) {
+      console.error("Error completing tutorial:", error);
+      res.status(500).json({ error: "Failed to update tutorial status" });
+    }
+  });
+  
+  // Skip tutorial endpoint
+  app.post("/api/onboarding/skip-tutorial", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
       const user = await storage.getUser(req.user.id);
       
       if (!user) {
@@ -798,7 +884,316 @@ export async function registerRoutes(app: Express): Promise<Server> {
         hasSeenTutorial: true
       });
     } catch (error) {
+      console.error("Error skipping tutorial:", error);
       res.status(500).json({ error: "Failed to update tutorial status" });
+    }
+  });
+  
+  // Get user achievements
+  app.get("/api/user/achievements", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      const userId = parseInt(req.query.userId as string) || req.user.id;
+      
+      // Check if user exists
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Get user profile
+      const userProfile = await storage.getUserProfile(userId);
+      if (!userProfile) {
+        // If no profile yet, return empty achievements
+        return res.status(200).json({
+          achievements: [],
+          points: 0,
+          level: 1
+        });
+      }
+      
+      // Define all possible achievements
+      const allAchievements = [
+        {
+          id: 'first_login',
+          name: {
+            en: 'First Login',
+            ar: 'الدخول الأول'
+          },
+          description: {
+            en: 'You logged in for the first time',
+            ar: 'لقد قمت بتسجيل الدخول لأول مرة'
+          },
+          points: 10
+        },
+        {
+          id: 'email_verified',
+          name: {
+            en: 'Email Verified',
+            ar: 'تم التحقق من البريد الإلكتروني'
+          },
+          description: {
+            en: 'You verified your email address',
+            ar: 'لقد تحققت من عنوان بريدك الإلكتروني'
+          },
+          points: 15
+        },
+        {
+          id: 'profile_completed',
+          name: {
+            en: 'Profile Expert',
+            ar: 'خبير الملف الشخصي'
+          },
+          description: {
+            en: 'Complete your profile information',
+            ar: 'أكمل معلومات ملفك الشخصي'
+          },
+          points: 25
+        },
+        {
+          id: 'document_uploaded',
+          name: {
+            en: 'Document Master',
+            ar: 'سيد المستندات'
+          },
+          description: {
+            en: 'Upload your first company document',
+            ar: 'قم بتحميل وثيقة الشركة الأولى الخاصة بك'
+          },
+          points: 20
+        },
+        {
+          id: 'first_saved_tender',
+          name: {
+            en: 'Tender Collector',
+            ar: 'جامع المناقصات'
+          },
+          description: {
+            en: 'Save your first tender',
+            ar: 'احفظ أول مناقصة'
+          },
+          points: 15
+        },
+        {
+          id: 'first_application',
+          name: {
+            en: 'First Application',
+            ar: 'الطلب الأول'
+          },
+          description: {
+            en: 'Apply for your first tender',
+            ar: 'تقدم بطلب للمناقصة الأولى'
+          },
+          points: 50
+        },
+        {
+          id: 'subscription_started',
+          name: {
+            en: 'Premium Member',
+            ar: 'عضو مميز'
+          },
+          description: {
+            en: 'Subscribe to a premium plan',
+            ar: 'اشترك في خطة مميزة'
+          },
+          points: 100
+        },
+        {
+          id: 'tutorial_completed',
+          name: {
+            en: 'Tutorial Graduate',
+            ar: 'خريج البرنامج التعليمي'
+          },
+          description: {
+            en: 'Complete the platform tutorial',
+            ar: 'أكمل البرنامج التعليمي للمنصة'
+          },
+          points: 30
+        },
+        {
+          id: 'tender_explorer',
+          name: {
+            en: 'Tender Explorer',
+            ar: 'مستكشف المناقصات'
+          },
+          description: {
+            en: 'Discover the recommended tenders section',
+            ar: 'اكتشف قسم المناقصات الموصى بها'
+          },
+          points: 20
+        },
+        {
+          id: 'profile_master',
+          name: {
+            en: 'Profile Master',
+            ar: 'سيد الملف الشخصي'
+          },
+          description: {
+            en: 'Learn how to optimize your profile',
+            ar: 'تعلم كيفية تحسين ملفك الشخصي'
+          },
+          points: 30
+        }
+      ];
+      
+      // Map earned achievements with dates
+      const unlockedAchievementMap = new Map(
+        (userProfile.achievements || []).map(achievement => [achievement.id, achievement.dateUnlocked])
+      );
+      
+      // Calculate progress for specific achievements
+      const calculateProfileCompleteness = () => {
+        // Basic profile fields that count toward completeness
+        const totalFields = 6; // username, email, companyName, description, industry, services
+        let completedFields = 0;
+        
+        if (user.username) completedFields++;
+        if (user.email) completedFields++;
+        if (user.companyName) completedFields++;
+        if (user.description) completedFields++;
+        if (user.industry) completedFields++;
+        if (user.services && user.services.length > 0) completedFields++;
+        
+        return Math.round((completedFields / totalFields) * 100);
+      };
+      
+      // Check for automatic achievements based on user state
+      const checkForAutomaticAchievements = async () => {
+        const newAchievements = [];
+        const profileCompleteness = calculateProfileCompleteness();
+        
+        // First login achievement - should always be unlocked if user exists
+        if (!unlockedAchievementMap.has('first_login')) {
+          newAchievements.push({
+            id: 'first_login',
+            dateUnlocked: new Date().toISOString()
+          });
+        }
+        
+        // Email verified achievement
+        if (!unlockedAchievementMap.has('email_verified') && user.emailVerified) {
+          newAchievements.push({
+            id: 'email_verified',
+            dateUnlocked: new Date().toISOString()
+          });
+        }
+        
+        // Profile completed achievement (if 100% complete)
+        if (!unlockedAchievementMap.has('profile_completed') && profileCompleteness === 100) {
+          newAchievements.push({
+            id: 'profile_completed',
+            dateUnlocked: new Date().toISOString()
+          });
+        }
+        
+        // Check if user has uploaded documents
+        if (!unlockedAchievementMap.has('document_uploaded')) {
+          const documents = await storage.getCompanyDocumentsByUser(userId);
+          if (documents && documents.length > 0) {
+            newAchievements.push({
+              id: 'document_uploaded',
+              dateUnlocked: new Date().toISOString()
+            });
+          }
+        }
+        
+        // Check if user has saved tenders
+        if (!unlockedAchievementMap.has('first_saved_tender')) {
+          const savedTenders = await storage.getSavedTenders(userId);
+          if (savedTenders && savedTenders.length > 0) {
+            newAchievements.push({
+              id: 'first_saved_tender',
+              dateUnlocked: new Date().toISOString()
+            });
+          }
+        }
+        
+        // Check if user has applied to any tenders
+        if (!unlockedAchievementMap.has('first_application')) {
+          const applications = await storage.getApplications(userId);
+          if (applications && applications.length > 0) {
+            newAchievements.push({
+              id: 'first_application',
+              dateUnlocked: new Date().toISOString()
+            });
+          }
+        }
+        
+        // Check if user has an active subscription
+        if (!unlockedAchievementMap.has('subscription_started') && 
+            user.subscriptionStatus === 'active') {
+          newAchievements.push({
+            id: 'subscription_started',
+            dateUnlocked: new Date().toISOString()
+          });
+        }
+        
+        // Check if we need to update the profile with new achievements
+        if (newAchievements.length > 0) {
+          // Calculate points from new achievements
+          const newPoints = newAchievements.reduce((total, achievement) => {
+            const achievementInfo = allAchievements.find(a => a.id === achievement.id);
+            return total + (achievementInfo?.points || 0);
+          }, 0);
+          
+          // Update user profile with new achievements and points
+          const updatedAchievements = [
+            ...(userProfile.achievements || []),
+            ...newAchievements
+          ];
+          
+          const updatedPoints = (userProfile.points || 0) + newPoints;
+          const newLevel = Math.floor(Math.sqrt(updatedPoints / 25)) + 1;
+          
+          await storage.updateUserProfile(userId, {
+            achievements: updatedAchievements,
+            points: updatedPoints,
+            level: newLevel
+          });
+          
+          // Update local map for response
+          newAchievements.forEach(achievement => {
+            unlockedAchievementMap.set(achievement.id, achievement.dateUnlocked);
+          });
+        }
+      };
+      
+      // Check for automatic achievements
+      await checkForAutomaticAchievements();
+      
+      // Map achievements to the format needed by the frontend
+      const formattedAchievements = allAchievements.map(achievement => {
+        const isUnlocked = unlockedAchievementMap.has(achievement.id);
+        const dateUnlocked = unlockedAchievementMap.get(achievement.id);
+        
+        // Calculate progress for profile completion if relevant
+        let progress;
+        if (achievement.id === 'profile_completed' && !isUnlocked) {
+          progress = calculateProfileCompleteness();
+        }
+        
+        return {
+          id: achievement.id,
+          name: achievement.name,
+          description: achievement.description,
+          points: achievement.points,
+          isUnlocked,
+          dateUnlocked,
+          progress
+        };
+      });
+      
+      res.status(200).json({
+        achievements: formattedAchievements,
+        points: userProfile.points || 0,
+        level: userProfile.level || 1,
+        completedTutorials: userProfile.completedTutorials || []
+      });
+      
+    } catch (error) {
+      console.error("Error fetching achievements:", error);
+      res.status(500).json({ error: "Failed to fetch achievements" });
     }
   });
 

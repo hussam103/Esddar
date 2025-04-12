@@ -474,7 +474,25 @@ const Onboarding = () => {
             <div className="mb-8">
               <Steps 
                 value={activeStep} 
-                onChange={setActiveStep}
+                onChange={(value) => {
+                  // Only allow moving to steps that should be accessible
+                  if (
+                    (value === 0) || // Always allow going to email verification
+                    (value === 1 && onboardingStatus.emailVerified) || // Allow document upload if email verified
+                    (value === 2 && !!onboardingStatus.documentStatus) || // Allow plan selection if document uploaded
+                    (value === 3 && activeStep >= 2) || // Allow payment if past plan selection
+                    (value === 4 && onboardingStatus.completed) // Allow completed if onboarding is done
+                  ) {
+                    setActiveStep(value);
+                  } else {
+                    // Show message about completing previous steps
+                    toast({
+                      title: t("Complete previous steps"),
+                      description: t("Please complete the previous steps first before proceeding."),
+                      variant: "default",
+                    });
+                  }
+                }}
                 className="w-full px-4"
               >
                 <Step value={0}>

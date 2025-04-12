@@ -5,7 +5,8 @@ import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, Upload, File, AlertCircle, CheckCircle } from 'lucide-react';
+import { Loader2, Upload, File, AlertCircle, CheckCircle, CheckCircle2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface DocumentUploadProps {
   onSuccess?: () => void;
@@ -251,47 +252,100 @@ export function DocumentUpload({ onSuccess }: DocumentUploadProps) {
           )}
           
           {uploadStatus === 'processing' && (
-            <div className="border rounded-lg p-6">
+            <div className="border rounded-lg p-8 bg-blue-50/30 dark:bg-blue-950/10 border-blue-100 dark:border-blue-900/30">
               <div className="flex flex-col items-center">
-                <Loader2 className="h-10 w-10 text-primary animate-spin mb-2" />
-                <p className="text-sm font-medium">
+                <div className="relative mb-4">
+                  <Loader2 className="h-12 w-12 text-primary animate-spin" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="h-2 w-2 bg-primary rounded-full" />
+                  </div>
+                </div>
+                <p className="text-md font-medium text-primary mb-2">
                   {language === 'ar' ? 'جاري معالجة المستند...' : 'Processing document...'}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-sm text-muted-foreground mt-1 text-center max-w-sm">
                   {language === 'ar'
                     ? 'يتم استخراج النص والمعلومات من المستند. قد تستغرق هذه العملية بضع دقائق.'
                     : 'Extracting text and information from the document. This process may take a few minutes.'}
                 </p>
+                <div className="w-full max-w-xs mt-6 space-y-2">
+                  <p className="text-xs text-muted-foreground mb-1 text-center">
+                    {language === 'ar' ? 'الرجاء الانتظار' : 'Please wait'}
+                  </p>
+                  <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-blue-100 dark:bg-blue-900/20">
+                    <div className="animate-progress absolute inset-y-0 left-0 w-1/3 bg-primary/60 transition-all duration-300" />
+                  </div>
+                </div>
               </div>
             </div>
           )}
           
           {uploadStatus === 'success' && (
-            <div className="border rounded-lg p-6 border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-900">
+            <div className="border rounded-lg p-8 border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-900">
               <div className="flex flex-col items-center">
-                <CheckCircle className="h-10 w-10 text-green-500 mb-2" />
-                <p className="text-sm font-medium text-green-700 dark:text-green-300">
-                  {language === 'ar' ? 'تمت المعالجة بنجاح' : 'Processing Successful'}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {language === 'ar'
-                    ? 'تمت معالجة المستند واستخراج المعلومات بنجاح'
-                    : 'Document processed and information extracted successfully'}
-                </p>
+                <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-full mb-4">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 260,
+                      damping: 20,
+                      delay: 0.1
+                    }}
+                  >
+                    <CheckCircle2 className="h-12 w-12 text-green-500" />
+                  </motion.div>
+                </div>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <p className="text-lg font-medium text-green-700 dark:text-green-300 mb-2">
+                    {language === 'ar' ? 'تمت المعالجة بنجاح!' : 'Processing Successful!'}
+                  </p>
+                  <p className="text-sm text-center text-green-600 dark:text-green-400 max-w-sm">
+                    {language === 'ar'
+                      ? 'تمت معالجة المستند واستخراج المعلومات بنجاح. سيساعدنا هذا في العثور على المناقصات المناسبة لشركتك.'
+                      : 'Document processed and information extracted successfully. This will help us find suitable tenders for your company.'}
+                  </p>
+                </motion.div>
               </div>
             </div>
           )}
           
           {uploadStatus === 'error' && (
-            <div className="border rounded-lg p-6 border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-900">
+            <div className="border rounded-lg p-8 border-red-200 bg-red-50/70 dark:bg-red-950/20 dark:border-red-900">
               <div className="flex flex-col items-center">
-                <AlertCircle className="h-10 w-10 text-red-500 mb-2" />
-                <p className="text-sm font-medium text-red-700 dark:text-red-300">
-                  {language === 'ar' ? 'حدث خطأ' : 'An Error Occurred'}
-                </p>
-                {error && (
-                  <p className="text-xs text-red-500 mt-1 text-center">{error}</p>
-                )}
+                <motion.div 
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className="bg-red-100 dark:bg-red-900/30 p-3 rounded-full mb-4"
+                >
+                  <AlertCircle className="h-12 w-12 text-red-500" />
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-center"
+                >
+                  <p className="text-lg font-medium text-red-700 dark:text-red-300 mb-2">
+                    {language === 'ar' ? 'حدث خطأ أثناء المعالجة' : 'Error Processing Document'}
+                  </p>
+                  {error && (
+                    <p className="text-sm text-red-600 mt-1 text-center max-w-md">
+                      {error}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-4">
+                    {language === 'ar'
+                      ? 'يرجى المحاولة مرة أخرى أو الاتصال بالدعم إذا استمرت المشكلة'
+                      : 'Please try again or contact support if the problem persists'}
+                  </p>
+                </motion.div>
               </div>
             </div>
           )}

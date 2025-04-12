@@ -1,15 +1,16 @@
-/**
- * Start the Etimad Tender Scraper Scheduler
- * 
- * This script runs the scheduler for scraping tender data from Etimad platform.
- * It's designed to be run as a separate process alongside the main application.
- */
+// Start Etimad Scheduler
+// This script initializes the Etimad scheduler
+// It is meant to be run as a standalone process
 
-// Register required environment variables
-import 'dotenv/config';
-
-// Import the scheduler
+// Import the scheduler script to start the cron job
 import './schedule-etimad-scraper.js';
 
-console.log('Etimad Tender Scraper Scheduler started');
-console.log('Press Ctrl+C to stop the scheduler');
+console.log('Etimad scheduler started!');
+console.log('Scraping will run automatically every 3 hours.');
+console.log('Press Ctrl+C to stop the scheduler.');
+
+// Keep the process running
+setInterval(() => {
+  const date = new Date();
+  console.log(`Scheduler alive: ${date.toISOString()}`);
+}, 3600000); // Log status every hour

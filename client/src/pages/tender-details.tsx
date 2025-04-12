@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Tender, insertApplicationSchema } from "@shared/schema";
@@ -20,7 +20,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Calendar, MapPin, Tag, FileText, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { 
+  Loader2, Calendar, MapPin, Tag, FileText, Clock, CheckCircle, 
+  AlertCircle, ExternalLink, Info, Building, FileCheck, Award 
+} from "lucide-react";
 import { SARIcon } from "@/components/ui/sar-icon";
 
 // Create application schema
@@ -50,6 +53,12 @@ export default function TenderDetailsPage() {
   // Check if tender is saved
   const { data: savedStatus, isLoading: savedStatusLoading } = useQuery<{ isSaved: boolean }>({
     queryKey: [`/api/is-tender-saved/${tenderId}`],
+  });
+  
+  // Fetch Etimad details if the tender is from Etimad
+  const { data: etimadDetails, isLoading: etimadLoading } = useQuery({
+    queryKey: [`/api/etimad/tender-details/${tender?.externalId}`],
+    enabled: !!tender && tender.source === 'etimad' && !!tender.externalId,
   });
 
   // Save/unsave tender mutations
@@ -372,6 +381,133 @@ export default function TenderDetailsPage() {
                   </div>
                 </CardContent>
               </Card>
+              
+              {/* Etimad Details Section - Only shown for tenders from Etimad */}
+              {tender.source === 'etimad' && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle>{t("tenderDetails.etimadDetails")}</CardTitle>
+                      <Badge className="bg-blue-50 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+                        {t("tenders.etimadPlatform")}
+                      </Badge>
+                    </div>
+                    <CardDescription>
+                      {etimadLoading ? (
+                        t("tenderDetails.loadingEtimadDetails")
+                      ) : (
+                        t("tenderDetails.detailsFromEtimad")
+                      )}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {etimadLoading ? (
+                      <div className="flex justify-center py-4">
+                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      </div>
+                    ) : etimadDetails?.success ? (
+                      <>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {etimadDetails?.tender_details?.lastEnrollDate && (
+                            <div className="flex items-start">
+                              <Calendar className="h-5 w-5 text-primary mt-0.5 mr-2" />
+                              <div>
+                                <p className="text-sm text-gray-500">{t("tenderDetails.lastEnrollmentDate")}</p>
+                                <p className="font-medium">
+                                  {new Date(etimadDetails.tender_details.lastEnrollDate).toLocaleDateString(
+                                    language === 'ar' ? 'ar-SA' : 'en-US',
+                                    { year: 'numeric', month: 'long', day: 'numeric' }
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {etimadDetails?.tender_details?.lastOfferDate && (
+                            <div className="flex items-start">
+                              <Clock className="h-5 w-5 text-primary mt-0.5 mr-2" />
+                              <div>
+                                <p className="text-sm text-gray-500">{t("tenderDetails.lastOfferDate")}</p>
+                                <p className="font-medium">
+                                  {new Date(etimadDetails.tender_details.lastOfferDate).toLocaleDateString(
+                                    language === 'ar' ? 'ar-SA' : 'en-US',
+                                    { year: 'numeric', month: 'long', day: 'numeric' }
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {etimadDetails?.tender_details?.tenderType && (
+                            <div className="flex items-start">
+                              <Tag className="h-5 w-5 text-primary mt-0.5 mr-2" />
+                              <div>
+                                <p className="text-sm text-gray-500">{t("tenderDetails.tenderType")}</p>
+                                <p className="font-medium">{etimadDetails.tender_details.tenderType}</p>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {etimadDetails?.tender_details?.tenderValue && (
+                            <div className="flex items-start">
+                              <SARIcon className="h-5 w-5 text-primary mt-0.5 mr-2" />
+                              <div>
+                                <p className="text-sm text-gray-500">{t("tenderDetails.tenderValue")}</p>
+                                <p className="font-medium">{formatSAR(Number(etimadDetails.tender_details.tenderValue))}</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {etimadDetails?.tender_details?.submissionDetails && (
+                          <div className="mt-4">
+                            <h3 className="font-medium mb-2 flex items-center">
+                              <FileCheck className="h-5 w-5 mr-2 text-primary" />
+                              {t("tenderDetails.submissionDetails")}
+                            </h3>
+                            <div className="text-gray-700 bg-gray-50 p-3 rounded-md border text-sm">
+                              {etimadDetails.tender_details.submissionDetails}
+                            </div>
+                          </div>
+                        )}
+                        
+                        <div className="mt-4 pt-4 border-t border-gray-100">
+                          <Button 
+                            variant="outline" 
+                            className="flex items-center"
+                            onClick={() => window.open(`https://tenders.etimad.sa/Tender/Details/${tender.externalId}`, '_blank')}
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            {t("tenderDetails.viewOnEtimad")}
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="rounded-md bg-amber-50 p-4 border border-amber-200">
+                        <div className="flex">
+                          <Info className="h-5 w-5 text-amber-600 mt-0.5 mr-2" />
+                          <div>
+                            <h3 className="font-medium text-amber-800">{t("tenderDetails.etimadDetailsUnavailable")}</h3>
+                            <p className="text-sm text-amber-700 mt-1">
+                              {etimadDetails?.message || t("tenderDetails.tryAgainLater")}
+                            </p>
+                            <div className="mt-3">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="text-amber-600 border-amber-300 hover:bg-amber-50"
+                                onClick={() => queryClient.invalidateQueries({ queryKey: [`/api/etimad/tender-details/${tender.externalId}`] })}
+                              >
+                                {t("tenderDetails.refreshDetails")}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             {/* Right column - Application */}

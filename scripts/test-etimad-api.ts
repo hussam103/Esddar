@@ -12,8 +12,8 @@ import { log } from '../server/vite';
 // Load environment variables
 dotenv.config();
 
-// Base URL for the Etimad API
-const ETIMAD_API_URL = process.env.ETIMAD_API_URL || 'http://localhost:3000';
+// Base URL for our server API
+const API_URL = process.env.API_URL || 'http://localhost:5000';
 
 // Test configuration
 const TEST_PAGE = 1;
@@ -71,9 +71,9 @@ async function testScrapeTenders(): Promise<void> {
   printWithColor('Testing Scrape Tenders API', colors.fg.green, true);
   
   try {
-    printWithColor(`GET ${ETIMAD_API_URL}/api/scrape-tenders?page=${TEST_PAGE}&page_size=${TEST_PAGE_SIZE}`, colors.fg.yellow);
+    printWithColor(`GET ${API_URL}/api/scrape-tenders?page=${TEST_PAGE}&page_size=${TEST_PAGE_SIZE}`, colors.fg.yellow);
     
-    const response = await axios.get(`${ETIMAD_API_URL}/api/scrape-tenders`, {
+    const response = await axios.get(`${API_URL}/api/scrape-tenders`, {
       params: {
         page: TEST_PAGE,
         page_size: TEST_PAGE_SIZE,
@@ -106,9 +106,9 @@ async function testTenderDetails(): Promise<void> {
   printWithColor('Testing Tender Details API', colors.fg.green, true);
   
   try {
-    printWithColor(`GET ${ETIMAD_API_URL}/api/tender-details/${TEST_TENDER_ID}`, colors.fg.yellow);
+    printWithColor(`GET ${API_URL}/api/tender-details/${TEST_TENDER_ID}`, colors.fg.yellow);
     
-    const response = await axios.get(`${ETIMAD_API_URL}/api/tender-details/${TEST_TENDER_ID}`);
+    const response = await axios.get(`${API_URL}/api/tender-details/${TEST_TENDER_ID}`);
     
     if (response.data) {
       printWithColor('Successfully fetched tender details', colors.fg.green);
@@ -131,9 +131,9 @@ async function testPaginatedTenders(): Promise<void> {
   printWithColor('Testing Paginated Tenders API', colors.fg.green, true);
   
   try {
-    printWithColor(`GET ${ETIMAD_API_URL}/api/tenders?page=${TEST_PAGE}&page_size=${TEST_PAGE_SIZE}`, colors.fg.yellow);
+    printWithColor(`GET ${API_URL}/api/tenders?page=${TEST_PAGE}&page_size=${TEST_PAGE_SIZE}`, colors.fg.yellow);
     
-    const response = await axios.get(`${ETIMAD_API_URL}/api/tenders`, {
+    const response = await axios.get(`${API_URL}/api/tenders`, {
       params: {
         page: TEST_PAGE,
         page_size: TEST_PAGE_SIZE,
@@ -166,7 +166,7 @@ async function testPaginatedTenders(): Promise<void> {
 // Test the Etimad API integration
 async function main(): Promise<void> {
   printWithColor('ETIMAD TENDER SCRAPER API TEST', colors.fg.magenta, true);
-  printWithColor(`Using API URL: ${ETIMAD_API_URL}`, colors.fg.cyan);
+  printWithColor(`Using API URL: ${API_URL}`, colors.fg.cyan);
   
   // Test each API endpoint
   await testScrapeTenders();

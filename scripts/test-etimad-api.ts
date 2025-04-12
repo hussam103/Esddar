@@ -71,9 +71,9 @@ async function testScrapeTenders(): Promise<void> {
   printWithColor('Testing Scrape Tenders API', colors.fg.green, true);
   
   try {
-    printWithColor(`GET ${API_URL}/api/scrape-tenders?page=${TEST_PAGE}&page_size=${TEST_PAGE_SIZE}`, colors.fg.yellow);
+    printWithColor(`GET ${API_URL}/api/etimad/scrape-tenders?page=${TEST_PAGE}&page_size=${TEST_PAGE_SIZE}`, colors.fg.yellow);
     
-    const response = await axios.get(`${API_URL}/api/scrape-tenders`, {
+    const response = await axios.get(`${API_URL}/api/etimad/scrape-tenders`, {
       params: {
         page: TEST_PAGE,
         page_size: TEST_PAGE_SIZE,
@@ -106,9 +106,9 @@ async function testTenderDetails(): Promise<void> {
   printWithColor('Testing Tender Details API', colors.fg.green, true);
   
   try {
-    printWithColor(`GET ${API_URL}/api/tender-details/${TEST_TENDER_ID}`, colors.fg.yellow);
+    printWithColor(`GET ${API_URL}/api/etimad/tender-details/${TEST_TENDER_ID}`, colors.fg.yellow);
     
-    const response = await axios.get(`${API_URL}/api/tender-details/${TEST_TENDER_ID}`);
+    const response = await axios.get(`${API_URL}/api/etimad/tender-details/${TEST_TENDER_ID}`);
     
     if (response.data) {
       printWithColor('Successfully fetched tender details', colors.fg.green);
@@ -131,9 +131,9 @@ async function testPaginatedTenders(): Promise<void> {
   printWithColor('Testing Paginated Tenders API', colors.fg.green, true);
   
   try {
-    printWithColor(`GET ${API_URL}/api/tenders?page=${TEST_PAGE}&page_size=${TEST_PAGE_SIZE}`, colors.fg.yellow);
+    printWithColor(`GET ${API_URL}/api/etimad/tenders?page=${TEST_PAGE}&page_size=${TEST_PAGE_SIZE}`, colors.fg.yellow);
     
-    const response = await axios.get(`${API_URL}/api/tenders`, {
+    const response = await axios.get(`${API_URL}/api/etimad/tenders`, {
       params: {
         page: TEST_PAGE,
         page_size: TEST_PAGE_SIZE,
@@ -143,7 +143,11 @@ async function testPaginatedTenders(): Promise<void> {
     if (response.data) {
       printWithColor('Successfully fetched paginated tenders', colors.fg.green);
       
-      if (response.data.tenders && response.data.tenders.length > 0) {
+      if (Array.isArray(response.data) && response.data.length > 0) {
+        printWithColor(`Returned tenders: ${response.data.length}`, colors.fg.cyan);
+        printWithColor('Sample tender:', colors.fg.cyan);
+        console.log(JSON.stringify(response.data[0], null, 2));
+      } else if (response.data.tenders && response.data.tenders.length > 0) {
         printWithColor(`Total tenders: ${response.data.totalCount || 'unknown'}`, colors.fg.cyan);
         printWithColor(`Returned tenders: ${response.data.tenders.length}`, colors.fg.cyan);
         printWithColor('Sample tender:', colors.fg.cyan);

@@ -74,6 +74,13 @@ export async function getTenderDetails(tenderIdString: string): Promise<any> {
   try {
     log(`Fetching tender details for ID ${tenderIdString}`, 'etimad-service');
     
+    // Check if we're in test mode
+    if (process.env.ETIMAD_API_MODE === 'test') {
+      log(`Using test mode for Etimad API`, 'etimad-service');
+      // Return mock data for testing
+      return getMockTenderDetails(tenderIdString);
+    }
+    
     const response = await axios.get(`${ETIMAD_API_BASE_URL}/api/tender-details/${tenderIdString}`);
     
     if (response.data) {
@@ -90,6 +97,13 @@ export async function getTenderDetails(tenderIdString: string): Promise<any> {
   } catch (error: any) {
     const errorMessage = error?.message || 'Unknown error';
     log(`Error fetching tender details: ${errorMessage}`, 'etimad-service');
+    
+    // If in development or test mode, provide mock data
+    if (process.env.NODE_ENV === 'development' || process.env.ETIMAD_API_MODE === 'test') {
+      log(`Providing mock data for tender details`, 'etimad-service');
+      return getMockTenderDetails(tenderIdString);
+    }
+    
     throw new Error(`Failed to get tender details: ${errorMessage}`);
   }
 }

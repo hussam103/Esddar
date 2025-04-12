@@ -1292,6 +1292,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Etimad Tender API Endpoints
+  // Get tenders with pagination and filters
+  app.get("/api/etimad/tenders", async (req, res) => {
+    try {
+      const page = req.query.page ? parseInt(req.query.page as string) : 1;
+      const pageSize = req.query.page_size ? parseInt(req.query.page_size as string) : 10;
+      const tenderType = req.query.tender_type as string || undefined;
+      const agencyName = req.query.agency_name as string || undefined;
+      
+      const paginatedTenders = await getPaginatedTenders(page, pageSize, tenderType, agencyName);
+      res.json(paginatedTenders);
+    } catch (error: any) {
+      console.error('Error fetching paginated tenders:', error);
+      res.status(500).json({ 
+        error: "Failed to fetch tenders", 
+        message: error.message || 'Unknown error occurred'
+      });
+    }
+  });
+  
+  // Get tender details by ID
+  app.get("/api/etimad/tender/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tender = await getTenderById(id);
+      
+      if (!tender) {
+        return res.status(404).json({ error: "Tender not found" });
+      }
+      
+      res.json(tender);
+    } catch (error: any) {
+      console.error('Error fetching tender details:', error);
+      res.status(500).json({ 
+        error: "Failed to fetch tender details", 
+        message: error.message || 'Unknown error occurred'
+      });
+    }
+  });
+  
+  // Get tender details by external ID (tenderIdString)
+  app.get("/api/etimad/tender-details/:tenderIdString", async (req, res) => {
+    try {
+      const { tenderIdString } = req.params;
+      const tenderDetails = await getTenderDetails(tenderIdString);
+      
+      if (!tenderDetails) {
+        return res.status(404).json({ error: "Tender details not found" });
+      }
+      
+      res.json(tenderDetails);
+    } catch (error: any) {
+      console.error('Error fetching tender details:', error);
+      res.status(500).json({ 
+        error: "Failed to fetch tender details", 
+        message: error.message || 'Unknown error occurred'
+      });
+    }
+  });
+  
+  // Scrape tenders from Etimad and save them to the database
+  app.get("/api/etimad/scrape-tenders", async (req, res) => {
+    try {
+      // Only allow authenticated admin users to trigger scraping
+      if (!req.isAuthenticated() || req.user.role !== 'admin') {
+        return res.status(403).json({ error: "Forbidden: Admin access required" });
+      }
+      
+      const page = req.query.page ? parseInt(req.query.page as string) : 1;
+      const pageSize = req.query.page_size ? parseInt(req.query.page_size as string) : 10;
+      
+      const tenders = await scrapeTenders(page, pageSize);
+      res.json(tenders);
+    } catch (error: any) {
+      console.error('Error scraping tenders:', error);
+      res.status(500).json({ 
+        error: "Failed to scrape tenders", 
+        message: error.message || 'Unknown error occurred'
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   
   // إنشاء خادم WebSocket مع تحديد المسار لتجنب التعارض مع HMR الخاص بـ Vite

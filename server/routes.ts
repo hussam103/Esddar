@@ -24,7 +24,8 @@ import {
   ensureUploadDirectories, 
   saveUploadedFile, 
   processDocumentWithOCR,
-  getDocumentStatus
+  getDocumentStatus,
+  cleanupDocumentFiles
 } from "./services/document-processing";
 
 // Schema for subscription
@@ -411,6 +412,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Ensure user exists
         if (!req.user || !req.user.id) {
           return res.status(401).json({ error: "User not authenticated" });
+        }
+        
+        // Check for existing documents and delete them if found
+        const existingDocuments = await storage.getCompanyDocumentsByUser(req.user.id);
+        
+        if (existingDocuments && existingDocuments.length > 0) {
+          // Delete existing documents from storage and database
+          for (const doc of existingDocuments) {
+            await cleanupDocumentFiles(doc.documentId);
+            // The database record will be replaced with the new upload
+          }
+          console.log(`Removed ${existingDocuments.length} existing documents for user ${req.user.id}`);
         }
         
         const documentId = await saveUploadedFile(req.file, req.user.id);

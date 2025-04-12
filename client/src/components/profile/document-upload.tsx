@@ -159,12 +159,12 @@ export function DocumentUpload() {
     <Card>
       <CardHeader>
         <CardTitle>
-          {language === 'ar' ? 'تحميل مستند' : 'Upload Document'}
+          {language === 'ar' ? 'تحميل مستند ملف الشركة' : 'Upload Company Profile Document'}
         </CardTitle>
         <CardDescription>
           {language === 'ar'
-            ? 'قم بتحميل مستندات الشركة الرسمية (PDF فقط)'
-            : 'Upload official company documents (PDF only)'}
+            ? 'قم بتحميل ملف الشركة الرسمي (PDF فقط). سيتم استبدال أي ملف موجود مسبقاً.'
+            : 'Upload your official company profile document (PDF only). Any existing document will be replaced.'}
         </CardDescription>
       </CardHeader>
       <CardContent>

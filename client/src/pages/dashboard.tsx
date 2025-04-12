@@ -70,11 +70,6 @@ export default function Dashboard() {
     setMobileMenuOpen(!mobileMenuOpen);
   };
 
-  // Handle tutorial completion
-  const handleTutorialComplete = () => {
-    setShowTutorial(false);
-  };
-
   return (
     <div className="min-h-screen flex flex-col md:flex-row" dir={language === "ar" ? "rtl" : "ltr"}>
       <Sidebar mobileMenuOpen={mobileMenuOpen} closeMobileMenu={() => setMobileMenuOpen(false)} />
@@ -130,15 +125,6 @@ export default function Dashboard() {
           )}
         </div>
       </main>
-      
-      {/* Tutorial overlay */}
-      {showTutorial && user && (
-        <InteractiveTutorial
-          tutorialKey="dashboard"
-          autoStart={true}
-          onComplete={handleTutorialComplete}
-        />
-      )}
     </div>
   );
 }

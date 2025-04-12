@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Step, StepDescription, StepLabel, StepSeparator, StepStatus, Steps } from "@/components/ui/steps";
 import { useLanguage } from "@/hooks/use-language";
-import { Loader2, Mail, FileText, CreditCard, Package, Check, ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Loader2, Mail, FileText, CreditCard, Package, Check, ArrowRight, ArrowLeft, CheckCircle, CheckCircle2 } from "lucide-react";
 import { DocumentUpload } from "@/components/profile/document-upload";
 import { motion } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
@@ -54,9 +54,10 @@ const Onboarding = () => {
       const response = await apiRequest("GET", "/api/onboarding-status");
       
       if (response.ok) {
-        const data = await response.json();
+        const data = await response.json() as OnboardingStatus;
         setOnboardingStatus(data);
-        setActiveStep(stepMap[data.currentStep]);
+        const step = stepMap[data.currentStep];
+        setActiveStep(step !== undefined ? step : 0);
         setStatus('loaded');
       } else {
         setStatus('error');
@@ -416,22 +417,81 @@ const Onboarding = () => {
         
       case 'completed':
         return (
-          <div className="space-y-4">
-            <div className="bg-green-50 border border-green-200 p-4 rounded-md text-green-800">
-              {t("Congratulations! Your account is fully set up.")}
-            </div>
+          <div className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ 
+                duration: 0.5,
+                ease: "easeOut"
+              }}
+              className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 p-6 rounded-xl text-green-800 shadow-sm"
+            >
+              <div className="text-center">
+                <motion.div 
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ 
+                    delay: 0.3, 
+                    type: "spring",
+                    stiffness: 260,
+                    damping: 20
+                  }}
+                  className="inline-block"
+                >
+                  <div className="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-4">
+                    <CheckCircle2 className="h-12 w-12 text-green-600" />
+                  </div>
+                </motion.div>
+                <motion.h3
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="text-xl font-semibold mb-2"
+                >
+                  {t("Congratulations! Your account is fully set up.")}
+                </motion.h3>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.7 }}
+                  className="text-green-700"
+                >
+                  {t("You have completed all the required steps to get started.")}
+                </motion.p>
+              </div>
+            </motion.div>
             
-            <div className="flex flex-col items-center space-y-4">
-              <Check className="h-16 w-16 text-green-500" />
-              <p className="text-center">
-                {t("You have completed the onboarding process. You can now access all features of the platform based on your subscription.")}
-              </p>
-              
-              <Button 
-                onClick={() => setLocation("/dashboard")}
+            <div className="flex flex-col items-center space-y-5">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.9 }}
+                className="text-center max-w-md"
               >
-                {t("Go to Dashboard")}
-              </Button>
+                <p>
+                  {t("You have completed the onboarding process. You can now access all features of the platform based on your subscription.")}
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {t("Your profile information has been saved and you can update it at any time from your profile settings.")}
+                </p>
+              </motion.div>
+              
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.1 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button 
+                  onClick={() => setLocation("/dashboard")}
+                  size="lg"
+                  className="shadow-md"
+                >
+                  {t("Go to Dashboard")}
+                </Button>
+              </motion.div>
             </div>
           </div>
         );
@@ -453,12 +513,16 @@ const Onboarding = () => {
       <div className="max-w-4xl mx-auto">
         <Card className="border-2 shadow-lg overflow-hidden">
           {/* Progress Bar */}
-          <div className="w-full h-1.5 bg-gray-100">
+          <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 overflow-hidden">
             <motion.div 
-              className="h-full bg-primary"
-              initial={{ width: 0 }}
-              animate={{ width: `${getProgressPercentage()}%` }}
-              transition={{ duration: 0.5 }}
+              className="h-full bg-gradient-to-r from-primary/80 to-primary"
+              initial={{ width: 0, x: -20 }}
+              animate={{ width: `${getProgressPercentage()}%`, x: 0 }}
+              transition={{ 
+                duration: 0.8, 
+                ease: "easeOut",
+                width: { type: "spring", stiffness: 100, damping: 15 }
+              }}
             />
           </div>
           

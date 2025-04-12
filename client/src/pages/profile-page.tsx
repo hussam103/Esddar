@@ -252,12 +252,12 @@ const ProfilePage = () => {
             <Card>
               <CardHeader>
                 <CardTitle>
-                  {language === "ar" ? "المستندات المُحملة" : "Uploaded Documents"}
+                  {language === "ar" ? "ملف الشركة المُحمل" : "Uploaded Company Profile"}
                 </CardTitle>
                 <CardDescription>
                   {language === "ar"
-                    ? "مستندات الشركة التي تم تحميلها إلى النظام"
-                    : "Company documents that have been uploaded to the system"}
+                    ? "ملف تعريف الشركة الذي تم تحميله إلى النظام"
+                    : "Company profile document that has been uploaded to the system"}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -317,8 +317,8 @@ const ProfilePage = () => {
                 ) : (
                   <div className="text-center py-6 text-muted-foreground">
                     {language === "ar"
-                      ? "لم يتم تحميل أي مستندات بعد"
-                      : "No documents uploaded yet"}
+                      ? "لم يتم تحميل ملف تعريف الشركة بعد"
+                      : "No company profile document uploaded yet"}
                   </div>
                 )}
               </CardContent>

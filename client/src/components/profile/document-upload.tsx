@@ -188,30 +188,46 @@ export function DocumentUpload({ onSuccess }: DocumentUploadProps) {
           
           {uploadStatus === 'idle' && (
             <div 
-              className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center hover:border-primary/50 cursor-pointer transition-colors"
+              className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-10 text-center hover:border-primary/50 cursor-pointer transition-all hover:shadow-md group"
               onClick={triggerFileSelect}
             >
               {selectedFile ? (
                 <div className="flex flex-col items-center">
-                  <File className="h-10 w-10 text-primary mb-2" />
-                  <p className="text-sm font-medium">{selectedFile.name}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+                    <File className="h-10 w-10 text-primary" />
+                  </div>
+                  <p className="text-md font-medium">{selectedFile.name}</p>
+                  <p className="text-sm text-muted-foreground mt-1">
                     {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                  <p className="mt-4 text-primary/80">
+                    {language === 'ar'
+                      ? 'انقر لتغيير الملف'
+                      : 'Click to change file'}
                   </p>
                 </div>
               ) : (
                 <div className="flex flex-col items-center">
-                  <Upload className="h-10 w-10 text-muted-foreground mb-2" />
-                  <p className="text-sm font-medium">
+                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4 group-hover:bg-primary/10 transition-colors group-hover:scale-105 transition-transform">
+                    <Upload className="h-10 w-10 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
+                  <p className="text-md font-medium mb-2">
                     {language === 'ar'
                       ? 'اسحب وأفلت أو انقر للتحميل'
                       : 'Drag and drop or click to upload'}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {language === 'ar'
-                      ? 'يجب أن يكون الملف بتنسيق PDF والحجم الأقصى 10 ميغابايت'
-                      : 'File must be PDF and maximum size 10MB'}
-                  </p>
+                  <div className="max-w-sm">
+                    <p className="text-sm text-muted-foreground mt-1 mb-4">
+                      {language === 'ar'
+                        ? 'يجب أن يكون الملف بتنسيق PDF والحجم الأقصى 10 ميغابايت'
+                        : 'File must be PDF and maximum size 10MB'}
+                    </p>
+                    <p className="text-xs text-primary/80 px-6">
+                      {language === 'ar'
+                        ? 'سنقوم باستخراج معلومات شركتك من المستند لمساعدتنا في العثور على المناقصات المناسبة لك'
+                        : 'We\'ll extract your company information from the document to help us find suitable tenders for you'}
+                    </p>
+                  </div>
                 </div>
               )}
             </div>

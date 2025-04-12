@@ -6,9 +6,11 @@ import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Step, StepDescription, StepLabel, StepSeparator, StepStatus, Steps } from "@/components/ui/steps";
-import { useTranslation } from "@/hooks/use-language";
-import { Loader2, Mail, FileText, CreditCard, Package, Check } from "lucide-react";
+import { useLanguage } from "@/hooks/use-language";
+import { Loader2, Mail, FileText, CreditCard, Package, Check, ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { DocumentUpload } from "@/components/profile/document-upload";
+import { motion } from "framer-motion";
+import { Progress } from "@/components/ui/progress";
 
 type OnboardingStep = 'email_verification' | 'upload_document' | 'choose_plan' | 'payment' | 'completed';
 
@@ -27,7 +29,7 @@ interface OnboardingStatus {
 }
 
 const Onboarding = () => {
-  const { t } = useTranslation();
+  const { t, language } = useLanguage();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const { user } = useAuth();
@@ -439,12 +441,29 @@ const Onboarding = () => {
     }
   };
 
+  // Get progress percentage for the progress bar
+  const getProgressPercentage = () => {
+    const stepCount = Object.keys(stepMap).length - 1; // Exclude completed step from count
+    const currentStepIndex = activeStep;
+    return Math.round((currentStepIndex / stepCount) * 100);
+  };
+
   return (
-    <div className="min-h-screen py-8 px-4">
+    <div className="min-h-screen py-8 px-4 bg-gradient-to-b from-background to-background/90">
       <div className="max-w-4xl mx-auto">
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">{t("Welcome to Esddar")}</CardTitle>
+        <Card className="border-2 shadow-lg overflow-hidden">
+          {/* Progress Bar */}
+          <div className="w-full h-1.5 bg-gray-100">
+            <motion.div 
+              className="h-full bg-primary"
+              initial={{ width: 0 }}
+              animate={{ width: `${getProgressPercentage()}%` }}
+              transition={{ duration: 0.5 }}
+            />
+          </div>
+          
+          <CardHeader className={`text-center ${language === 'ar' ? 'rtl' : 'ltr'}`}>
+            <CardTitle className="text-2xl bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">{t("Welcome to Esddar")}</CardTitle>
             <CardDescription>
               {t("Complete these steps to set up your account and start finding relevant tenders.")}
             </CardDescription>
@@ -460,43 +479,82 @@ const Onboarding = () => {
               >
                 <Step value={0}>
                   <StepStatus complete={onboardingStatus.emailVerified} />
-                  <StepLabel>{t("Verify Email")}</StepLabel>
-                  <StepDescription>{t("Confirm your email address")}</StepDescription>
+                  <div className="ml-3 flex flex-col">
+                    <StepLabel>{t("Verify Email")}</StepLabel>
+                    <StepDescription>{t("Confirm your email address")}</StepDescription>
+                  </div>
                   <StepSeparator />
                 </Step>
                 
                 <Step value={1}>
                   <StepStatus complete={!!onboardingStatus.documentStatus} />
-                  <StepLabel>{t("Upload Document")}</StepLabel>
-                  <StepDescription>{t("Company profile")}</StepDescription>
+                  <div className="ml-3 flex flex-col">
+                    <StepLabel>{t("Upload Document")}</StepLabel>
+                    <StepDescription>{t("Company profile")}</StepDescription>
+                  </div>
                   <StepSeparator />
                 </Step>
                 
                 <Step value={2}>
                   <StepStatus complete={activeStep > 2} />
-                  <StepLabel>{t("Choose Plan")}</StepLabel>
-                  <StepDescription>{t("Select subscription")}</StepDescription>
+                  <div className="ml-3 flex flex-col">
+                    <StepLabel>{t("Choose Plan")}</StepLabel>
+                    <StepDescription>{t("Select subscription")}</StepDescription>
+                  </div>
                   <StepSeparator />
                 </Step>
                 
                 <Step value={3}>
                   <StepStatus complete={onboardingStatus.hasSubscription || activeStep > 3} />
-                  <StepLabel>{t("Payment")}</StepLabel>
-                  <StepDescription>{t("Complete subscription")}</StepDescription>
+                  <div className="ml-3 flex flex-col">
+                    <StepLabel>{t("Payment")}</StepLabel>
+                    <StepDescription>{t("Complete subscription")}</StepDescription>
+                  </div>
                   <StepSeparator />
                 </Step>
                 
                 <Step value={4}>
                   <StepStatus complete={onboardingStatus.completed} />
-                  <StepLabel>{t("Complete")}</StepLabel>
-                  <StepDescription>{t("Start using platform")}</StepDescription>
+                  <div className="ml-3 flex flex-col">
+                    <StepLabel>{t("Complete")}</StepLabel>
+                    <StepDescription>{t("Start using platform")}</StepDescription>
+                  </div>
                 </Step>
               </Steps>
             </div>
             
             {/* Step content */}
-            <div className="mt-8">
+            <motion.div 
+              className="mt-8 p-4 rounded-lg"
+              key={onboardingStatus.currentStep}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
               {renderStepContent()}
+            </motion.div>
+            
+            {/* Navigation buttons */}
+            <div className={`flex ${language === 'ar' ? 'flex-row-reverse' : 'flex-row'} justify-between mt-8`}>
+              {activeStep > 0 && activeStep < 4 && (
+                <Button
+                  variant="outline"
+                  onClick={() => setActiveStep(activeStep - 1)}
+                  className="flex items-center gap-2"
+                >
+                  {language === 'ar' ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
+                  {t("Previous")}
+                </Button>
+              )}
+              {activeStep < 4 && (
+                <div className={`${activeStep === 0 ? (language === 'ar' ? 'mr-auto' : 'ml-auto') : ''}`}>
+                  <Progress value={getProgressPercentage()} className="w-24 h-2 mb-1" />
+                  <p className="text-xs text-muted-foreground text-right">
+                    {getProgressPercentage()}% {t("Complete")}
+                  </p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

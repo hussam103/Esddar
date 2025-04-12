@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
@@ -1364,12 +1364,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Scrape tenders from Etimad and save them to the database
-  app.get("/api/etimad/scrape-tenders", async (req, res) => {
+  app.get("/api/etimad/scrape-tenders", isAdmin, async (req, res) => {
     try {
-      // Only allow authenticated admin users to trigger scraping
-      if (!req.isAuthenticated() || req.user.role !== 'admin') {
-        return res.status(403).json({ error: "Forbidden: Admin access required" });
-      }
       
       const page = req.query.page ? parseInt(req.query.page as string) : 1;
       const pageSize = req.query.page_size ? parseInt(req.query.page_size as string) : 10;
@@ -1562,19 +1558,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Admin API routes
-  
-  // Check if user is admin middleware
-  const isAdmin = (req: any, res: any, next: any) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-    
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: "Forbidden: Admin access required" });
-    }
-    
-    next();
-  };
   
   // Get all external sources
   app.get("/api/admin/sources", isAdmin, async (req, res) => {
@@ -1831,22 +1814,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // API endpoint for scraping tenders from Etimad platform
-  app.post("/api/scrape-tenders", async (req, res) => {
-    // Check if user is authenticated and is an admin
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ 
-        success: false, 
-        message: "لم يتم التعرف على المستخدم" 
-      });
-    }
-    
-    // Check if the user is an admin
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false, 
-        message: "ليس لديك الصلاحيات الكافية للقيام بهذا الإجراء"
-      });
-    }
+  app.post("/api/scrape-tenders", isAdmin, async (req, res) => {
     
     try {
       // Using arrow functions to avoid strict mode issues

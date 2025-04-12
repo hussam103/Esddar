@@ -15,7 +15,8 @@ import { log } from '../vite';
 import { eq, sql } from 'drizzle-orm';
 
 // Base URL for the Etimad Tender Scraper API
-const ETIMAD_API_BASE_URL = process.env.ETIMAD_API_URL || 'http://localhost:3000';
+// The API runs on port 5000 according to documentation
+const ETIMAD_API_BASE_URL = process.env.ETIMAD_API_URL || 'http://localhost:5000';
 
 interface EtimadTender {
   id?: number;

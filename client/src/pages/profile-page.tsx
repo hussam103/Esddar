@@ -1,19 +1,42 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { DocumentUpload } from "@/components/profile/document-upload";
-import { Loader2 } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+
+import { Loader2, Save } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+
+// Form schema
+const profileFormSchema = z.object({
+  companyName: z.string().min(2, "Company name must be at least 2 characters"),
+  industry: z.string().min(1, "Please select an industry"),
+  description: z.string().optional(),
+  services: z.array(z.string()).optional(),
+});
+
+type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 const ProfilePage = () => {
   const { user } = useAuth();
   const { language, t } = useLanguage();
   const isMobile = useIsMobile();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("info");
 
   // Fetch user profile data
@@ -27,6 +50,44 @@ const ProfilePage = () => {
     queryKey: ["/api/company-documents"],
     enabled: !!user,
   });
+  
+  // Form setup
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileFormSchema),
+    defaultValues: {
+      companyName: user?.companyName || "",
+      industry: user?.industry || "",
+      description: user?.description || "",
+      services: user?.services || [],
+    },
+  });
+
+  // Update profile mutation
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data: Partial<ProfileFormValues>) => {
+      const res = await apiRequest("PUT", "/api/user", data);
+      return await res.json();
+    },
+    onSuccess: (updatedUser) => {
+      queryClient.setQueryData(["/api/user"], updatedUser);
+      toast({
+        title: "Profile updated",
+        description: "Your company profile has been updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Update failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle form submission
+  const onSubmit = (data: ProfileFormValues) => {
+    updateProfileMutation.mutate(data);
+  };
 
   if (!user) {
     return (
@@ -48,15 +109,21 @@ const ProfilePage = () => {
         onValueChange={setActiveTab}
         className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="info">
             {language === "ar" ? "معلومات الشركة" : "Company Info"}
           </TabsTrigger>
           <TabsTrigger value="documents">
             {language === "ar" ? "المستندات" : "Documents"}
           </TabsTrigger>
-          <TabsTrigger value="preferences">
-            {language === "ar" ? "التفضيلات" : "Preferences"}
+          <TabsTrigger value="edit">
+            {language === "ar" ? "تعديل الملف" : "Edit Profile"}
+          </TabsTrigger>
+          <TabsTrigger value="notifications">
+            {language === "ar" ? "الإشعارات" : "Notifications"}
+          </TabsTrigger>
+          <TabsTrigger value="account">
+            {language === "ar" ? "الحساب" : "Account"}
           </TabsTrigger>
         </TabsList>
 

@@ -37,8 +37,7 @@ export default function Sidebar({ mobileMenuOpen, closeMobileMenu, activePage = 
     { path: "/dashboard", label: t("nav.dashboard"), icon: Home },
     { path: "/tenders", label: t("nav.tenders"), icon: ListFilter },
     { path: "/saved", label: t("nav.saved"), icon: Bookmark },
-    { path: "/profile", label: language === "ar" ? "الملف الشخصي" : "Profile", icon: User },
-    { path: "/settings", label: t("nav.settings"), icon: Settings },
+    { path: "/profile", label: language === "ar" ? "الملف الشخصي والإعدادات" : "Profile & Settings", icon: User },
   ];
   
   // Add admin menu item only for admin user

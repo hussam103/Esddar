@@ -8,157 +8,51 @@ import { sql } from "drizzle-orm";
  * 3. NOT dropping any existing columns to preserve data
  */
 async function main() {
-  console.log("Starting schema migration...");
+  console.log("Applying schema changes...");
   
   try {
-    console.log("Adding new columns to existing tables...");
-    
-    // Add new columns to Users table
+    // Add email column to users table if it doesn't exist
     await db.execute(sql`
       ALTER TABLE IF EXISTS users 
-      ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user',
-      ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+      ADD COLUMN IF NOT EXISTS email TEXT;
     `);
-    console.log("✓ Added columns to users table");
+    console.log("Added email column to users table");
     
-    // Add new columns to Tenders table
+    // Add emailVerified column to users table if it doesn't exist
     await db.execute(sql`
-      ALTER TABLE IF EXISTS tenders 
-      ADD COLUMN IF NOT EXISTS external_id TEXT,
-      ADD COLUMN IF NOT EXISTS vector_id TEXT,
-      ADD COLUMN IF NOT EXISTS vector_status TEXT DEFAULT 'pending',
-      ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW(),
-      ADD COLUMN IF NOT EXISTS url TEXT;
+      ALTER TABLE IF EXISTS users 
+      ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE;
     `);
-    console.log("✓ Added columns to tenders table");
+    console.log("Added email_verified column to users table");
     
-    // Add new columns to Applications table
+    // Add onboarding step tracking
     await db.execute(sql`
-      ALTER TABLE IF EXISTS applications 
-      ADD COLUMN IF NOT EXISTS match_score INTEGER;
+      ALTER TABLE IF EXISTS users 
+      ADD COLUMN IF NOT EXISTS onboarding_step TEXT DEFAULT 'email_verification';
     `);
-    console.log("✓ Added columns to applications table");
+    console.log("Added onboarding_step column to users table");
     
-    // Add new columns to UserProfiles table
+    // Add onboarding completion flag
     await db.execute(sql`
-      ALTER TABLE IF EXISTS user_profiles 
-      ADD COLUMN IF NOT EXISTS company_description TEXT,
-      ADD COLUMN IF NOT EXISTS business_type TEXT,
-      ADD COLUMN IF NOT EXISTS company_activities JSONB DEFAULT '[]',
-      ADD COLUMN IF NOT EXISTS main_industries JSONB DEFAULT '[]',
-      ADD COLUMN IF NOT EXISTS specializations JSONB DEFAULT '[]',
-      ADD COLUMN IF NOT EXISTS target_markets JSONB DEFAULT '[]',
-      ADD COLUMN IF NOT EXISTS certifications JSONB DEFAULT '[]',
-      ADD COLUMN IF NOT EXISTS keywords JSONB DEFAULT '[]',
-      ADD COLUMN IF NOT EXISTS skills TEXT,
-      ADD COLUMN IF NOT EXISTS past_experience TEXT,
-      ADD COLUMN IF NOT EXISTS preferred_sectors TEXT[],
-      ADD COLUMN IF NOT EXISTS company_size TEXT,
-      ADD COLUMN IF NOT EXISTS years_in_business INTEGER,
-      ADD COLUMN IF NOT EXISTS vector_id TEXT,
-      ADD COLUMN IF NOT EXISTS vector_status TEXT DEFAULT 'pending',
-      ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW(),
-      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();
+      ALTER TABLE IF EXISTS users 
+      ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN DEFAULT FALSE;
     `);
-    console.log("✓ Added columns to user_profiles table");
+    console.log("Added onboarding_completed column to users table");
     
-    // Create new tables
-    console.log("Creating new tables...");
-    
-    // Company Documents
+    // Add tutorial flag
     await db.execute(sql`
-      CREATE TABLE IF NOT EXISTS company_documents (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        document_id TEXT NOT NULL UNIQUE,
-        file_name TEXT NOT NULL,
-        file_path TEXT NOT NULL,
-        file_size INTEGER NOT NULL,
-        document_type TEXT DEFAULT 'company_profile',
-        status TEXT NOT NULL DEFAULT 'pending',
-        extracted_text TEXT,
-        extracted_data JSONB,
-        error_message TEXT,
-        whisper_hash TEXT,
-        uploaded_at TIMESTAMP DEFAULT NOW(),
-        processed_at TIMESTAMP
-      );
+      ALTER TABLE IF EXISTS users 
+      ADD COLUMN IF NOT EXISTS has_seen_tutorial BOOLEAN DEFAULT FALSE;
     `);
-    console.log("✓ Created company_documents table");
+    console.log("Added has_seen_tutorial column to users table");
     
-    // External Sources
-    await db.execute(sql`
-      CREATE TABLE IF NOT EXISTS external_sources (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL UNIQUE,
-        url TEXT NOT NULL,
-        type TEXT NOT NULL,
-        api_endpoint TEXT,
-        credentials JSONB,
-        active BOOLEAN DEFAULT TRUE,
-        last_scraped_at TIMESTAMP,
-        scraping_frequency INTEGER DEFAULT 24,
-        created_at TIMESTAMP DEFAULT NOW(),
-        created_by INTEGER NOT NULL REFERENCES users(id)
-      );
-    `);
-    console.log("✓ Created external_sources table");
-    
-    // Scrape Logs
-    await db.execute(sql`
-      CREATE TABLE IF NOT EXISTS scrape_logs (
-        id SERIAL PRIMARY KEY,
-        source_id INTEGER NOT NULL REFERENCES external_sources(id) ON DELETE CASCADE,
-        start_time TIMESTAMP DEFAULT NOW(),
-        end_time TIMESTAMP,
-        status TEXT DEFAULT 'running',
-        total_tenders INTEGER DEFAULT 0,
-        new_tenders INTEGER DEFAULT 0,
-        updated_tenders INTEGER DEFAULT 0,
-        failed_tenders INTEGER DEFAULT 0,
-        error_message TEXT,
-        details JSONB
-      );
-    `);
-    console.log("✓ Created scrape_logs table");
-    
-    // Tender Matches
-    await db.execute(sql`
-      CREATE TABLE IF NOT EXISTS tender_matches (
-        id SERIAL PRIMARY KEY,
-        tender_id INTEGER NOT NULL REFERENCES tenders(id) ON DELETE CASCADE,
-        user_profile_id INTEGER NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
-        match_score INTEGER NOT NULL,
-        match_details JSONB,
-        created_at TIMESTAMP DEFAULT NOW(),
-        notification_sent BOOLEAN DEFAULT FALSE
-      );
-    `);
-    console.log("✓ Created tender_matches table");
-    
-    // Vector Records
-    await db.execute(sql`
-      CREATE TABLE IF NOT EXISTS vector_records (
-        id SERIAL PRIMARY KEY,
-        external_id TEXT NOT NULL,
-        source_type TEXT NOT NULL,
-        source_id INTEGER NOT NULL,
-        embedding_model TEXT NOT NULL,
-        dimensions INTEGER NOT NULL,
-        metadata JSONB,
-        created_at TIMESTAMP DEFAULT NOW(),
-        updated_at TIMESTAMP DEFAULT NOW()
-      );
-    `);
-    console.log("✓ Created vector_records table");
-    
-    console.log("Schema migration completed successfully!");
+    console.log("Schema changes applied successfully!");
   } catch (error) {
     console.error("Error applying schema changes:", error);
     process.exit(1);
-  } finally {
-    process.exit(0);
   }
+  
+  process.exit(0);
 }
 
 main();

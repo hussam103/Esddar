@@ -27,6 +27,7 @@ import {
   getDocumentStatus,
   cleanupDocumentFiles
 } from "./services/document-processing";
+import { sendWelcomeEmail, sendSubscriptionConfirmationEmail } from "./services/email-service";
 
 // Schema for subscription
 const subscriptionSchema = z.object({
@@ -560,6 +561,146 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   );
+
+  // Onboarding Flow Endpoints
+  
+  // Get user's current onboarding status
+  app.get("/api/onboarding-status", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      const user = await storage.getUser(req.user.id);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Get document status if in document upload step
+      let documentStatus = null;
+      if (user.onboardingStep === 'upload_document') {
+        const documents = await storage.getCompanyDocumentsByUser(user.id);
+        if (documents && documents.length > 0) {
+          documentStatus = {
+            documentId: documents[0].documentId,
+            status: documents[0].status,
+            fileName: documents[0].fileName,
+            uploadedAt: documents[0].uploadedAt
+          };
+        }
+      }
+      
+      res.json({
+        completed: user.onboardingCompleted,
+        currentStep: user.onboardingStep,
+        emailVerified: user.emailVerified,
+        documentStatus,
+        hasSubscription: !!user.subscriptionPlan,
+        hasTutorial: user.hasSeenTutorial
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch onboarding status" });
+    }
+  });
+  
+  // Update onboarding step
+  app.post("/api/onboarding/next-step", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      const { currentStep, nextStep } = req.body;
+      const user = await storage.getUser(req.user.id);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Validate the current step
+      if (user.onboardingStep !== currentStep) {
+        return res.status(400).json({ 
+          error: "Invalid current step", 
+          expected: user.onboardingStep, 
+          received: currentStep 
+        });
+      }
+      
+      // Validate the next step based on the current step
+      const validNextSteps: Record<string, string[]> = {
+        'email_verification': ['upload_document'],
+        'upload_document': ['choose_plan'],
+        'choose_plan': ['payment'],
+        'payment': ['completed']
+      };
+      
+      if (!validNextSteps[currentStep]?.includes(nextStep)) {
+        return res.status(400).json({ 
+          error: "Invalid next step", 
+          validSteps: validNextSteps[currentStep] || [] 
+        });
+      }
+      
+      // Special validation for specific steps
+      if (currentStep === 'email_verification' && !user.emailVerified) {
+        return res.status(400).json({ 
+          error: "Email must be verified to proceed" 
+        });
+      }
+      
+      if (currentStep === 'upload_document') {
+        const documents = await storage.getCompanyDocumentsByUser(user.id);
+        if (!documents || documents.length === 0) {
+          return res.status(400).json({ 
+            error: "Company document must be uploaded to proceed" 
+          });
+        }
+      }
+      
+      // Update the user's onboarding step
+      const updatedUser = await storage.updateUser(user.id, { 
+        onboardingStep: nextStep,
+        onboardingCompleted: nextStep === 'completed'
+      });
+      
+      if (!updatedUser) {
+        return res.status(500).json({ error: "Failed to update onboarding step" });
+      }
+      
+      res.json({
+        success: true,
+        currentStep: nextStep,
+        completed: nextStep === 'completed'
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update onboarding step" });
+    }
+  });
+  
+  // Complete tutorial
+  app.post("/api/onboarding/complete-tutorial", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      const user = await storage.getUser(req.user.id);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      const updatedUser = await storage.updateUser(user.id, {
+        hasSeenTutorial: true
+      });
+      
+      if (!updatedUser) {
+        return res.status(500).json({ error: "Failed to update tutorial status" });
+      }
+      
+      res.json({
+        success: true,
+        hasSeenTutorial: true
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update tutorial status" });
+    }
+  });
 
   const httpServer = createServer(app);
   

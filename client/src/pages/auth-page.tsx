@@ -20,6 +20,7 @@ const loginSchema = z.object({
 
 // Register schema based on insertUserSchema
 const registerSchema = insertUserSchema.extend({
+  email: z.string().email({ message: "يرجى إدخال بريد إلكتروني صحيح" }),
   password: z.string().min(6, { message: "كلمة المرور يجب أن تتكون من 6 أحرف على الأقل" }),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -51,6 +52,7 @@ export default function AuthPage() {
     resolver: zodResolver(registerSchema),
     defaultValues: {
       username: "",
+      email: "",
       password: "",
       confirmPassword: "",
       companyName: "",
@@ -170,6 +172,20 @@ export default function AuthPage() {
                           </FormItem>
                         )}
                       />
+                      <FormField
+                        control={registerForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>البريد الإلكتروني</FormLabel>
+                            <FormControl>
+                              <Input type="email" placeholder="أدخل البريد الإلكتروني" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
                       <FormField
                         control={registerForm.control}
                         name="companyName"

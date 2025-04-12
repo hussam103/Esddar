@@ -16,6 +16,8 @@ import LandingPage from "@/pages/landing-page";
 import SubscriptionPage from "@/pages/subscription-page";
 import AdminPage from "@/pages/admin";
 import AdminDashboard from "@/pages/admin-dashboard";
+import ConfirmEmail from "@/pages/confirm-email";
+import Onboarding from "@/pages/onboarding";
 import { ProtectedRoute, AdminRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 import { NotificationsProvider } from "./hooks/use-notifications";
@@ -26,6 +28,8 @@ function Router() {
     <Switch>
       <Route path="/" component={LandingPage} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/confirm-email" component={ConfirmEmail} />
+      <ProtectedRoute path="/onboarding" component={Onboarding} />
       <ProtectedRoute path="/dashboard" component={Dashboard}/>
       <ProtectedRoute path="/tenders" component={TendersPage}/>
       <ProtectedRoute path="/tenders/:id" component={TenderDetailsPage}/>

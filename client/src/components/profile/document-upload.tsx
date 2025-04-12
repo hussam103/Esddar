@@ -7,7 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { Loader2, Upload, File, AlertCircle, CheckCircle } from 'lucide-react';
 
-export function DocumentUpload() {
+interface DocumentUploadProps {
+  onSuccess?: () => void;
+}
+
+export function DocumentUpload({ onSuccess }: DocumentUploadProps) {
   const { language, t } = useLanguage();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -135,10 +139,15 @@ export function DocumentUpload() {
               : 'Document processed and information extracted successfully',
           });
           
-          // Refresh the page to show the extracted information
-          setTimeout(() => {
-            window.location.reload();
-          }, 2000);
+          // Call the onSuccess callback if provided
+          if (onSuccess) {
+            onSuccess();
+          } else {
+            // If no callback, just refresh the page after delay
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+          }
         } else if (data.status === 'error') {
           setUploadStatus('error');
           setError(data.message || 'Processing failed');

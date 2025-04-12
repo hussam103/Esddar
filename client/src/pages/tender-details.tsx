@@ -55,10 +55,28 @@ export default function TenderDetailsPage() {
     queryKey: [`/api/is-tender-saved/${tenderId}`],
   });
   
+  // Define type for Etimad tender details response
+  interface EtimadDetailsResponse {
+    success: boolean;
+    message: string;
+    tender_details?: {
+      tenderIdString: string;
+      entityName: string;
+      tenderTitle: string;
+      tenderType?: string;
+      tenderValue?: number;
+      lastEnrollDate?: string;
+      lastOfferDate?: string;
+      submissionDetails?: string;
+      details?: any;
+    };
+    errors?: string[];
+  }
+  
   // Fetch Etimad details if the tender is from Etimad
-  const { data: etimadDetails, isLoading: etimadLoading } = useQuery({
-    queryKey: [`/api/etimad/tender-details/${tender?.externalId}`],
-    enabled: !!tender && tender.source === 'etimad' && !!tender.externalId,
+  const { data: etimadDetails, isLoading: etimadLoading } = useQuery<EtimadDetailsResponse>({
+    queryKey: [`/api/etimad/tender-details/${tender?.externalId || tender?.bidNumber}`],
+    enabled: !!tender && tender.source === 'etimad' && !!(tender.externalId || tender.bidNumber),
   });
 
   // Save/unsave tender mutations

@@ -18,7 +18,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { db } from "./db";
-import { eq, count } from "drizzle-orm";
+import { eq, count, desc } from "drizzle-orm";
 import multer from "multer";
 import { 
   ensureUploadDirectories, 
@@ -576,12 +576,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const verified = await verifyEmailConfirmationToken(token);
       
       if (verified) {
-        // Get the user info for the welcome email
-        const user = await storage.getUserByUsername(req.user?.username || '');
-        
-        if (user && user.email) {
-          // Send welcome email
-          await sendWelcomeEmail(user.username, user.email);
+        // The verification was successful, look for any authenticated user
+        if (req.isAuthenticated() && req.user) {
+          const user = await storage.getUser(req.user.id);
+          if (user && user.email) {
+            await sendWelcomeEmail(user.username, user.email);
+          }
         }
         
         return res.json({ 

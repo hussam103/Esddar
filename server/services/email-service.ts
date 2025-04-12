@@ -11,7 +11,7 @@ const mailService = new MailService();
 mailService.setApiKey(process.env.SENDGRID_API_KEY || '');
 
 // Store confirmation tokens temporarily (in production, this should be in the database)
-const emailConfirmationTokens = new Map<string, { userId: number, email: string, expires: Date }>();
+export const emailConfirmationTokens = new Map<string, { userId: number, email: string, expires: Date }>();
 
 /**
  * Generate a confirmation token for email verification

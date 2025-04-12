@@ -1,144 +1,221 @@
 import { useEffect, useState } from "react";
-import { useLocation, useRoute, Link } from "wouter";
+import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/hooks/use-language";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
+import { Loader2, CheckCircle, AlertCircle, Mail } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, CheckCircle2, XCircle } from "lucide-react";
-import { useTranslation } from "@/hooks/use-language";
+import { motion } from "framer-motion";
 
 const ConfirmEmail = () => {
-  const { t } = useTranslation();
-  const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const [, params] = useRoute("/confirm-email");
-  const { user } = useAuth();
-  
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [message, setMessage] = useState("");
-  const token = new URLSearchParams(window.location.search).get('token');
+  const { toast } = useToast();
+  const { t, language } = useLanguage();
+  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // If already logged in and email already verified, redirect to dashboard
-    if (user && user.emailVerified) {
-      setLocation("/dashboard");
-      return;
-    }
-
-    // If no token is provided, show error
-    if (!token) {
-      setStatus('error');
-      setMessage(t("Invalid or missing confirmation token"));
-      return;
-    }
-
-    // Call the API to confirm email
     const confirmEmail = async () => {
       try {
+        // Get token from URL
+        const searchParams = new URLSearchParams(window.location.search);
+        const token = searchParams.get("token");
+
+        if (!token) {
+          setStatus("error");
+          setError(t("No confirmation token provided. Please check your email link."));
+          return;
+        }
+
         const response = await apiRequest("GET", `/api/confirm-email?token=${token}`);
-        const data = await response.json();
         
         if (response.ok) {
-          setStatus('success');
-          setMessage(t("Your email has been confirmed successfully!"));
-          
-          // Show toast notification
+          setStatus("success");
           toast({
-            title: t("Email Confirmed"),
-            description: t("Your email has been confirmed successfully."),
+            title: t("Email Verified"),
+            description: t("Your email has been successfully verified."),
           });
-          
-          // Redirect after a delay if the user is logged in
-          if (user) {
-            setTimeout(() => {
-              setLocation("/dashboard");
-            }, 3000);
-          }
         } else {
-          setStatus('error');
-          setMessage(data.error || t("Failed to confirm email"));
-          
+          const data = await response.json();
+          setStatus("error");
+          setError(data.error || t("Failed to verify your email."));
           toast({
-            title: t("Confirmation Failed"),
-            description: data.error || t("Failed to confirm your email."),
+            title: t("Verification Failed"),
+            description: data.error || t("Failed to verify your email."),
             variant: "destructive",
           });
         }
       } catch (error) {
         console.error("Error confirming email:", error);
-        setStatus('error');
-        setMessage(t("An error occurred while confirming your email"));
-        
+        setStatus("error");
+        setError(t("An error occurred while verifying your email."));
         toast({
           title: t("Error"),
-          description: t("An error occurred while confirming your email."),
+          description: t("An error occurred while verifying your email."),
           variant: "destructive",
         });
       }
     };
 
     confirmEmail();
-  }, [token, toast, t, setLocation, user]);
+  }, [toast, t]);
+
+  const redirectToOnboarding = () => {
+    setLocation("/onboarding");
+  };
+
+  const resendConfirmation = async () => {
+    try {
+      const response = await apiRequest("POST", "/api/resend-confirmation");
+      
+      if (response.ok) {
+        toast({
+          title: t("Email Sent"),
+          description: t("A confirmation email has been sent to your email address."),
+        });
+      } else {
+        const data = await response.json();
+        toast({
+          title: t("Error"),
+          description: data.error || t("Failed to resend confirmation email."),
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error resending confirmation:", error);
+      toast({
+        title: t("Error"),
+        description: t("An error occurred while sending the confirmation email."),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const renderContent = () => {
+    switch (status) {
+      case "loading":
+        return (
+          <div className="flex flex-col items-center justify-center p-8">
+            <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
+            <p className="text-center text-lg font-medium">
+              {t("Verifying your email...")}
+            </p>
+            <p className="text-center text-muted-foreground mt-2">
+              {t("This will only take a moment.")}
+            </p>
+          </div>
+        );
+        
+      case "success":
+        return (
+          <motion.div 
+            className="flex flex-col items-center justify-center p-8"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ 
+                delay: 0.2,
+                type: "spring",
+                stiffness: 260,
+                damping: 20
+              }}
+            >
+              <div className="bg-green-100 dark:bg-green-900/30 p-4 rounded-full mb-4">
+                <CheckCircle className="h-12 w-12 text-green-600" />
+              </div>
+            </motion.div>
+            
+            <motion.h2 
+              className="text-xl font-semibold text-center mb-2"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              {t("Email Successfully Verified!")}
+            </motion.h2>
+            
+            <motion.p 
+              className="text-center text-muted-foreground mb-6"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              {t("Your email has been successfully verified. You can now continue with the onboarding process.")}
+            </motion.p>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Button size="lg" onClick={redirectToOnboarding}>
+                {t("Continue to Onboarding")}
+              </Button>
+            </motion.div>
+          </motion.div>
+        );
+        
+      case "error":
+        return (
+          <div className="flex flex-col items-center justify-center p-8">
+            <div className="bg-red-100 dark:bg-red-900/30 p-4 rounded-full mb-4">
+              <AlertCircle className="h-12 w-12 text-red-600" />
+            </div>
+            
+            <h2 className="text-xl font-semibold text-center mb-2 text-red-700 dark:text-red-400">
+              {t("Email Verification Failed")}
+            </h2>
+            
+            {error && (
+              <p className="text-center text-red-600 dark:text-red-400 mb-4">
+                {error}
+              </p>
+            )}
+            
+            <p className="text-center text-muted-foreground mb-6">
+              {t("Please try again or request a new verification email.")}
+            </p>
+            
+            <div className="flex flex-col gap-3 w-full max-w-xs">
+              <Button variant="outline" onClick={resendConfirmation}>
+                {t("Resend Verification Email")}
+              </Button>
+              
+              <Button variant="ghost" onClick={redirectToOnboarding}>
+                {t("Return to Onboarding")}
+              </Button>
+            </div>
+          </div>
+        );
+    }
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <Card className="w-full max-w-md">
+    <div dir={language === 'ar' ? 'rtl' : 'ltr'} className="min-h-screen bg-gradient-to-b from-background to-background/90 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <Card className="w-full max-w-md shadow-lg border-2">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">{t("Email Confirmation")}</CardTitle>
-          <CardDescription>
-            {status === 'loading' ? t("Verifying your email address...") : 
-             status === 'success' ? t("Verification complete") : 
-             t("Verification failed")}
-          </CardDescription>
+          <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-2">
+            <Mail className="h-6 w-6 text-primary" />
+          </div>
+          <CardTitle className="text-2xl">{t("Email Verification")}</CardTitle>
+          <CardDescription>{t("Verify your email address to continue")}</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center p-6">
-          {status === 'loading' && (
-            <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
-          )}
-          {status === 'success' && (
-            <CheckCircle2 className="h-12 w-12 text-green-500 mb-4" />
-          )}
-          {status === 'error' && (
-            <XCircle className="h-12 w-12 text-red-500 mb-4" />
-          )}
-          <p className="text-center mb-4">{message}</p>
+        
+        <CardContent>
+          {renderContent()}
         </CardContent>
-        <CardFooter className="flex justify-center">
-          {status === 'success' && (
-            <Button className="w-full" onClick={() => setLocation("/dashboard")}>
-              {t("Proceed to Dashboard")}
-            </Button>
-          )}
-          {status === 'error' && (
-            <div className="space-y-2 w-full">
-              <Button className="w-full" variant="outline" onClick={() => setLocation("/auth")}>
-                {t("Back to Login")}
-              </Button>
-              {user && (
-                <Button 
-                  className="w-full" 
-                  onClick={async () => {
-                    try {
-                      await apiRequest("POST", "/api/resend-confirmation");
-                      toast({
-                        title: t("Email Sent"),
-                        description: t("A new confirmation email has been sent."),
-                      });
-                    } catch (error) {
-                      toast({
-                        title: t("Error"),
-                        description: t("Failed to resend confirmation email."),
-                        variant: "destructive",
-                      });
-                    }
-                  }}
-                >
-                  {t("Resend Confirmation Email")}
-                </Button>
-              )}
-            </div>
-          )}
+        
+        <CardFooter className="flex justify-center text-sm text-muted-foreground">
+          <p className="text-center">
+            {t("Having trouble? Contact our support team for assistance.")}
+          </p>
         </CardFooter>
       </Card>
     </div>

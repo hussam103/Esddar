@@ -9,8 +9,9 @@ import { z } from "zod";
 import { DocumentUpload } from "@/components/profile/document-upload";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, ArrowLeft } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ const ProfilePage = () => {
   const isMobile = useIsMobile();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("info");
+  const [_, navigate] = useLocation();
 
   // Fetch user profile data
   const { data: profile, isLoading: isProfileLoading } = useQuery<any>({
@@ -99,9 +101,20 @@ const ProfilePage = () => {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-6">
-        {language === "ar" ? "الملف الشخصي" : "Profile"}
-      </h1>
+      <div className="flex items-center mb-6">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="mr-2"
+          onClick={() => navigate("/dashboard")}
+          aria-label="Go back"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <h1 className="text-3xl font-bold">
+          {language === "ar" ? "الملف الشخصي" : "Profile"}
+        </h1>
+      </div>
 
       <Tabs
         defaultValue="info"
@@ -402,32 +415,7 @@ const ProfilePage = () => {
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{language === "ar" ? "وصف الشركة" : "Company Description"}</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder={language === "ar" 
-                              ? "صف شركتك وقدراتها بإيجاز" 
-                              : "Briefly describe your company and its capabilities"
-                            } 
-                            className="min-h-[120px]"
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          {language === "ar"
-                            ? "سيتم استخدام هذه المعلومات لتحسين المطابقة بالذكاء الاصطناعي"
-                            : "This information will be used to improve AI matching"
-                          }
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+
 
                   <div>
                     <h3 className="text-sm font-medium mb-3">

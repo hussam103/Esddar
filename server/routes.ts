@@ -670,18 +670,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "User not found" });
       }
       
-      // Get document status if in document upload step
+      // Get document status for all steps (needed for step completion indicators)
       let documentStatus = null;
-      if (user.onboardingStep === 'upload_document') {
-        const documents = await storage.getCompanyDocumentsByUser(user.id);
-        if (documents && documents.length > 0) {
-          documentStatus = {
-            documentId: documents[0].documentId,
-            status: documents[0].status,
-            fileName: documents[0].fileName,
-            uploadedAt: documents[0].uploadedAt
-          };
-        }
+      const documents = await storage.getCompanyDocumentsByUser(user.id);
+      if (documents && documents.length > 0) {
+        documentStatus = {
+          documentId: documents[0].documentId,
+          status: documents[0].status,
+          fileName: documents[0].fileName,
+          uploadedAt: documents[0].uploadedAt
+        };
       }
       
       res.json({
@@ -745,6 +743,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!documents || documents.length === 0) {
           return res.status(400).json({ 
             error: "Company document must be uploaded to proceed" 
+          });
+        }
+        
+        // Make sure the document is fully processed
+        if (documents[0].status !== 'completed') {
+          return res.status(400).json({ 
+            error: "Document is still being processed. Please wait until processing is complete." 
           });
         }
       }

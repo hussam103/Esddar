@@ -40,13 +40,13 @@ const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState("info");
 
   // Fetch user profile data
-  const { data: profile, isLoading: isProfileLoading } = useQuery({
+  const { data: profile, isLoading: isProfileLoading } = useQuery<any>({
     queryKey: ["/api/user-profile"],
     enabled: !!user,
   });
 
   // Fetch user's company documents
-  const { data: documents, isLoading: isDocumentsLoading } = useQuery({
+  const { data: documents, isLoading: isDocumentsLoading } = useQuery<any[]>({
     queryKey: ["/api/company-documents"],
     enabled: !!user,
   });
@@ -181,7 +181,7 @@ const ProfilePage = () => {
                         {language === "ar" ? "أنشطة الشركة" : "Company Activities"}
                       </h3>
                       <div className="flex flex-wrap gap-2 mt-1">
-                        {Array.isArray(profile.companyActivities) && profile.companyActivities.map((activity, index) => (
+                        {Array.isArray(profile.companyActivities) && profile.companyActivities.map((activity: string, index: number) => (
                           <Badge key={index} variant="secondary">
                             {activity}
                           </Badge>
@@ -196,7 +196,7 @@ const ProfilePage = () => {
                         {language === "ar" ? "القطاعات الرئيسية" : "Main Industries"}
                       </h3>
                       <div className="flex flex-wrap gap-2 mt-1">
-                        {Array.isArray(profile.mainIndustries) && profile.mainIndustries.map((industry, index) => (
+                        {Array.isArray(profile.mainIndustries) && profile.mainIndustries.map((industry: string, index: number) => (
                           <Badge key={index} variant="secondary">
                             {industry}
                           </Badge>
@@ -211,7 +211,7 @@ const ProfilePage = () => {
                         {language === "ar" ? "التخصصات" : "Specializations"}
                       </h3>
                       <div className="flex flex-wrap gap-2 mt-1">
-                        {Array.isArray(profile.specializations) && profile.specializations.map((specialization, index) => (
+                        {Array.isArray(profile.specializations) && profile.specializations.map((specialization: string, index: number) => (
                           <Badge key={index} variant="secondary">
                             {specialization}
                           </Badge>
@@ -268,11 +268,11 @@ const ProfilePage = () => {
                           <Badge
                             variant={
                               doc.status === "completed"
-                                ? "success"
+                                ? "secondary"
                                 : doc.status === "error"
                                 ? "destructive"
                                 : doc.status === "processing"
-                                ? "warning"
+                                ? "outline"
                                 : "secondary"
                             }
                           >
@@ -313,6 +313,389 @@ const ProfilePage = () => {
           </div>
         </TabsContent>
 
+        <TabsContent value="edit" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {language === "ar" ? "تعديل ملف الشركة" : "Edit Company Profile"}
+              </CardTitle>
+              <CardDescription>
+                {language === "ar" 
+                  ? "تحديث معلومات شركتك لتحسين مطابقة المناقصات"
+                  : "Update your company information to improve tender matching"
+                }
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="companyName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === "ar" ? "اسم الشركة" : "Company Name"}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="industry"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === "ar" ? "الصناعة" : "Industry"}</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder={language === "ar" ? "اختر مجال عملك" : "Select your industry"} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="IT Services">
+                              {language === "ar" ? "خدمات تكنولوجيا المعلومات" : "IT Services"}
+                            </SelectItem>
+                            <SelectItem value="Construction">
+                              {language === "ar" ? "البناء والإنشاءات" : "Construction"}
+                            </SelectItem>
+                            <SelectItem value="Healthcare">
+                              {language === "ar" ? "الرعاية الصحية" : "Healthcare"}
+                            </SelectItem>
+                            <SelectItem value="Education">
+                              {language === "ar" ? "التعليم" : "Education"}
+                            </SelectItem>
+                            <SelectItem value="Consulting">
+                              {language === "ar" ? "الاستشارات" : "Consulting"}
+                            </SelectItem>
+                            <SelectItem value="Manufacturing">
+                              {language === "ar" ? "التصنيع" : "Manufacturing"}
+                            </SelectItem>
+                            <SelectItem value="Finance">
+                              {language === "ar" ? "التمويل والمالية" : "Finance"}
+                            </SelectItem>
+                            <SelectItem value="Retail">
+                              {language === "ar" ? "تجارة التجزئة" : "Retail"}
+                            </SelectItem>
+                            <SelectItem value="Transportation">
+                              {language === "ar" ? "النقل والمواصلات" : "Transportation"}
+                            </SelectItem>
+                            <SelectItem value="Energy">
+                              {language === "ar" ? "الطاقة" : "Energy"}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          {language === "ar" 
+                            ? "هذا يساعدنا على مطابقتك مع المناقصات ذات الصلة"
+                            : "This helps us match you with relevant tenders"
+                          }
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{language === "ar" ? "وصف الشركة" : "Company Description"}</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder={language === "ar" 
+                              ? "صف شركتك وقدراتها بإيجاز" 
+                              : "Briefly describe your company and its capabilities"
+                            } 
+                            className="min-h-[120px]"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {language === "ar"
+                            ? "سيتم استخدام هذه المعلومات لتحسين المطابقة بالذكاء الاصطناعي"
+                            : "This information will be used to improve AI matching"
+                          }
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div>
+                    <h3 className="text-sm font-medium mb-3">
+                      {language === "ar" ? "اكتمال الملف الشخصي" : "Profile Completion"}
+                    </h3>
+                    <div className="w-full h-2 bg-gray-200 rounded-full">
+                      <div 
+                        className="h-2 bg-primary rounded-full" 
+                        style={{ width: `${user?.profileCompleteness || 0}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-2">
+                      {user?.profileCompleteness || 0}% {language === "ar" 
+                        ? "مكتمل - املأ المزيد من التفاصيل لتحسين مطابقة المناقصات"
+                        : "complete - Fill in more details to improve tender matching"
+                      }
+                    </p>
+                  </div>
+
+                  <Button 
+                    type="submit" 
+                    className="flex items-center"
+                    disabled={updateProfileMutation.isPending}
+                  >
+                    {updateProfileMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        {language === "ar" ? "جاري التحديث..." : "Updating..."}
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        {language === "ar" ? "حفظ التغييرات" : "Save Changes"}
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="notifications" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {language === "ar" ? "تفضيلات الإشعارات" : "Notification Preferences"}
+              </CardTitle>
+              <CardDescription>
+                {language === "ar"
+                  ? "اختر متى وكيف ترغب في تلقي الإشعارات"
+                  : "Choose when and how you want to receive notifications"
+                }
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="text-sm font-medium mb-3">
+                  {language === "ar" ? "إشعارات البريد الإلكتروني" : "Email Notifications"}
+                </h3>
+                <Separator className="mb-4" />
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">
+                        {language === "ar" ? "مناقصات جديدة متطابقة" : "New Matching Tenders"}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {language === "ar" 
+                          ? "استلام إشعارات عند العثور على مناقصات جديدة متطابقة" 
+                          : "Receive notifications when new matching tenders are found"
+                        }
+                      </p>
+                    </div>
+                    <Switch defaultChecked />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">
+                        {language === "ar" ? "مواعيد المناقصات" : "Tender Deadlines"}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {language === "ar" 
+                          ? "الحصول على تذكيرات للمواعيد النهائية القادمة" 
+                          : "Get reminders for upcoming deadlines"
+                        }
+                      </p>
+                    </div>
+                    <Switch defaultChecked />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">
+                        {language === "ar" ? "تحديثات حالة الطلب" : "Application Status Updates"}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {language === "ar" 
+                          ? "تلقي إشعار عند تغيير حالة طلبك" 
+                          : "Get notified when your application status changes"
+                        }
+                      </p>
+                    </div>
+                    <Switch defaultChecked />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">
+                        {language === "ar" ? "ملخص دوري" : "Periodic Summary"}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {language === "ar" 
+                          ? "ملخص أسبوعي لجميع نشاطات المناقصات" 
+                          : "Weekly summary of all tender activities"
+                        }
+                      </p>
+                    </div>
+                    <Switch />
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="text-sm font-medium mb-3">
+                  {language === "ar" ? "إشعارات التطبيق" : "App Notifications"}
+                </h3>
+                <Separator className="mb-4" />
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">
+                        {language === "ar" ? "جميع الإشعارات" : "All Notifications"}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {language === "ar" 
+                          ? "تفعيل أو تعطيل جميع إشعارات التطبيق" 
+                          : "Enable or disable all app notifications"
+                        }
+                      </p>
+                    </div>
+                    <Switch defaultChecked />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">
+                        {language === "ar" ? "تنبيهات صوتية" : "Sound Alerts"}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {language === "ar" 
+                          ? "تشغيل صوت عند وصول الإشعارات" 
+                          : "Play sound when notifications arrive"
+                        }
+                      </p>
+                    </div>
+                    <Switch />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button>
+                {language === "ar" ? "حفظ إعدادات الإشعارات" : "Save Notification Settings"}
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="account" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {language === "ar" ? "إعدادات الحساب" : "Account Settings"}
+              </CardTitle>
+              <CardDescription>
+                {language === "ar"
+                  ? "إدارة معلومات حسابك والأمان"
+                  : "Manage your account information and security"
+                }
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="text-sm font-medium mb-3">
+                  {language === "ar" ? "معلومات الحساب" : "Account Information"}
+                </h3>
+                <Separator className="mb-4" />
+                
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium">
+                        {language === "ar" ? "اسم المستخدم" : "Username"}
+                      </label>
+                      <Input value={user?.username} disabled className="mt-1" />
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium">
+                        {language === "ar" ? "البريد الإلكتروني" : "Email"}
+                      </label>
+                      <Input 
+                        placeholder={language === "ar" ? "أضف البريد الإلكتروني" : "Add your email"} 
+                        className="mt-1" 
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="text-sm font-medium mb-3">
+                  {language === "ar" ? "كلمة المرور" : "Password"}
+                </h3>
+                <Separator className="mb-4" />
+                
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium">
+                        {language === "ar" ? "كلمة المرور الحالية" : "Current Password"}
+                      </label>
+                      <Input 
+                        type="password" 
+                        placeholder={language === "ar" ? "أدخل كلمة المرور الحالية" : "Enter current password"} 
+                        className="mt-1" 
+                      />
+                    </div>
+                    
+                    <div />
+                    
+                    <div>
+                      <label className="text-sm font-medium">
+                        {language === "ar" ? "كلمة المرور الجديدة" : "New Password"}
+                      </label>
+                      <Input 
+                        type="password" 
+                        placeholder={language === "ar" ? "أدخل كلمة المرور الجديدة" : "Enter new password"} 
+                        className="mt-1" 
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium">
+                        {language === "ar" ? "تأكيد كلمة المرور الجديدة" : "Confirm New Password"}
+                      </label>
+                      <Input 
+                        type="password" 
+                        placeholder={language === "ar" ? "تأكيد كلمة المرور الجديدة" : "Confirm new password"} 
+                        className="mt-1" 
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button>
+                {language === "ar" ? "حفظ إعدادات الحساب" : "Save Account Settings"}
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        
         <TabsContent value="preferences" className="mt-4">
           <Card>
             <CardHeader>

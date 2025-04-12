@@ -78,6 +78,22 @@ export function DocumentUpload({ onSuccess }: DocumentUploadProps) {
     formData.append('file', selectedFile);
     
     try {
+      console.log(`Starting upload of file ${selectedFile.name} (${(selectedFile.size / 1024 / 1024).toFixed(2)} MB)`);
+      
+      // Validate file type again
+      if (selectedFile.type !== 'application/pdf') {
+        throw new Error(language === 'ar' 
+          ? 'نوع الملف غير صالح. يرجى تحميل ملف PDF فقط' 
+          : 'Invalid file type. Please upload a PDF file only');
+      }
+      
+      // Validate file size again
+      if (selectedFile.size > 10 * 1024 * 1024) {
+        throw new Error(language === 'ar'
+          ? 'حجم الملف كبير جدًا. الحد الأقصى هو 10 ميغابايت'
+          : 'File is too large. Maximum size is 10MB');
+      }
+      
       const response = await apiRequest(
         'POST', 
         '/api/upload-company-document',
@@ -85,39 +101,87 @@ export function DocumentUpload({ onSuccess }: DocumentUploadProps) {
         (progressEvent) => {
           const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
           setUploadProgress(progress);
+          console.log(`Upload progress: ${progress}%`);
         }
       );
       
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error("Error parsing response:", parseError);
+        throw new Error(language === 'ar'
+          ? 'تعذر معالجة استجابة الخادم. يرجى المحاولة مرة أخرى.'
+          : 'Could not process server response. Please try again.');
+      }
       
       if (response.ok) {
+        console.log(`File uploaded successfully. Document ID: ${data.documentId}`);
         setDocumentId(data.documentId);
         setUploadStatus('processing');
         
         // Start processing the document
-        const processResponse = await apiRequest(
-          'POST',
-          `/api/process-company-document/${data.documentId}`
-        );
-        
-        if (processResponse.ok) {
-          // Start checking the processing status
-          checkProcessingStatus(data.documentId);
-        } else {
-          const processError = await processResponse.json();
-          throw new Error(processError.message || 'Failed to process document');
+        try {
+          const processResponse = await apiRequest(
+            'POST',
+            `/api/process-company-document/${data.documentId}`
+          );
+          
+          if (processResponse.ok) {
+            console.log(`Document processing started for document ID: ${data.documentId}`);
+            // Start checking the processing status
+            checkProcessingStatus(data.documentId);
+          } else {
+            const processError = await processResponse.json();
+            console.error("Process document error:", processError);
+            throw new Error(processError.message || (language === 'ar'
+              ? 'فشل في معالجة المستند'
+              : 'Failed to process document'));
+          }
+        } catch (processErr) {
+          console.error("Error initiating document processing:", processErr);
+          throw new Error(language === 'ar'
+            ? 'تم تحميل المستند ولكن تعذر بدء المعالجة. يرجى المحاولة مرة أخرى.'
+            : 'Document uploaded but processing could not be initiated. Please try again.');
         }
       } else {
-        throw new Error(data.message || 'Upload failed');
+        console.error("Upload failed with status:", response.status, data);
+        let errorMessage = data.message || data.error || (language === 'ar' ? 'فشل التحميل' : 'Upload failed');
+        
+        // Provide more specific error messages based on status codes
+        if (response.status === 413) {
+          errorMessage = language === 'ar'
+            ? 'حجم الملف كبير جدًا. الحد الأقصى هو 10 ميغابايت'
+            : 'File is too large. Maximum size is 10MB';
+        } else if (response.status === 415) {
+          errorMessage = language === 'ar'
+            ? 'نوع الملف غير مدعوم. يرجى تحميل ملف PDF فقط'
+            : 'Unsupported file type. Please upload a PDF file only';
+        } else if (response.status === 401) {
+          errorMessage = language === 'ar'
+            ? 'انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى'
+            : 'Session expired. Please login again';
+        } else if (response.status === 500) {
+          errorMessage = language === 'ar'
+            ? 'حدث خطأ في الخادم. يرجى المحاولة مرة أخرى لاحقًا'
+            : 'Server error occurred. Please try again later';
+        }
+        
+        throw new Error(errorMessage);
       }
     } catch (err: any) {
+      console.error("Document upload error:", err);
       setUploadStatus('error');
-      setError(err.message || 'An error occurred during upload');
+      
+      const errorMessage = err.message || (language === 'ar' 
+        ? 'حدث خطأ أثناء تحميل المستند' 
+        : 'An error occurred during document upload');
+      
+      setError(errorMessage);
+      
       toast({
         title: language === 'ar' ? 'فشل التحميل' : 'Upload Failed',
-        description: err.message || (language === 'ar' 
-          ? 'حدث خطأ أثناء تحميل المستند' 
-          : 'An error occurred during document upload'),
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -125,13 +189,33 @@ export function DocumentUpload({ onSuccess }: DocumentUploadProps) {
     }
   };
 
-  const checkProcessingStatus = async (docId: string) => {
+  const checkProcessingStatus = async (docId: string, retryCount: number = 0, maxRetries: number = 60) => {
     try {
+      console.log(`Checking processing status for document ID: ${docId} (Attempt ${retryCount + 1}/${maxRetries})`);
+      
+      if (retryCount >= maxRetries) {
+        throw new Error(language === 'ar'
+          ? 'انتهت مهلة معالجة المستند. يرجى المحاولة مرة أخرى أو الاتصال بالدعم.'
+          : 'Document processing timed out. Please try again or contact support.');
+      }
+      
       const response = await apiRequest('GET', `/api/check-document-status/${docId}`);
-      const data = await response.json();
+      
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error("Error parsing status response:", parseError);
+        throw new Error(language === 'ar'
+          ? 'تعذر معالجة استجابة الخادم. يرجى المحاولة مرة أخرى.'
+          : 'Could not process server response. Please try again.');
+      }
       
       if (response.ok) {
+        console.log(`Processing status for document ${docId}: ${data.status || 'unknown'}`);
+        
         if (data.status === 'completed') {
+          console.log(`Document ${docId} processing completed successfully`);
           setUploadStatus('success');
           toast({
             title: language === 'ar' ? 'تم المعالجة بنجاح' : 'Processing Successful',
@@ -150,18 +234,73 @@ export function DocumentUpload({ onSuccess }: DocumentUploadProps) {
             }, 2000);
           }
         } else if (data.status === 'error') {
+          console.error(`Document ${docId} processing failed:`, data.message);
           setUploadStatus('error');
-          setError(data.message || 'Processing failed');
+          setError(data.message || (language === 'ar'
+            ? 'فشلت معالجة المستند'
+            : 'Processing failed'));
+          
+          // Show toast for processing error
+          toast({
+            title: language === 'ar' ? 'فشل المعالجة' : 'Processing Failed',
+            description: data.message || (language === 'ar'
+              ? 'حدث خطأ أثناء معالجة المستند. يرجى المحاولة مرة أخرى.'
+              : 'An error occurred while processing the document. Please try again.'),
+            variant: 'destructive',
+          });
         } else {
-          // Still processing, check again after 5 seconds
-          setTimeout(() => checkProcessingStatus(docId), 5000);
+          // Still processing, show more detailed status if available
+          const processingMessage = data.message || (language === 'ar'
+            ? 'لا تزال معالجة المستند جارية...'
+            : 'Document is still being processed...');
+            
+          console.log(`Document ${docId} still processing: ${processingMessage}`);
+          
+          // Update progress message if relevant
+          if (retryCount % 5 === 0) { // Only update visible UI occasionally
+            // Here we could update a progress message if we had one
+          }
+          
+          // Check again after 5 seconds
+          setTimeout(() => checkProcessingStatus(docId, retryCount + 1, maxRetries), 5000);
         }
       } else {
-        throw new Error(data.message || 'Failed to check processing status');
+        console.error(`Error checking document ${docId} status:`, data);
+        let errorMessage = data.message || data.error || (language === 'ar'
+          ? 'فشل في التحقق من حالة المعالجة'
+          : 'Failed to check processing status');
+          
+        // Handle specific error cases
+        if (response.status === 404) {
+          errorMessage = language === 'ar'
+            ? 'المستند غير موجود. قد يكون تم حذفه.'
+            : 'Document not found. It may have been deleted.';
+        } else if (response.status === 401) {
+          errorMessage = language === 'ar'
+            ? 'انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى.'
+            : 'Session expired. Please login again.';
+        }
+        
+        throw new Error(errorMessage);
       }
     } catch (err: any) {
+      console.error(`Error checking document ${docId} processing status:`, err);
       setUploadStatus('error');
-      setError(err.message || 'An error occurred while checking processing status');
+      
+      const errorMessage = err.message || (language === 'ar'
+        ? 'حدث خطأ أثناء التحقق من حالة معالجة المستند'
+        : 'An error occurred while checking document processing status');
+      
+      setError(errorMessage);
+      
+      // Only show toast for critical errors, not for normal retries
+      if (retryCount > 3) {
+        toast({
+          title: language === 'ar' ? 'خطأ في المعالجة' : 'Processing Error',
+          description: errorMessage,
+          variant: 'destructive',
+        });
+      }
     }
   };
 

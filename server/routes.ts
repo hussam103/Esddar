@@ -418,7 +418,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Authentication check passed");
       next();
     },
-    upload.single('file'),
+    (req, res, next) => {
+      // Custom error handling middleware for multer
+      upload.single('file')(req, res, (err) => {
+        if (err) {
+          console.error('Multer error:', err);
+          
+          // Handle specific multer errors with appropriate status codes
+          if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(413).json({ 
+              error: "File too large",
+              message: "Maximum file size is 10MB"
+            });
+          } else if (err.message && err.message.includes('Only PDF files are allowed')) {
+            return res.status(415).json({ 
+              error: "Invalid file type",
+              message: "Only PDF files are allowed"
+            });
+          } else {
+            return res.status(400).json({ 
+              error: "File upload error",
+              message: err.message || "Failed to upload file"
+            });
+          }
+        }
+        next();
+      });
+    },
     async (req, res) => {
       try {
         console.log("Upload endpoint called", { 
@@ -428,10 +454,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         if (!req.file) {
-          return res.status(400).json({ error: "No file uploaded" });
+          return res.status(400).json({ 
+            error: "No file uploaded",
+            message: "Please select a PDF file to upload"
+          });
         }
         
-        console.log("File uploaded:", {
+        // Additional validation for file size and type (belt and suspenders)
+        if (req.file.size > 10 * 1024 * 1024) {
+          return res.status(413).json({ 
+            error: "File too large",
+            message: "Maximum file size is 10MB"
+          });
+        }
+        
+        if (req.file.mimetype !== 'application/pdf') {
+          return res.status(415).json({ 
+            error: "Invalid file type",
+            message: "Only PDF files are allowed"
+          });
+        }
+        
+        console.log("File upload validated:", {
           originalname: req.file.originalname,
           size: req.file.size,
           mimetype: req.file.mimetype
@@ -439,7 +483,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Ensure user exists
         if (!req.user || !req.user.id) {
-          return res.status(401).json({ error: "User not authenticated" });
+          return res.status(401).json({ 
+            error: "User not authenticated",
+            message: "You must be logged in to upload documents"
+          });
         }
         
         // Check for existing documents and delete them if found
@@ -448,28 +495,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (existingDocuments && existingDocuments.length > 0) {
           // Delete existing documents from storage and database
           for (const doc of existingDocuments) {
-            await cleanupDocumentFiles(doc.documentId);
-            // The database record will be replaced with the new upload
+            try {
+              await cleanupDocumentFiles(doc.documentId);
+              console.log(`Cleaned up files for document ${doc.documentId}`);
+            } catch (cleanupError) {
+              console.error(`Error cleaning up document ${doc.documentId}:`, cleanupError);
+              // Continue with the upload even if cleanup fails
+            }
           }
           console.log(`Removed ${existingDocuments.length} existing documents for user ${req.user.id}`);
         }
         
-        const documentId = await saveUploadedFile(req.file, req.user.id);
-        
-        res.status(201).json({ 
-          success: true, 
-          documentId,
-          message: "Document uploaded successfully"
-        });
-        
-        // Send notification
-        (global as any).sendNotification(
-          req.user.id,
-          'Document Upload',
-          'Your document has been uploaded and is pending processing',
-          'info',
-          { documentId }
-        );
+        try {
+          const documentId = await saveUploadedFile(req.file, req.user.id);
+          console.log(`Document saved successfully with ID: ${documentId}`);
+          
+          res.status(201).json({ 
+            success: true, 
+            documentId,
+            fileName: req.file.originalname,
+            fileSize: req.file.size,
+            message: "Document uploaded successfully"
+          });
+          
+          // Send notification
+          try {
+            (global as any).sendNotification(
+              req.user.id,
+              'Document Upload',
+              'Your document has been uploaded and is pending processing',
+              'info',
+              { documentId }
+            );
+          } catch (notificationError) {
+            console.error('Error sending notification:', notificationError);
+            // Don't fail the request if notification fails
+          }
+        } catch (saveError: any) {
+          console.error('Error saving uploaded file:', saveError);
+          throw new Error(`Failed to save document: ${saveError.message}`);
+        }
       } catch (error: any) {
         console.error('Error uploading document:', error);
         res.status(500).json({ 
@@ -529,37 +594,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const { documentId } = req.params;
         
+        if (!documentId) {
+          return res.status(400).json({ 
+            error: "Missing document ID",
+            message: "Document ID is required"
+          });
+        }
+        
+        console.log(`Checking status for document: ${documentId}, user: ${req.user.id}`);
+        
         // Get document from database
         const document = await storage.getCompanyDocument(documentId);
         
         if (!document) {
-          return res.status(404).json({ error: "Document not found" });
+          return res.status(404).json({ 
+            error: "Document not found",
+            message: "The requested document could not be found"
+          });
         }
         
         if (document.userId !== req.user.id) {
-          return res.status(403).json({ error: "Forbidden" });
+          return res.status(403).json({ 
+            error: "Forbidden",
+            message: "You don't have permission to access this document"
+          });
         }
         
-        // Get processing status
-        const status = getDocumentStatus(documentId);
+        // Get processing status from in-memory job tracker
+        const jobStatus = getDocumentStatus(documentId);
+        
+        console.log(`Document database status: ${document.status}, job tracker status: ${jobStatus?.status || 'not found in tracker'}`);
+        
+        // Detect inconsistencies between database and memory tracking
+        if (document.status !== 'completed' && jobStatus && jobStatus.status === 'completed') {
+          // Memory tracking shows completed but database doesn't - update database
+          console.log(`Updating database status for document ${documentId} to completed`);
+          await storage.updateCompanyDocument(documentId, {
+            status: 'completed',
+            processedAt: new Date()
+          });
+          
+          // Update document after changes
+          const updatedDocument = await storage.getCompanyDocument(documentId);
+          if (updatedDocument) {
+            document.status = updatedDocument.status;
+            document.processedAt = updatedDocument.processedAt;
+          }
+        }
         
         // If processing is complete, send notification
-        if (status && status.status === 'completed' && !document.processedAt) {
-          // Send notification
-          (global as any).sendNotification(
-            req.user.id,
-            'Document Processing Complete',
-            'Your document has been processed successfully',
-            'success',
-            { documentId }
-          );
+        if ((jobStatus && jobStatus.status === 'completed' && !document.processedAt) || 
+            (document.status === 'completed' && !document.processedAt)) {
+          try {
+            // Send notification
+            (global as any).sendNotification(
+              req.user.id,
+              'Document Processing Complete',
+              'Your document has been processed successfully',
+              'success',
+              { documentId }
+            );
+            console.log(`Sent completion notification for document ${documentId} to user ${req.user.id}`);
+          } catch (notificationError) {
+            console.error('Error sending completion notification:', notificationError);
+            // Don't fail the request if notification fails
+          }
         }
         
-        res.json({ 
+        // Create a detailed response
+        const response = { 
           documentId,
+          fileName: document.fileName,
+          fileSize: document.fileSize,
+          uploadedAt: document.uploadedAt,
           status: document.status,
-          message: document.errorMessage || 'Document is being processed'
-        });
+          processing: {
+            stage: jobStatus?.status || document.status,
+            processedAt: document.processedAt,
+            progress: document.status === 'completed' ? 100 : 
+                    document.status === 'error' ? 0 : 
+                    document.status === 'processing' ? 50 : 25
+          },
+          message: document.errorMessage || 
+                  (document.status === 'completed' ? 'Document processed successfully' : 
+                   document.status === 'error' ? 'Error processing document' : 
+                   'Document is being processed')
+        };
+        
+        res.json(response);
       } catch (error: any) {
         console.error('Error checking document status:', error);
         res.status(500).json({ 
@@ -773,11 +895,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
         
+        console.log(`Checking document status for user ${user.id} before proceeding to next step. Document status: ${documents[0].status}`);
+        
+        // Get both database status and in-memory job status
+        const documentStatus = documents[0].status;
+        const jobStatus = documents[0].documentId ? getDocumentStatus(documents[0].documentId) : null;
+        
         // Make sure the document is fully processed
-        if (documents[0].status !== 'completed') {
-          return res.status(400).json({ 
-            error: "Document is still being processed. Please wait until processing is complete." 
-          });
+        if (documentStatus !== 'completed') {
+          // Double-check if job status shows completed but DB doesn't
+          if (jobStatus && jobStatus.status === 'completed') {
+            console.log(`Job status shows completed but DB doesn't for doc ${documents[0].documentId}. Updating DB...`);
+            
+            // Update document status in DB
+            try {
+              await storage.updateCompanyDocument(documents[0].documentId, {
+                status: 'completed',
+                processedAt: new Date()
+              });
+              
+              console.log(`Updated document ${documents[0].documentId} status to completed in DB`);
+              
+              // Now we can proceed - document is actually completed
+            } catch (updateError) {
+              console.error(`Failed to update document status in DB:`, updateError);
+              return res.status(400).json({ 
+                error: "Document is still being processed. Please wait until processing is complete.",
+                details: "Status synchronization failed. Please refresh the page and try again." 
+              });
+            }
+          } else {
+            // Genuinely not completed
+            return res.status(400).json({ 
+              error: "Document is still being processed. Please wait until processing is complete.",
+              status: documentStatus,
+              jobStatus: jobStatus?.status || 'unknown'
+            });
+          }
         }
       }
       

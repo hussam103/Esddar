@@ -457,10 +457,7 @@ export const InteractiveTutorial = ({ autoStart = true, onComplete, tutorialKey 
             {/* Step counter and points */}
             <div className="flex justify-between items-center mb-2">
               <Badge variant="outline" className="text-xs">
-                {t("Step {{current}} of {{total}}", { 
-                  current: (currentStepIndex + 1).toString(), 
-                  total: tutorialSteps.length.toString() 
-                })}
+                {t(`Step ${currentStepIndex + 1} of ${tutorialSteps.length}`)}
               </Badge>
               <Badge className="bg-amber-100 text-amber-800 border-amber-200">
                 <Trophy className="h-3 w-3 mr-1" />
@@ -499,7 +496,7 @@ export const InteractiveTutorial = ({ autoStart = true, onComplete, tutorialKey 
             {currentStep.points && (
               <div className="mb-4 text-sm text-green-600 dark:text-green-400 flex items-center">
                 <Star className="h-4 w-4 mr-1" />
-                {t("Complete this step to earn {{points}} points", { points: currentStep.points.toString() })}
+                {t(`Complete this step to earn ${currentStep.points} points`)}
               </div>
             )}
             
@@ -566,27 +563,29 @@ export const InteractiveTutorial = ({ autoStart = true, onComplete, tutorialKey 
       </AnimatePresence>
       
       {/* Add tutorial highlight styles */}
-      <style jsx global>{`
-        .tutorial-highlight {
-          position: relative;
-          z-index: 40;
-          box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.4);
-          border-radius: 4px;
-          animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-          0% {
-            box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          .tutorial-highlight {
+            position: relative;
+            z-index: 40;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.4);
+            border-radius: 4px;
+            animation: pulse 2s infinite;
           }
-          70% {
-            box-shadow: 0 0 0 6px rgba(79, 70, 229, 0);
+          
+          @keyframes pulse {
+            0% {
+              box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
+            }
+            70% {
+              box-shadow: 0 0 0 6px rgba(79, 70, 229, 0);
+            }
+            100% {
+              box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+            }
           }
-          100% {
-            box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
-          }
-        }
-      `}</style>
+        `
+      }} />
     </>
   );
 };

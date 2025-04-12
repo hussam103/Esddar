@@ -125,6 +125,11 @@ export const userProfiles = pgTable("user_profiles", {
   tendersFound: integer("tenders_found").default(0),
   proposalsSubmitted: integer("proposals_submitted").default(0),
   successRate: integer("success_rate").default(0),
+  // Gamification fields
+  points: integer("points").default(0),
+  level: integer("level").default(1),
+  achievements: jsonb("achievements").default([]),
+  completedTutorials: jsonb("completed_tutorials").default([]),
   // Vector embedding information for RAG
   vectorId: text("vector_id"),
   vectorStatus: text("vector_status").default("pending"), // 'pending', 'processed', 'failed'

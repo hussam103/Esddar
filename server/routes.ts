@@ -360,53 +360,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to fetch user profile" });
     }
   });
-  
-  // Search tenders with company profile data
-  app.post("/api/search-tenders-with-profile", async (req, res) => {
-    try {
-      // Validate the company profile data
-      const companyProfile = {
-        companyName: req.body.companyName || '',
-        companyDescription: req.body.companyDescription || '',
-        activities: req.body.activities || [],
-        sectors: req.body.sectors || [],
-        specialization: req.body.specialization || ''
-      };
-      
-      // Set search parameters
-      const limit = req.body.limit || 20;
-      const activeOnly = req.body.activeOnly !== false; // Default to true
-      
-      log(`Searching tenders with company profile data`, 'search-tenders');
-      
-      // Call the search function from etimad-service
-      const searchResults = await searchTenders(companyProfile, limit, activeOnly);
-      
-      if (searchResults.success) {
-        log(`Successfully found ${searchResults.results?.length || 0} matching tenders`, 'search-tenders');
-        return res.json({
-          success: true,
-          message: "Search completed successfully",
-          results: searchResults.results,
-          count: searchResults.count
-        });
-      } else {
-        log(`Search failed: ${searchResults.message}`, 'search-tenders');
-        return res.status(400).json({
-          success: false,
-          message: searchResults.message,
-          errors: searchResults.errors
-        });
-      }
-    } catch (error) {
-      console.error('Error searching tenders with profile:', error);
-      res.status(500).json({ 
-        success: false,
-        message: "Failed to search tenders", 
-        error: error.message 
-      });
-    }
-  });
 
   app.put("/api/user-profile", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });

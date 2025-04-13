@@ -27,7 +27,7 @@ async function testExternalSearchAPI() {
   printWithColor('TESTING EXTERNAL SIMPLE TENDER SEARCH API', colors.magenta, true);
   
   // Get the API base URL from environment variable or use the default
-  const apiBaseUrl = process.env.SIMPLE_TENDER_SEARCH_API_URL || 'https://esddar-api.replit.app';
+  const apiBaseUrl = process.env.SIMPLE_TENDER_SEARCH_API_URL || 'https://a0d2d09d-4640-4a52-95d4-670754df12f5-00-2zrcgu8913s5f.picard.replit.dev';
   const searchQuery = 'medical equipment';
   const limit = 2;
   

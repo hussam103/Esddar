@@ -18,8 +18,8 @@ import { eq, sql } from 'drizzle-orm';
 // The API runs on port 5000 according to documentation
 const ETIMAD_API_BASE_URL = process.env.ETIMAD_API_URL || 'http://localhost:5000';
 
-// Base URL for the Simple Tender Search API
-const SEARCH_API_BASE_URL = process.env.SIMPLE_TENDER_SEARCH_API_URL || 'https://esddar-api.replit.app';
+// Base URL for the Simple Tender Search API - hosted on Replit.dev
+const SEARCH_API_BASE_URL = process.env.SIMPLE_TENDER_SEARCH_API_URL || 'https://a0d2d09d-4640-4a52-95d4-670754df12f5-00-2zrcgu8913s5f.picard.replit.dev';
 
 interface EtimadTender {
   id?: number;
@@ -296,7 +296,7 @@ export async function searchTenders(
     };
     
     log(`Performing semantic search with query: "${searchQuery}"`, 'etimad-service');
-    // The Simple Tender Search API is hosted on esddar-api.replit.app
+    // The Simple Tender Search API is hosted on the Replit.dev server
     const response = await axios.get(`${SEARCH_API_BASE_URL}/api/v1/search`, { 
       params,
       headers: {

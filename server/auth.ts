@@ -91,13 +91,21 @@ export function setupAuth(app: Express) {
       
       // Check for existing user with same email
       try {
-        const usersByEmail = await db.select()
-          .from(users)
-          .where(eq(users.email, req.body.email))
-          .limit(1);
-          
-        if (usersByEmail.length > 0) {
-          return res.status(400).json({ error: "البريد الإلكتروني مستخدم بالفعل" });
+        // Exception for testing email
+        const testingEmails = ['hussam.h.khogali@gmail.com', 'hussam1030@gmail.com'];
+        
+        // Skip email uniqueness check for test emails
+        if (!testingEmails.includes(req.body.email)) {
+          const usersByEmail = await db.select()
+            .from(users)
+            .where(eq(users.email, req.body.email))
+            .limit(1);
+            
+          if (usersByEmail.length > 0) {
+            return res.status(400).json({ error: "البريد الإلكتروني مستخدم بالفعل" });
+          }
+        } else {
+          console.log(`Allowing test email: ${req.body.email} for multiple accounts`);
         }
       } catch (err) {
         console.error("Error checking email uniqueness:", err);

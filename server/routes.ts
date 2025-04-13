@@ -18,7 +18,12 @@ import { WebSocketServer, WebSocket } from "ws";
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { db } from "./db";
-import { eq, count, desc } from "drizzle-orm";
+import { eq, count, desc, sql } from "drizzle-orm";
+
+// Helper function for logging
+function log(message: string, source: string = 'server') {
+  console.log(`${new Date().toLocaleTimeString()} [${source}] ${message}`);
+}
 import multer from "multer";
 import { 
   ensureUploadDirectories, 
@@ -1604,6 +1609,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register both GET and POST routes with the same handler
   app.get("/api/etimad/scrape-tenders", isAdmin, scrapeTendersHandler);
   app.post("/api/etimad/scrape-tenders", isAdmin, scrapeTendersHandler);
+  
+  // New endpoint for the semantic search scheduler
+  app.post("/api/search/run-tender-search", isAdmin, async (req, res) => {
+    try {
+      log('Starting scheduled semantic tender search', 'search-scheduler');
+      
+      // Get all active user profiles with subscription
+      const activeUsers = await db.select()
+        .from(users)
+        .where(sql`${users.subscriptionStatus} = 'active'`);
+      
+      log(`Found ${activeUsers.length} active users to process`, 'search-scheduler');
+      
+      const results = {
+        success: true,
+        message: "Scheduled semantic search completed",
+        profiles_processed: 0,
+        tenders_found: 0,
+        errors: []
+      };
+      
+      // Process each user profile
+      for (const user of activeUsers) {
+        try {
+          // Get user profile
+          const userProfile = await storage.getUserProfile(user.id);
+          
+          if (!userProfile) {
+            log(`No profile found for user ${user.id}, skipping`, 'search-scheduler');
+            continue;
+          }
+          
+          // Run search with the user profile
+          const searchResponse = await searchTenders(userProfile, 50, true);
+          
+          if (searchResponse.success && searchResponse.results && searchResponse.results.length > 0) {
+            results.profiles_processed++;
+            results.tenders_found += searchResponse.results.length;
+            
+            log(`Found ${searchResponse.results.length} matching tenders for user ${user.id}`, 'search-scheduler');
+          } else {
+            log(`No matching tenders found for user ${user.id}`, 'search-scheduler');
+          }
+        } catch (userError) {
+          const errorMessage = `Error processing user ${user.id}: ${userError.message}`;
+          log(errorMessage, 'search-scheduler');
+          results.errors.push(errorMessage);
+        }
+      }
+      
+      // Log the results in the scrape_logs table
+      await db.insert(scrapeLogs).values({
+        source: 'semantic-search',
+        status: results.success ? 'success' : 'error',
+        message: results.message,
+        itemsProcessed: results.profiles_processed,
+        itemsFound: results.tenders_found,
+        details: JSON.stringify(results)
+      });
+      
+      res.json(results);
+    } catch (error) {
+      log(`Error in tender search endpoint: ${error.message}`, 'search-scheduler');
+      res.status(500).json({
+        success: false,
+        message: `Error running scheduled tender search: ${error.message}`,
+        errors: [error.message]
+      });
+    }
+  });
 
   const httpServer = createServer(app);
   

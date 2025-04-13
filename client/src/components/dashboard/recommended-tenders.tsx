@@ -1,5 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { useState } from "react";
 import { Tender } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +22,30 @@ export default function RecommendedTenders({ loading, tenders, className = '' }:
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { t, language } = useLanguage();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Function to force-refresh recommendations from API
+  const refreshRecommendations = async () => {
+    setIsRefreshing(true);
+    try {
+      await apiRequest("GET", "/api/recommended-tenders?refresh=true");
+      queryClient.invalidateQueries({ queryKey: ["/api/recommended-tenders"] });
+      toast({
+        title: language === "ar" ? "تم تحديث المناقصات الموصى بها" : "Recommendations Refreshed",
+        description: language === "ar" 
+          ? "تم تحديث المناقصات الموصى بها بنجاح من خلال البحث الدلالي" 
+          : "Successfully refreshed recommended tenders via semantic search",
+      });
+    } catch (error: any) {
+      toast({
+        title: language === "ar" ? "فشل تحديث المناقصات" : "Refresh Failed",
+        description: error.message || 'Unknown error during refresh',
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Get days remaining until deadline
   const getDaysRemaining = (deadline: Date): number => {
@@ -120,6 +145,25 @@ export default function RecommendedTenders({ loading, tenders, className = '' }:
           {language === "ar" ? "المناقصات الموصى بها" : "Recommended Tenders"}
         </h2>
         <div className={`flex items-center ${language === "ar" ? "space-x-2 space-x-reverse" : "space-x-2"}`}>
+          {/* Refresh Button */}
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="text-primary bg-white border-primary/20 hover:bg-primary/5 flex items-center gap-1"
+            onClick={refreshRecommendations}
+            disabled={isRefreshing}
+          >
+            <svg className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+              <path d="M21 3v5h-5"></path>
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+              <path d="M8 16H3v5"></path>
+            </svg>
+            {language === "ar" 
+              ? (isRefreshing ? "جاري التحديث..." : "تحديث")
+              : (isRefreshing ? "Refreshing..." : "Refresh")}
+          </Button>
+          
           <div className="relative">
             <select className={`${language === "ar" ? "pr-3 pl-8" : "pl-3 pr-8"} py-1.5 bg-white border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 appearance-none`}>
               {language === "ar" ? (

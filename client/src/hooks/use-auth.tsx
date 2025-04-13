@@ -37,28 +37,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       const res = await apiRequest("POST", "/api/login", credentials);
-      return await res.json();
+      const data = await res.json();
+      
+      // If the response is not successful, throw an error with the message
+      if (!res.ok) {
+        throw new Error(data.error || "اسم المستخدم أو كلمة المرور غير صحيحة");
+      }
+      
+      return data;
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
       toast({
-        title: "Login successful",
-        description: `Welcome back, ${user.companyName}!`,
+        title: "تم تسجيل الدخول بنجاح",
+        description: `مرحباً بعودتك، ${user.companyName || user.username}!`,
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Login failed",
+        title: "فشل تسجيل الدخول",
         description: error.message,
         variant: "destructive",
       });
+      
+      console.error("Login error:", error);
     },
   });
 
   const registerMutation = useMutation({
     mutationFn: async (credentials: InsertUser) => {
       const res = await apiRequest("POST", "/api/register", credentials);
-      return await res.json();
+      const data = await res.json();
+      
+      // If the response is not successful, we need to throw an error with the error message
+      if (!res.ok) {
+        throw new Error(data.error || "Unknown error occurred during registration");
+      }
+      
+      return data;
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -68,11 +84,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.location.href = "/onboarding";
     },
     onError: (error: Error) => {
+      // Use proper toast with real error message
       toast({
-        title: "Registration failed",
+        title: "فشل إنشاء الحساب",
         description: error.message,
         variant: "destructive",
       });
+      
+      console.error("Registration error:", error);
     },
   });
 

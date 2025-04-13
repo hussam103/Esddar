@@ -1,75 +1,75 @@
-import cron from 'node-cron';
+/**
+ * Scheduler for semantic search tender matching
+ * 
+ * This script will run a scheduled job to regularly search for new tenders
+ * that match user company profiles using the Simple Semantic Search API.
+ * 
+ * It runs every 2 hours by default but can be configured via environment variables.
+ */
 import axios from 'axios';
+import cron from 'node-cron';
+import dotenv from 'dotenv';
 
-// Simple logger function 
+dotenv.config();
+
+// Configure schedule using environment variables or defaults
+const SEARCH_SCHEDULE = process.env.TENDER_SEARCH_SCHEDULE || '0 */2 * * *'; // Every 2 hours by default
+const API_URL = process.env.API_URL || 'http://localhost:5000';
+const API_KEY = process.env.ETIMAD_SCRAPER_API_KEY || 'internal-scheduler';
+
 function log(message, source = "search-scheduler") {
   console.log(`${new Date().toLocaleTimeString()} [${source}] ${message}`);
 }
 
-// Function to run the tender search API
+/**
+ * Run the semantic tender search via the API endpoint
+ */
 async function runTenderSearch() {
   try {
-    log('Starting scheduled semantic tender search', 'search-scheduler');
+    log("Starting scheduled semantic tender search...");
     
-    // Call our semantic search API endpoint
-    const response = await axios.post('http://localhost:5000/api/search/run-tender-search', {}, {
-      headers: {
-        'X-API-Key': process.env.ETIMAD_SCRAPER_API_KEY || 'internal-scheduler',
-        'Content-Type': 'application/json'
+    const response = await axios.post(`${API_URL}/api/search/run-tender-search`, 
+      {}, // Empty request body - the endpoint will find all active user profiles
+      {
+        headers: {
+          'X-API-Key': API_KEY,
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
     
-    log(`Semantic search completed: ${JSON.stringify(response.data)}`, 'search-scheduler');
-    
-    // Store the search result in a log
-    const searchResult = {
-      timestamp: new Date().toISOString(),
-      success: response.data.success,
-      message: response.data.message,
-      profilesProcessed: response.data.profiles_processed || 0,
-      tendersFound: response.data.tenders_found || 0
-    };
-    
-    console.log('========== SEMANTIC SEARCH RESULT ==========');
-    console.log(`Timestamp: ${searchResult.timestamp}`);
-    console.log(`Success: ${searchResult.success}`);
-    console.log(`Message: ${searchResult.message}`);
-    console.log(`Profiles Processed: ${searchResult.profilesProcessed}`);
-    console.log(`Tenders Found: ${searchResult.tendersFound}`);
-    console.log('============================================');
-    
-    return searchResult;
+    if (response.data.success) {
+      log(`Search completed successfully. Processed ${response.data.profiles_processed} profiles and found ${response.data.tenders_found} tenders.`);
+      
+      if (response.data.errors && response.data.errors.length > 0) {
+        log(`Completed with warnings:`);
+        response.data.errors.forEach(error => log(`- ${error}`));
+      }
+    } else {
+      log(`Search failed: ${response.data.message}`);
+      
+      if (response.data.errors) {
+        response.data.errors.forEach(error => log(`- ${error}`));
+      }
+    }
   } catch (error) {
-    log(`Error in scheduled tender search: ${error.message}`, 'search-scheduler');
-    
-    console.error('========== SEMANTIC SEARCH ERROR ==========');
-    console.error(`Timestamp: ${new Date().toISOString()}`);
-    console.error(`Error: ${error.message}`);
-    console.error('============================================');
-    
-    return {
-      timestamp: new Date().toISOString(),
-      success: false,
-      message: error.message,
-      profilesProcessed: 0,
-      tendersFound: 0
-    };
+    log(`Error running tender search: ${error.message}`);
+    if (error.response) {
+      log(`Response status: ${error.response.status}`);
+      log(`Response data: ${JSON.stringify(error.response.data)}`);
+    }
   }
 }
 
-// Schedule the search task to run every 2 hours
-// Cron format: second(0-59) minute(0-59) hour(0-23) day(1-31) month(1-12) day-of-week(0-6)
-// 0 0 */2 * * * runs every 2 hours (at 0:00, 2:00, 4:00, etc.)
-cron.schedule('0 0 */2 * * *', async () => {
-  log('Running scheduled semantic tender search task', 'search-scheduler');
-  await runTenderSearch();
+// Run the scheduler
+log(`Starting tender search scheduler with schedule: ${SEARCH_SCHEDULE}`);
+
+// Run once immediately on startup
+runTenderSearch();
+
+// Then schedule for regular runs
+cron.schedule(SEARCH_SCHEDULE, () => {
+  runTenderSearch();
 });
 
-// Optional: Run immediately when the script starts
-(async () => {
-  log('Initial semantic tender search on startup', 'search-scheduler');
-  await runTenderSearch();
-})();
-
-// Keep the script running
-log('Semantic search scheduler started, will run every 2 hours', 'search-scheduler');
+log('Tender search scheduler is running...');

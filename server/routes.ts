@@ -5,13 +5,16 @@ import { storage } from "./storage";
 import { 
   insertTenderSchema, 
   insertApplicationSchema, 
-  insertSavedTenderSchema, 
+  insertSavedTenderSchema,
+  insertExternalSourceSchema,
+  insertScrapeLogSchema,
   tenders, 
   users, 
   applications,
   externalSources,
   scrapeLogs,
-  vectorRecords
+  vectorRecords,
+  userProfiles
 } from "@shared/schema";
 import { z } from "zod";
 import { WebSocketServer, WebSocket } from "ws";
@@ -1653,8 +1656,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             log(`No matching tenders found for user ${user.id}`, 'search-scheduler');
           }
         } catch (userError) {
-          const errorMessage = `Error processing user ${user.id}: ${userError.message}`;
+          const errorMessage = `Error processing user ${user.id}: ${userError instanceof Error ? userError.message : String(userError)}`;
           log(errorMessage, 'search-scheduler');
+          if (!results.errors) {
+            results.errors = [];
+          }
           results.errors.push(errorMessage);
         }
       }
@@ -1676,11 +1682,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .values({
               name: 'semantic-search',
               url: 'https://llmwhisperer-api.us-central.unstract.com/api/v2/search',
-              description: 'Simple Semantic Search API for tender matching',
               type: 'api',
-              enabled: true,
-              createdBy: (req.user as any)?.id || 0,
-              createdAt: new Date()
+              apiEndpoint: '/api/v2/search',
+              active: true,
+              createdBy: (req.user as any)?.id || 0
             })
             .returning();
           
@@ -1705,11 +1710,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(results);
     } catch (error) {
-      log(`Error in tender search endpoint: ${error.message}`, 'search-scheduler');
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      log(`Error in tender search endpoint: ${errorMessage}`, 'search-scheduler');
       res.status(500).json({
         success: false,
-        message: `Error running scheduled tender search: ${error.message}`,
-        errors: [error.message]
+        message: `Error running scheduled tender search: ${errorMessage}`,
+        errors: [errorMessage]
       });
     }
   });

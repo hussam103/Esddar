@@ -493,6 +493,7 @@ async function saveTendersToDatabase(tendersData: EtimadTender[]): Promise<void>
           location: tenderData.details?.location || '',
           externalId: tenderData.tenderIdString,
           externalSource: 'Etimad',
+          source: 'etimad',
           externalUrl: `https://tenders.etimad.sa/Tender/Details/${tenderData.tenderIdString}`,
           rawData: JSON.stringify(tenderData),
         };
@@ -656,6 +657,7 @@ async function saveTendersFromSearchResults(searchResults: any[]): Promise<void>
           requirements: result.requirements || '',
           externalId: String(result.tender_id),
           externalSource: 'Etimad',
+          source: 'etimad',
           externalUrl: `https://tenders.etimad.sa/Tender/Details/${result.tender_id}`,
           rawData: JSON.stringify({
             ...result,
@@ -687,7 +689,8 @@ async function saveTendersFromSearchResults(searchResults: any[]): Promise<void>
         await db.update(tenders)
           .set({
             matchScore: result.similarity_percentage || null,
-            rawData: JSON.stringify(updatedRawData)
+            rawData: JSON.stringify(updatedRawData),
+            source: 'etimad' // Ensure source field is set to etimad
           })
           .where(eq(tenders.id, existingTenderData.id));
         

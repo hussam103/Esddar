@@ -383,6 +383,7 @@ Extract the following information in JSON format:
 3. companyActivities: An array of primary business activities or services (provide at least 3-5 if possible)
 4. mainIndustries: An array of the main industries the company operates in (provide at least 2-3 if possible)
 5. specializations: An array of specialized areas or expertise (provide at least 2-3 if possible)
+6. keywords: An array of 10-15 relevant keywords that best describe the company's services, technologies, expertise, and the types of government tenders or projects they would be qualified for. These keywords will be used for matching the company with relevant government tenders.
 
 If you cannot find specific information for a field, use null for singular values or an empty array [] for array values.
 IMPORTANT: Always return a valid JSON object with all the requested fields, even if some values are null or empty arrays.
@@ -417,7 +418,8 @@ ${truncatedText}
         businessType: typeof extractedInfo.businessType === 'string' ? extractedInfo.businessType : null,
         companyActivities: Array.isArray(extractedInfo.companyActivities) ? extractedInfo.companyActivities : [],
         mainIndustries: Array.isArray(extractedInfo.mainIndustries) ? extractedInfo.mainIndustries : [],
-        specializations: Array.isArray(extractedInfo.specializations) ? extractedInfo.specializations : []
+        specializations: Array.isArray(extractedInfo.specializations) ? extractedInfo.specializations : [],
+        keywords: Array.isArray(extractedInfo.keywords) ? extractedInfo.keywords : []
       };
       
       console.log('Validated extraction result:', validatedInfo);
@@ -435,7 +437,8 @@ ${truncatedText}
       businessType: null,
       companyActivities: [],
       mainIndustries: [],
-      specializations: []
+      specializations: [],
+      keywords: []
     };
     
     console.log('Returning default values due to extraction error:', defaultValues);
@@ -459,7 +462,8 @@ async function updateUserProfileWithExtractedData(userId: number, extractedData:
       companyActivities: Array.isArray(extractedData.companyActivities) ? extractedData.companyActivities : [],
       businessType: extractedData.businessType || null,
       mainIndustries: Array.isArray(extractedData.mainIndustries) ? extractedData.mainIndustries : [],
-      specializations: Array.isArray(extractedData.specializations) ? extractedData.specializations : []
+      specializations: Array.isArray(extractedData.specializations) ? extractedData.specializations : [],
+      keywords: Array.isArray(extractedData.keywords) ? extractedData.keywords : []
     };
     
     // Prepare a combined query string for tender matching
@@ -469,7 +473,8 @@ async function updateUserProfileWithExtractedData(userId: number, extractedData:
       normalizedData.companyDescription || '',
       ...(normalizedData.companyActivities || []),
       ...(normalizedData.mainIndustries || []),
-      ...(normalizedData.specializations || [])
+      ...(normalizedData.specializations || []),
+      ...(normalizedData.keywords || []) // Include the AI-generated keywords
     ].filter(Boolean).join(' ');
     
     console.log(`Generated combined query data for tender matching: ${combinedQueryData.substring(0, 100)}...`);
@@ -485,6 +490,7 @@ async function updateUserProfileWithExtractedData(userId: number, extractedData:
         businessType: normalizedData.businessType || existingProfile.businessType,
         mainIndustries: normalizedData.mainIndustries.length > 0 ? normalizedData.mainIndustries : existingProfile.mainIndustries,
         specializations: normalizedData.specializations.length > 0 ? normalizedData.specializations : existingProfile.specializations,
+        keywords: normalizedData.keywords.length > 0 ? normalizedData.keywords : existingProfile.keywords || [],
         queryData: combinedQueryData, // Store the combined data for tender API queries
       });
       

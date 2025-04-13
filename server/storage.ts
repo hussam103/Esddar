@@ -295,11 +295,28 @@ export class DatabaseStorage implements IStorage {
           .limit(limit);
       }
       
+      // First, check for tenders with match scores (from API)
+      const matchedTenders = await db.select()
+        .from(tenders)
+        .where(
+          sql`${tenders.status} = 'open' AND ${tenders.matchScore} IS NOT NULL`
+        )
+        .orderBy(tenders.matchScore, 'desc')
+        .limit(limit);
+      
+      // If we have matched tenders from the API, return them
+      if (matchedTenders.length > 0) {
+        console.log(`Found ${matchedTenders.length} tenders with API match scores for user ${userId}`);
+        return matchedTenders;
+      }
+      
+      // Fallback to local matching if no API results found
+      console.log(`No API-matched tenders found, using local matching algorithm for user ${userId}`);
+      
       // Get all available tenders
       const allTenders = await this.getTenders();
       
       // Simplified matching algorithm
-      // In a real implementation, this would use the vector database and RAG
       const scoredTenders = allTenders
         .filter(tender => tender.status === 'open')
         .map(tender => {
@@ -361,9 +378,6 @@ export class DatabaseStorage implements IStorage {
               console.error('Error processing company activities for matching:', err);
             }
           }
-          
-          // Add a random factor to simulate AI-driven matching
-          matchScore += Math.floor(Math.random() * 10);
           
           // Cap at 100
           matchScore = Math.min(matchScore, 100);

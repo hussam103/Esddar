@@ -1659,15 +1659,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Log the results in the scrape_logs table
-      await db.insert(scrapeLogs).values({
-        source: 'semantic-search',
-        status: results.success ? 'success' : 'error',
-        message: results.message,
-        itemsProcessed: results.profiles_processed,
-        itemsFound: results.tenders_found,
-        details: JSON.stringify(results)
-      });
+      // Check if we have a semantic-search source in the database
+      let sourceId;
+      try {
+        // Try to find an existing semantic-search source
+        const existingSource = await db.select()
+          .from(externalSources)
+          .where(eq(externalSources.name, 'semantic-search'))
+          .limit(1);
+        
+        if (existingSource.length > 0) {
+          sourceId = existingSource[0].id;
+        } else {
+          // Create a new source for semantic search
+          const newSource = await db.insert(externalSources)
+            .values({
+              name: 'semantic-search',
+              url: 'https://llmwhisperer-api.us-central.unstract.com/api/v2/search',
+              description: 'Simple Semantic Search API for tender matching',
+              type: 'api',
+              enabled: true,
+              createdBy: (req.user as any)?.id || 0,
+              createdAt: new Date()
+            })
+            .returning();
+          
+          sourceId = newSource[0].id;
+        }
+        
+        // Log the results in the scrape_logs table
+        await db.insert(scrapeLogs).values({
+          sourceId: sourceId,
+          startTime: new Date(),
+          endTime: new Date(),
+          status: results.success ? 'completed' : 'failed',
+          totalTenders: results.tenders_found || 0,
+          newTenders: results.tenders_found || 0,
+          errorMessage: results.errors?.join(', ') || null,
+          details: results
+        });
+      } catch (dbError) {
+        console.error('Error logging search results to database:', dbError);
+        // Continue anyway - don't fail the whole request due to logging issues
+      }
       
       res.json(results);
     } catch (error) {

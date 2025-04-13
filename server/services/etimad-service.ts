@@ -60,18 +60,7 @@ export async function scrapeTenders(page: number = 1, pageSize: number = 10): Pr
       };
     }
     
-    // Check if we're in test mode
-    if (process.env.ETIMAD_API_MODE === 'test') {
-      log(`Using test mode for Etimad API`, 'etimad-service');
-      const mockData = getMockPaginatedTenders(page, pageSize);
-      await saveTendersToDatabase(mockData.tenders);
-      return {
-        success: true,
-        message: `Successfully scraped ${mockData.tenders.length} tenders (test mode)`,
-        tenders_count: mockData.tenders.length,
-        tenders: mockData.tenders
-      };
-    }
+    // No test mode - only use real API data
     
     const response = await axios.get(`${ETIMAD_API_BASE_URL}/api/scrape-tenders`, {
       params: {
@@ -111,18 +100,7 @@ export async function scrapeTenders(page: number = 1, pageSize: number = 10): Pr
     const errorMessage = error?.message || 'Unknown error';
     log(`Error scraping tenders from Etimad: ${errorMessage}`, 'etimad-service');
     
-    // If in development or test mode, provide mock data
-    if (process.env.NODE_ENV === 'development' || process.env.ETIMAD_API_MODE === 'test') {
-      log(`Providing mock data for scraping tenders`, 'etimad-service');
-      const mockData = getMockPaginatedTenders(page, pageSize);
-      await saveTendersToDatabase(mockData.tenders);
-      return {
-        success: true,
-        message: `Successfully scraped ${mockData.tenders.length} tenders (mock data)`,
-        tenders_count: mockData.tenders.length,
-        tenders: mockData.tenders
-      };
-    }
+    // No mock data, if the API fails we return an error
     
     return {
       success: false,
@@ -147,17 +125,7 @@ export async function getTenderDetails(tenderIdString: string): Promise<{
   try {
     log(`Fetching tender details for ID ${tenderIdString}`, 'etimad-service');
     
-    // Check if we're in test mode
-    if (process.env.ETIMAD_API_MODE === 'test') {
-      log(`Using test mode for Etimad API`, 'etimad-service');
-      // Return mock data for testing
-      const mockData = getMockTenderDetails(tenderIdString);
-      return {
-        success: true,
-        message: `Successfully retrieved tender details (test mode)`,
-        tender_details: mockData
-      };
-    }
+    // No test mode - only use real API data
     
     const response = await axios.get(`${ETIMAD_API_BASE_URL}/api/tender-details/${tenderIdString}`, {
       headers: {
@@ -192,16 +160,7 @@ export async function getTenderDetails(tenderIdString: string): Promise<{
     const errorMessage = error?.message || 'Unknown error';
     log(`Error fetching tender details: ${errorMessage}`, 'etimad-service');
     
-    // If in development or test mode, provide mock data
-    if (process.env.NODE_ENV === 'development' || process.env.ETIMAD_API_MODE === 'test') {
-      log(`Providing mock data for tender details`, 'etimad-service');
-      const mockData = getMockTenderDetails(tenderIdString);
-      return {
-        success: true,
-        message: `Successfully retrieved tender details (mock data)`,
-        tender_details: mockData
-      };
-    }
+    // No mock data, if the API fails we return an error
     
     return {
       success: false,
@@ -246,21 +205,7 @@ export async function getPaginatedTenders(
       };
     }
     
-    // Check if we're in test mode
-    if (process.env.ETIMAD_API_MODE === 'test') {
-      log(`Using test mode for Etimad API`, 'etimad-service');
-      // Return mock data for testing
-      const mockData = getMockPaginatedTenders(page, pageSize, tenderType, agencyName);
-      return {
-        success: true,
-        message: `Successfully retrieved tenders (test mode)`,
-        tenders: mockData.tenders,
-        total_count: mockData.totalCount,
-        current_page: mockData.currentPage,
-        total_pages: mockData.totalPages,
-        page_size: mockData.pageSize
-      };
-    }
+    // No test mode - only use real API data
     
     const params: any = {
       page,
@@ -302,20 +247,7 @@ export async function getPaginatedTenders(
     const errorMessage = error?.message || 'Unknown error';
     log(`Error fetching paginated tenders: ${errorMessage}`, 'etimad-service');
     
-    // If in development or test mode, provide mock data
-    if (process.env.NODE_ENV === 'development' || process.env.ETIMAD_API_MODE === 'test') {
-      log(`Providing mock data for paginated tenders`, 'etimad-service');
-      const mockData = getMockPaginatedTenders(page, pageSize, tenderType, agencyName);
-      return {
-        success: true,
-        message: `Successfully retrieved tenders (mock data)`,
-        tenders: mockData.tenders,
-        total_count: mockData.totalCount,
-        current_page: mockData.currentPage,
-        total_pages: mockData.totalPages,
-        page_size: mockData.pageSize
-      };
-    }
+    // No mock data, if the API fails we return an error
     
     return {
       success: false,
@@ -355,24 +287,7 @@ export async function searchTenders(
     // Build a search query from company profile data
     const searchQuery = buildSearchQueryFromProfile(companyProfile);
     
-    // Check if we're in test mode
-    if (process.env.ETIMAD_API_MODE === 'test') {
-      log(`Using test mode for Etimad API search`, 'etimad-service');
-      // Return mock data for testing
-      const mockData = getMockSearchResults(searchQuery, limit, activeOnly);
-      
-      // Save the mock tenders to the database
-      if (mockData.results) {
-        await saveTendersFromSearchResults(mockData.results);
-      }
-      
-      return {
-        success: true,
-        message: `Successfully searched for tenders (test mode)`,
-        results: mockData.results,
-        count: mockData.results?.length || 0
-      };
-    }
+    // No test mode - only use real API data
     
     const params = {
       q: searchQuery,
@@ -415,24 +330,8 @@ export async function searchTenders(
     const errorMessage = error?.message || 'Unknown error';
     log(`Error searching tenders: ${errorMessage}`, 'etimad-service');
     
-    // If in development or test mode, provide mock data
-    if (process.env.NODE_ENV === 'development' || process.env.ETIMAD_API_MODE === 'test') {
-      log(`Providing mock data for tender search`, 'etimad-service');
-      const searchQuery = buildSearchQueryFromProfile(companyProfile);
-      const mockData = getMockSearchResults(searchQuery, limit, activeOnly);
-      
-      // Save the mock tenders to the database
-      if (mockData.results) {
-        await saveTendersFromSearchResults(mockData.results);
-      }
-      
-      return {
-        success: true,
-        message: `Successfully searched for tenders (mock data)`,
-        results: mockData.results,
-        count: mockData.results?.length || 0
-      };
-    }
+    // No more mock data, if the API fails we report the failure
+    log(`Unable to connect to the tender search API: ${errorMessage}`, 'etimad-service');
     
     return {
       success: false,

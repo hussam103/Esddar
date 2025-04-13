@@ -234,7 +234,7 @@ export default function RecommendedTenders({ loading, tenders, className = '' }:
           return (
             <div key={tender.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200">
               <div className="relative">
-                <div className="absolute top-0 left-0 bg-primary-600 text-white text-xs font-bold px-2 py-1 rounded-br-md">
+                <div className="absolute top-0 left-0 bg-gradient-to-r from-green-600 to-green-500 text-white text-xs font-bold px-3 py-1.5 rounded-br-md shadow">
                   <span className="flex items-center whitespace-nowrap">
                     {language === "ar" ? `تطابق ${matchScore}%` : `Match ${matchScore}%`}
                   </span>

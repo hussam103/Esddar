@@ -296,11 +296,17 @@ export async function searchTenders(
     };
     
     log(`Performing semantic search with query: "${searchQuery}"`, 'etimad-service');
+    // The API actually requires an API key, contrary to documentation
+    if (!process.env.UNSTRACT_API_KEY) {
+      log('Missing UNSTRACT_API_KEY environment variable - API calls will fail', 'etimad-service');
+    }
+
     const response = await axios.get(`${SEARCH_API_BASE_URL}/api/v1/search`, { 
       params,
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'Ocp-Apim-Subscription-Key': process.env.UNSTRACT_API_KEY || ''
       }
     });
     
@@ -495,38 +501,6 @@ async function updateTenderDetails(tenderIdString: string, details: any): Promis
 }
 
 /**
- * Gets mock tender details for testing
- * @param tenderIdString Tender ID
- * @returns Mock tender details
- */
-function getMockTenderDetails(tenderIdString: string): any {
-  return {
-    tenderIdString,
-    title: `Test Tender ${tenderIdString}`,
-    agency: "Ministry of Testing",
-    description: "This is a test tender from the mock API",
-    category: "Information Technology",
-    value: 1000000,
-    lastEnrollDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    lastOfferDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-    submissionDetails: "Submit your proposal through the platform",
-    requirements: "Must have experience in government projects",
-    location: "Riyadh",
-    industry: "Technology",
-    keywords: ["software", "IT", "development"]
-  };
-}
-
-/**
- * Gets mock paginated tenders for testing
- * @param page Page number
- * @param pageSize Number of items per page
- * @param tenderType Optional tender type filter
- * @param agencyName Optional agency name filter
- * @returns Mock paginated tenders
- */
-
-/**
  * Builds a search query string from company profile data
  * @param companyProfile User profile containing company information
  * @returns Search query string for the API
@@ -668,96 +642,3 @@ async function saveTendersFromSearchResults(searchResults: any[]): Promise<void>
   }
 }
 
-/**
- * Gets mock search results for testing
- * @param query Search query string
- * @param limit Maximum number of results to return
- * @param activeOnly Filter to only active tenders
- * @returns Mock search results
- */
-function getMockSearchResults(query: string, limit: number, activeOnly: boolean): any {
-  const mockResults = [];
-  
-  for (let i = 0; i < limit; i++) {
-    const similarity = Math.round((100 - (i * 5)) * 10) / 10; // Decreasing similarity
-    
-    mockResults.push({
-      id: i + 1,
-      tender_id: `tender_${i + 1}`,
-      tender_name: `Mock Tender ${i + 1} for "${query}"`,
-      agency_name: ['Ministry of Technology', 'Ministry of Health', 'Ministry of Education'][i % 3],
-      reference_number: `REF-${i + 1}-2025`,
-      tender_purpose: `This tender is related to ${query} and requires expertise in the field`,
-      submission_date: new Date(Date.now() + (14 + i) * 24 * 60 * 60 * 1000).toISOString(),
-      tender_value: String(Math.floor(Math.random() * 1000000) + 500000),
-      tender_type: ['Services', 'Supplies', 'Construction'][i % 3],
-      requirements: "Qualified vendor with experience in similar projects",
-      location: ["Riyadh", "Jeddah", "Dammam"][i % 3],
-      execution_location: ["Riyadh", "Jeddah", "Dammam"][i % 3],
-      is_active: activeOnly ? true : (i % 5 !== 0), // Some inactive if not filtered
-      
-      // Search relevance information
-      similarity_percentage: String(similarity),
-      match_rank: i + 1
-    });
-  }
-  
-  return {
-    success: true,
-    query: query,
-    results: mockResults,
-    count: mockResults.length,
-    active_only: activeOnly
-  };
-}
-
-/**
- * Gets mock paginated tenders for testing
- * @param page Page number
- * @param pageSize Number of items per page
- * @param tenderType Optional tender type filter
- * @param agencyName Optional agency name filter
- * @returns Mock paginated tenders
- */
-function getMockPaginatedTenders(
-  page: number = 1,
-  pageSize: number = 10,
-  tenderType?: string,
-  agencyName?: string
-): any {
-  // Generate mock tenders
-  const mockTenders = [];
-  const startIndex = (page - 1) * pageSize;
-  const totalCount = 150; // Mock total count
-  
-  const endIndex = Math.min(startIndex + pageSize, totalCount);
-  
-  for (let i = startIndex; i < endIndex; i++) {
-    const tenderId = `tender_${i + 1}`;
-    mockTenders.push({
-      tenderIdString: tenderId,
-      tenderTitle: `Test Tender ${i + 1}`,
-      entityName: agencyName || ['Ministry of Testing', 'Ministry of Technology', 'Ministry of Infrastructure'][i % 3],
-      tenderType: tenderType || ['IT Services', 'Construction', 'Consulting'][i % 3],
-      tenderValue: Math.floor(Math.random() * 1000000) + 500000,
-      lastEnrollDate: new Date(Date.now() + (7 + i) * 24 * 60 * 60 * 1000).toISOString(),
-      lastOfferDate: new Date(Date.now() + (14 + i) * 24 * 60 * 60 * 1000).toISOString(),
-      submissionDetails: "Submit through platform",
-      details: {
-        description: `Detailed description for tender ${i + 1}`,
-        requirements: "Vendor requirements go here",
-        location: ["Riyadh", "Jeddah", "Dammam"][i % 3],
-        industry: "Technology",
-        keywords: ["software", "IT", "development"]
-      }
-    });
-  }
-  
-  return {
-    tenders: mockTenders,
-    totalCount,
-    currentPage: page,
-    pageSize,
-    totalPages: Math.ceil(totalCount / pageSize)
-  };
-}

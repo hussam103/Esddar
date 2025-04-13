@@ -148,24 +148,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+      const forceRefresh = req.query.refresh === 'true';
       
-      // First, try to fetch recommendations using the Semantic Search API
-      try {
-        const searchResponse = await searchTenders(userProfile, limit, true);
+      // Check if a new API search should be performed (forced or no matches in database)
+      if (forceRefresh) {
+        log(`Force refreshing recommendations for user ${req.user.id}`, 'recommendations');
         
-        if (searchResponse.success && searchResponse.results && searchResponse.results.length > 0) {
-          // Return the newly matched tenders
+        try {
+          // Trigger a new API search to refresh recommendations
+          const searchResponse = await searchTenders(userProfile, limit, true);
+          log(`Search API response: ${searchResponse.success}, found ${searchResponse.results?.length || 0} results`, 'recommendations');
+          
+          // Whether search succeeded or not, return what we have in the database
+          // The API search function saves results to the database automatically
           const tenders = await storage.getRecommendedTenders(req.user.id, limit);
+          log(`Returning ${tenders.length} recommended tenders after API refresh`, 'recommendations');
           return res.json(tenders);
+        } catch (searchError) {
+          console.error('Error using semantic search API:', searchError);
         }
-      } catch (searchError) {
-        console.error('Error using semantic search API:', searchError);
-        // If API search fails, we'll fall back to database recommendations
       }
       
-      // Fallback to existing recommendations if the API request fails
+      // Get recommended tenders from storage (which will prioritize API-matched tenders)
       const recommendedTenders = await storage.getRecommendedTenders(req.user.id, limit);
-      res.json(recommendedTenders);
+      log(`Returning ${recommendedTenders.length} recommended tenders from database`, 'recommendations');
+      
+      // If no recommendations found, try an immediate API search
+      if (recommendedTenders.length === 0) {
+        try {
+          log(`No recommendations found, triggering immediate API search`, 'recommendations');
+          await searchTenders(userProfile, limit, true);
+          
+          // Get the recommendations again after the search
+          const updatedTenders = await storage.getRecommendedTenders(req.user.id, limit);
+          log(`Found ${updatedTenders.length} tenders after API search`, 'recommendations');
+          return res.json(updatedTenders);
+        } catch (apiError) {
+          console.error('Error using semantic search API:', apiError);
+        }
+      }
+      
+      return res.json(recommendedTenders);
     } catch (error) {
       console.error('Error fetching recommended tenders:', error);
       res.status(500).json({ error: "Failed to fetch recommended tenders" });

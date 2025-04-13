@@ -93,7 +93,24 @@ export default function RecommendedTenders({ loading, tenders, className = '' }:
   // Get match score from tender data or use a fallback
   const getMatchScore = (tender: Tender): number => {
     // If the tender has a matchScore property, use it
-    return (tender as any).matchScore || 95;
+    if ((tender as any).matchScore !== null && (tender as any).matchScore !== undefined) {
+      return (tender as any).matchScore;
+    }
+    
+    // Check if there's match score in the rawData
+    if (tender.rawData) {
+      try {
+        const rawData = JSON.parse(tender.rawData);
+        if (rawData.similarity_percentage) {
+          return Math.round(rawData.similarity_percentage);
+        }
+      } catch (e) {
+        console.error('Error parsing tender rawData:', e);
+      }
+    }
+    
+    // Default fallback
+    return 75;
   };
 
   return (

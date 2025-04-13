@@ -287,109 +287,43 @@ export class DatabaseStorage implements IStorage {
       // Get user profile to match against tenders
       const userProfile = await this.getUserProfile(userId);
       if (!userProfile) {
-        // If no profile exists, return general tenders sorted by deadline
+        // If no profile exists, return API tenders sorted by deadline
         return await db.select()
           .from(tenders)
-          .where(eq(tenders.status, 'open'))
+          .where(
+            sql`${tenders.status} = 'open' AND ${tenders.source} = 'etimad'`
+          )
           .orderBy(tenders.deadline)
           .limit(limit);
       }
       
-      // First, check for tenders with match scores (from API)
-      const matchedTenders = await db.select()
+      // Only return tenders from the API (Etimad) with match scores
+      const matchedApiTenders = await db.select()
         .from(tenders)
         .where(
-          sql`${tenders.status} = 'open' AND ${tenders.matchScore} IS NOT NULL`
+          sql`${tenders.status} = 'open' AND ${tenders.source} = 'etimad' AND ${tenders.matchScore} IS NOT NULL`
         )
         .orderBy(desc(tenders.matchScore))
         .limit(limit);
       
       // If we have matched tenders from the API, return them
-      if (matchedTenders.length > 0) {
-        console.log(`Found ${matchedTenders.length} tenders with API match scores for user ${userId}`);
-        return matchedTenders;
+      if (matchedApiTenders.length > 0) {
+        console.log(`[recommendations] Returning ${matchedApiTenders.length} recommended tenders from database`);
+        return matchedApiTenders;
       }
       
-      // Fallback to local matching if no API results found
-      console.log(`No API-matched tenders found, using local matching algorithm for user ${userId}`);
+      // If no matched API tenders with scores, return any API tenders
+      console.log(`[recommendations] No API tenders with match scores found, returning API tenders without scores`);
       
-      // Get all available tenders
-      const allTenders = await this.getTenders();
+      const apiTenders = await db.select()
+        .from(tenders)
+        .where(
+          sql`${tenders.status} = 'open' AND ${tenders.source} = 'etimad'`
+        )
+        .orderBy(tenders.deadline)
+        .limit(limit);
       
-      // Simplified matching algorithm
-      const scoredTenders = allTenders
-        .filter(tender => tender.status === 'open')
-        .map(tender => {
-          // Initialize with a base score
-          let matchScore = 50;
-          
-          // Consider user profile attributes
-          if (userProfile.preferredSectors && 
-              userProfile.preferredSectors.includes(tender.category)) {
-            matchScore += 20;
-          }
-          
-          // Consider company description match with tender description
-          if (userProfile.companyDescription && tender.description) {
-            // Simplified keyword matching
-            const companyKeywords = userProfile.companyDescription.toLowerCase().split(/\s+/);
-            const tenderKeywords = tender.description.toLowerCase().split(/\s+/);
-            
-            // Count matching keywords
-            const matchingKeywords = companyKeywords.filter(word => 
-              tenderKeywords.includes(word) && word.length > 3
-            ).length;
-            
-            matchScore += matchingKeywords * 2;
-          }
-          
-          // Consider skills match
-          if (userProfile.skills && tender.requirements) {
-            const skills = userProfile.skills.toLowerCase().split(/\s+/);
-            const requirements = tender.requirements.toLowerCase().split(/\s+/);
-            
-            const matchingSkills = skills.filter(skill => 
-              requirements.includes(skill) && skill.length > 3
-            ).length;
-            
-            matchScore += matchingSkills * 3;
-          }
-          
-          // Use company activities (from document extraction) for matching
-          if (userProfile.companyActivities && tender.description) {
-            try {
-              // We know companyActivities is a JSON array from our schema
-              const activities = Array.isArray(userProfile.companyActivities) 
-                ? userProfile.companyActivities 
-                : [];
-              
-              const tenderDesc = tender.description.toLowerCase();
-              
-              // Count how many activities match the tender description
-              let activityMatches = 0;
-              for (const activity of activities) {
-                if (typeof activity === 'string' && tenderDesc.includes(activity.toLowerCase())) {
-                  activityMatches++;
-                }
-              }
-              
-              matchScore += activityMatches * 5;
-            } catch (err) {
-              console.error('Error processing company activities for matching:', err);
-            }
-          }
-          
-          // Cap at 100
-          matchScore = Math.min(matchScore, 100);
-          
-          return { tender, matchScore };
-        });
-      
-      // Sort by match score (highest first) and return top matches
-      return scoredTenders
-        .sort((a, b) => b.matchScore - a.matchScore)
-        .slice(0, limit)
-        .map(item => item.tender);
+      return apiTenders;
     } catch (error) {
       console.error('Error getting recommended tenders:', error);
       return [];

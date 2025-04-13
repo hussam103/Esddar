@@ -5,8 +5,10 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User as SelectUser } from "@shared/schema";
+import { User as SelectUser, users } from "@shared/schema";
 import { sendConfirmationEmail, verifyEmailConfirmationToken, sendWelcomeEmail } from "./services/email-service";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 declare global {
   namespace Express {
@@ -72,14 +74,33 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
+      // Validate required fields
+      const requiredFields = ['username', 'email', 'password', 'companyName', 'industry'];
+      const missingFields = requiredFields.filter(field => !req.body[field]);
+      
+      if (missingFields.length > 0) {
+        return res.status(400).json({ 
+          error: `Missing required fields: ${missingFields.join(', ')}` 
+        });
+      }
+      
       const existingUser = await storage.getUserByUsername(req.body.username);
       if (existingUser) {
-        return res.status(400).json({ error: "Username already exists" });
+        return res.status(400).json({ error: "اسم المستخدم موجود بالفعل" });
       }
-
-      // Make sure email is provided
-      if (!req.body.email) {
-        return res.status(400).json({ error: "Email is required" });
+      
+      // Check for existing user with same email
+      try {
+        const usersByEmail = await db.select()
+          .from(users)
+          .where(eq(users.email, req.body.email))
+          .limit(1);
+          
+        if (usersByEmail.length > 0) {
+          return res.status(400).json({ error: "البريد الإلكتروني مستخدم بالفعل" });
+        }
+      } catch (err) {
+        console.error("Error checking email uniqueness:", err);
       }
 
       // Create the user with email verification pending
@@ -141,8 +162,13 @@ export function setupAuth(app: Express) {
         delete userWithoutPassword.password;
         res.status(201).json(userWithoutPassword);
       });
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      console.error("Registration error:", error);
+      
+      // Provide a more useful error response
+      res.status(500).json({ 
+        error: error.message || "حدث خطأ أثناء إنشاء الحساب. يرجى المحاولة مرة أخرى."
+      });
     }
   });
   

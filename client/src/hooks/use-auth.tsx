@@ -21,10 +21,8 @@ type LoginData = Pick<InsertUser, "username" | "password">;
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // استخدم Toast API مباشرة بدلاً من hook
-  const toast = ({ title, description, variant }: any) => {
-    console.log(`Toast: ${title} - ${description}`);
-  };
+  // Use the actual toast hook for proper error display
+  const { toast } = useToast();
   const {
     data: user,
     error,

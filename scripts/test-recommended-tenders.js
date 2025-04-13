@@ -11,8 +11,8 @@ dotenv.config();
 
 const API_BASE_URL = 'http://localhost:5000';
 const TEST_USER = {
-  username: 'hussam145',
-  password: 'Testhusam@123'
+  username: 'hussam1030',
+  password: 'Hm@103037'
 };
 
 // ANSI color codes for console output

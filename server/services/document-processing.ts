@@ -383,10 +383,20 @@ Extract the following information in JSON format:
 3. companyActivities: An array of primary business activities or services (provide at least 3-5 if possible)
 4. mainIndustries: An array of the main industries the company operates in (provide at least 2-3 if possible)
 5. specializations: An array of specialized areas or expertise (provide at least 2-3 if possible)
-6. keywords: An array of 20-30 relevant keywords in BOTH Arabic and English that best describe the company's services, technologies, expertise, and the types of government tenders or projects they would be qualified for. For each concept, provide both the English keyword and its Arabic equivalent. These keywords will be used for matching the company with relevant government tenders in Saudi Arabia, which are often published in both languages.
+6. keywords: An array of 20-30 relevant keywords in BOTH Arabic and English that best describe the company's services, technologies, expertise, and the types of government tenders or projects they would be qualified for. For each concept, format as "English keyword - الكلمة العربية" with the Arabic equivalent. These keywords will be used for matching the company with relevant government tenders in Saudi Arabia, which are often published in both languages.
 
 If you cannot find specific information for a field, use null for singular values or an empty array [] for array values.
 IMPORTANT: Always return a valid JSON object with all the requested fields, even if some values are null or empty arrays.
+
+Your response MUST be a valid JSON object with the following structure:
+{
+  "companyDescription": "...",
+  "businessType": "...",
+  "companyActivities": ["...", "...", "..."],
+  "mainIndustries": ["...", "...", "..."],
+  "specializations": ["...", "...", "..."],
+  "keywords": ["English keyword 1 - الكلمة العربية 1", "English keyword 2 - الكلمة العربية 2", "..."]
+}
 
 Here's the text from the document:
 ${truncatedText}

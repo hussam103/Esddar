@@ -50,6 +50,15 @@ Name: ${company.name}
 Description: ${company.description}
 Industries: ${company.industries.join(', ')}
 Specializations: ${company.specializations.join(', ')}
+
+Please respond with a JSON object in the following format:
+{
+  "keywords": [
+    "English keyword 1 - الكلمة الرئيسية بالعربية 1",
+    "English keyword 2 - الكلمة الرئيسية بالعربية 2",
+    "..."
+  ]
+}
 `;
 
     const completion = await openai.chat.completions.create({

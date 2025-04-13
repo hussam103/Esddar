@@ -1,12 +1,42 @@
 [
   {
     "company": "Tech Solutions Company",
-    "keywords": [],
-    "error": "400 'messages' must contain the word 'json' in some form, to use 'response_format' of type 'json_object'."
+    "keywords": [
+      "Information Technology - تقنية المعلومات",
+      "Cybersecurity - الأمن السيبراني",
+      "Software Development - تطوير البرمجيات",
+      "Government IT Systems - أنظمة تقنية المعلومات الحكومية",
+      "Secure Infrastructure - البنية التحتية الآمنة",
+      "Custom Applications - التطبيقات المخصصة",
+      "IT Services - خدمات تقنية المعلومات",
+      "Network Security - أمن الشبكات",
+      "Data Protection - حماية البيانات",
+      "Cloud Solutions - حلول السحابة",
+      "Digital Transformation - التحول الرقمي",
+      "IT Consultancy - استشارات تقنية المعلومات",
+      "System Integration - تكامل الأنظمة",
+      "Application Development - تطوير التطبيقات",
+      "Technology Solutions - حلول تقنية"
+    ]
   },
   {
     "company": "Construction Excellence Corp",
-    "keywords": [],
-    "error": "400 'messages' must contain the word 'json' in some form, to use 'response_format' of type 'json_object'."
+    "keywords": [
+      "Construction - البناء",
+      "Infrastructure - البنية التحتية",
+      "Engineering services - خدمات الهندسة",
+      "Road infrastructure - بنية الطرق التحتية",
+      "Government buildings - المباني الحكومية",
+      "Public facilities - المرافق العامة",
+      "Building development - تطوير المباني",
+      "Public sector projects - مشاريع القطاع العام",
+      "Private sector projects - مشاريع القطاع الخاص",
+      "Civil engineering - الهندسة المدنية",
+      "Project management - إدارة المشاريع",
+      "Structural engineering - الهندسة الإنشائية",
+      "Urban development - التنمية الحضرية",
+      "Construction management - إدارة البناء",
+      "Tender participation - المشاركة في المناقصات"
+    ]
   }
 ]

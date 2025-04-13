@@ -462,17 +462,30 @@ async function updateUserProfileWithExtractedData(userId: number, extractedData:
       specializations: Array.isArray(extractedData.specializations) ? extractedData.specializations : []
     };
     
+    // Prepare a combined query string for tender matching
+    // This combines all extracted data into a single comprehensive string
+    // that will be used for semantic search in the tender API
+    const combinedQueryData = [
+      normalizedData.companyDescription || '',
+      ...(normalizedData.companyActivities || []),
+      ...(normalizedData.mainIndustries || []),
+      ...(normalizedData.specializations || [])
+    ].filter(Boolean).join(' ');
+    
+    console.log(`Generated combined query data for tender matching: ${combinedQueryData.substring(0, 100)}...`);
+    
     // For debugging, log the profile before update
     console.log('Existing profile:', existingProfile);
     
     if (existingProfile) {
-      // Update existing profile with extracted data
+      // Update existing profile with extracted data and combined query data
       const updatedProfile = await storage.updateUserProfile(userId, {
         companyDescription: normalizedData.companyDescription || existingProfile.companyDescription,
         companyActivities: normalizedData.companyActivities.length > 0 ? normalizedData.companyActivities : existingProfile.companyActivities,
         businessType: normalizedData.businessType || existingProfile.businessType,
         mainIndustries: normalizedData.mainIndustries.length > 0 ? normalizedData.mainIndustries : existingProfile.mainIndustries,
         specializations: normalizedData.specializations.length > 0 ? normalizedData.specializations : existingProfile.specializations,
+        queryData: combinedQueryData, // Store the combined data for tender API queries
       });
       
       console.log('Profile updated successfully:', updatedProfile);
@@ -500,14 +513,15 @@ async function updateUserProfileWithExtractedData(userId: number, extractedData:
         console.log(`Updated user profile completeness to ${completeness}%`);
       }
     } else {
-      // Create new profile with extracted data
+      // Create new profile with extracted data and combined query data
       const newProfile = await storage.createUserProfile({
         userId,
         companyDescription: normalizedData.companyDescription,
         companyActivities: normalizedData.companyActivities,
         businessType: normalizedData.businessType,
         mainIndustries: normalizedData.mainIndustries,
-        specializations: normalizedData.specializations
+        specializations: normalizedData.specializations,
+        queryData: combinedQueryData // Store the combined data for tender API queries
       });
       
       console.log('New profile created successfully:', newProfile);

@@ -127,6 +127,8 @@ export const userProfiles = pgTable("user_profiles", {
   targetMarkets: jsonb("target_markets").default([]),
   certifications: jsonb("certifications").default([]),
   keywords: jsonb("keywords").default([]),
+  // Combined data for tender API queries
+  queryData: text("query_data"), // Combined text from extraction for tender matching
   // Original fields
   skills: text("skills"),
   pastExperience: text("past_experience"),

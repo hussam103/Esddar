@@ -14,7 +14,8 @@ import {
   ShieldAlert,
   ChevronLeft,
   ChevronRight,
-  User
+  User,
+  Search
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,7 @@ export default function Sidebar({ mobileMenuOpen, closeMobileMenu, activePage = 
     { path: "/dashboard", label: t("nav.dashboard"), icon: Home },
     { path: "/tenders", label: t("nav.tenders"), icon: ListFilter },
     { path: "/saved", label: t("nav.saved"), icon: Bookmark },
+    { path: "/search", label: language === "ar" ? "البحث" : "Search", icon: Search },
     { path: "/profile", label: language === "ar" ? "الملف الشخصي والإعدادات" : "Profile & Settings", icon: User },
   ];
   

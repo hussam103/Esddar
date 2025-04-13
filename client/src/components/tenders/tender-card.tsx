@@ -5,7 +5,7 @@ import { Tender } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/use-language";
-import { Bookmark, Clock, MapPin, Tag, Building, Hash } from "lucide-react";
+import { Award as AwardIcon, Bookmark, Clock, MapPin, Tag, Building, Hash } from "lucide-react";
 import { SARIcon } from "@/components/ui/sar-icon";
 import { Badge } from "@/components/ui/badge";
 import { formatSAR } from "@/components/ui/currency";
@@ -149,8 +149,13 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
       <div className="relative flex-1 flex flex-col">
         {/* Match Score Badge */}
         {matchScore > 0 && (
-          <div className={`absolute top-0 ${isRTL ? 'right-0 rounded-bl-md' : 'left-0 rounded-br-md'} bg-primary-600 text-white text-xs font-bold px-2 py-1 z-10`}>
-            {matchScore}% {t("tenders.matchRate")}
+          <div 
+            className={`absolute top-2 ${isRTL ? 'right-2' : 'left-2'} bg-gradient-to-br from-green-500 to-emerald-600 text-white text-xs font-semibold px-2.5 py-1.5 rounded-md shadow-sm z-10 flex items-center`}
+          >
+            <span className="flex items-center gap-1">
+              <AwardIcon className="h-3 w-3" />
+              {matchScore}% {t("tenders.matchRate")}
+            </span>
           </div>
         )}
         

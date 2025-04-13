@@ -67,8 +67,8 @@ export const tenders = pgTable("tenders", {
   source: text("source").default("local"), // 'local', 'etimad', or other API sources
   // Raw data storage for additional API response information
   rawData: text("raw_data"),
-  // Match score from semantic search
-  matchScore: numeric("match_score"),
+  // Match score from semantic search (stored as string for compatibility)
+  matchScore: text("match_score"),
   // Vector embedding information for RAG
   vectorId: text("vector_id"),
   vectorStatus: text("vector_status").default("pending"), // 'pending', 'processed', 'failed'

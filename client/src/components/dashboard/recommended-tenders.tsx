@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/use-language";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Bookmark, Building, Clock, MapPin, Tag } from "lucide-react";
+import { Award as AwardIcon, Bookmark, Building, Clock, MapPin, Tag } from "lucide-react";
 import { formatSAR } from "@/components/ui/currency";
 import { SARIcon } from "@/components/ui/sar-icon";
 import { TenderDetailsButton } from "@/components/ui/tender-details-button";
@@ -235,8 +235,11 @@ export default function RecommendedTenders({ loading, tenders, className = '' }:
             <div key={tender.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200">
               <div className="relative">
                 {matchScore > 0 && (
-                  <div className="absolute top-0 left-0 bg-primary-600 text-white text-xs font-bold px-2 py-1 rounded-br-md">
-                    {language === "ar" ? `تطابق ${matchScore}%` : `Match ${matchScore}%`}
+                  <div className="absolute top-2 left-2 bg-gradient-to-br from-green-500 to-emerald-600 text-white text-xs font-semibold px-2.5 py-1.5 rounded-md shadow-sm z-10 flex items-center">
+                    <span className="flex items-center gap-1">
+                      <AwardIcon className="h-3 w-3" />
+                      {language === "ar" ? `تطابق ${matchScore}%` : `Match ${matchScore}%`}
+                    </span>
                   </div>
                 )}
                 <div className="p-4">

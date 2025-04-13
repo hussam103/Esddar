@@ -48,8 +48,17 @@ import {
   getTenderDetails, 
   getPaginatedTenders, 
   getTenderById,
-  searchTenders
+  searchTenders,
+  buildSearchQueryFromProfile
 } from './services/etimad-service';
+
+// Middleware to check if user is authenticated
+const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Unauthorized: Please log in" });
+  }
+  next();
+};
 
 // Middleware to check if user is authenticated and has admin role
 const isAdmin = async (req: Request, res: Response, next: NextFunction) => {

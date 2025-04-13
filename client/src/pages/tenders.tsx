@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import TenderFilter from "@/components/tenders/tender-filter";
 import TenderCard from "@/components/tenders/tender-card";
 import { Tender } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export default function TendersPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -17,12 +19,46 @@ export default function TendersPage() {
   const matchPercentageText = t("tenders.matchPercentage");
   const [category, setCategory] = useState<string>(allCategoriesText);
   const [sortBy, setSortBy] = useState<string>(matchPercentageText);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
   // Fetch tenders
   const { data: tenders = [], isLoading, refetch } = useQuery<Tender[]>({
     queryKey: ["/api/tenders"],
+  });
+  
+  // Refresh recommendations mutation
+  const refreshMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/refresh-recommended-tenders");
+      return await response.json();
+    },
+    onMutate: () => {
+      setIsRefreshing(true);
+    },
+    onSuccess: (data) => {
+      // Invalidate tender queries to refresh UI
+      queryClient.invalidateQueries({ queryKey: ["/api/tenders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/recommended-tenders"] });
+      
+      toast({
+        title: language === "ar" ? "تم تحديث المناقصات" : "Tenders Refreshed",
+        description: language === "ar"
+          ? "تم تحديث قائمة المناقصات الموصى بها بنجاح"
+          : data.message || "Successfully refreshed recommended tenders",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: language === "ar" ? "فشل تحديث المناقصات" : "Refresh Failed",
+        description: error.message || "An error occurred while refreshing tenders",
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      setIsRefreshing(false);
+    }
   });
 
   // Fetch user profile to get matching info
@@ -108,13 +144,36 @@ export default function TendersPage() {
         />
         
         <div className="p-4 md:p-6 max-w-7xl mx-auto">
-          <TenderFilter 
-            categories={categories}
-            selectedCategory={category}
-            onCategoryChange={setCategory}
-            selectedSort={sortBy}
-            onSortChange={setSortBy}
-          />
+          <div className="flex flex-col md:flex-row justify-between gap-4 mb-4">
+            <div className="flex-grow">
+              <TenderFilter 
+                categories={categories}
+                selectedCategory={category}
+                onCategoryChange={setCategory}
+                selectedSort={sortBy}
+                onSortChange={setSortBy}
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button 
+                variant="outline"
+                size="sm" 
+                className="text-primary hover:bg-primary/5 border-primary/20 flex items-center gap-1"
+                onClick={() => refreshMutation.mutate()}
+                disabled={isRefreshing || !user}
+              >
+                <svg className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+                  <path d="M21 3v5h-5"></path>
+                  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+                  <path d="M8 16H3v5"></path>
+                </svg>
+                {language === "ar" 
+                  ? (isRefreshing ? "جاري التحديث..." : "تحديث المناقصات")
+                  : (isRefreshing ? "Refreshing..." : "Refresh Tenders")}
+              </Button>
+            </div>
+          </div>
           
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">

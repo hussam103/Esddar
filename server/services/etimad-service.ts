@@ -524,12 +524,20 @@ async function updateTenderDetails(tenderIdString: string, details: any): Promis
 function buildSearchQueryFromProfile(companyProfile: any): string {
   // If we have a pre-processed query data field from OCR extraction, use it first
   if (companyProfile.queryData && typeof companyProfile.queryData === 'string' && companyProfile.queryData.length > 0) {
-    log(`Using pre-processed queryData from document OCR extraction: ${companyProfile.queryData.substring(0, 100)}...`, 'etimad-service');
+    log(`Using pre-processed queryData for tender matching: ${companyProfile.queryData.substring(0, 100)}...`, 'etimad-service');
     return companyProfile.queryData;
   }
   
   // Otherwise, build the query from profile components
   const queryParts = [];
+  
+  // First, prioritize AI-generated keywords as they're most relevant for tender matching
+  if (companyProfile.keywords && Array.isArray(companyProfile.keywords) && companyProfile.keywords.length > 0) {
+    // Repeat keywords to give them more weight in the search query
+    queryParts.push(companyProfile.keywords.join(' '));
+    queryParts.push(companyProfile.keywords.join(' ')); // Add twice for more weight
+    log(`Added AI-generated keywords to search query: ${companyProfile.keywords.join(', ')}`, 'etimad-service');
+  }
   
   // Add company description
   if (companyProfile.companyDescription) {
@@ -560,11 +568,6 @@ function buildSearchQueryFromProfile(companyProfile: any): string {
   // Add business type for better matching
   if (companyProfile.businessType) {
     queryParts.push(companyProfile.businessType);
-  }
-  
-  // Add keywords if available
-  if (companyProfile.keywords && Array.isArray(companyProfile.keywords) && companyProfile.keywords.length > 0) {
-    queryParts.push(companyProfile.keywords.join(' '));
   }
   
   // Join all parts and return

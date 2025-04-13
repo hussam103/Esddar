@@ -527,6 +527,7 @@ async function updateUserProfileWithExtractedData(userId: number, extractedData:
         businessType: normalizedData.businessType,
         mainIndustries: normalizedData.mainIndustries,
         specializations: normalizedData.specializations,
+        keywords: normalizedData.keywords,
         queryData: combinedQueryData // Store the combined data for tender API queries
       });
       

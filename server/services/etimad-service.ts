@@ -600,6 +600,13 @@ function getMockTenderDetails(tenderIdString: string): any {
  * @returns Search query string for the API
  */
 function buildSearchQueryFromProfile(companyProfile: any): string {
+  // If we have a pre-processed query data field from OCR extraction, use it first
+  if (companyProfile.queryData && typeof companyProfile.queryData === 'string' && companyProfile.queryData.length > 0) {
+    log(`Using pre-processed queryData from document OCR extraction: ${companyProfile.queryData.substring(0, 100)}...`, 'etimad-service');
+    return companyProfile.queryData;
+  }
+  
+  // Otherwise, build the query from profile components
   const queryParts = [];
   
   // Add company description
@@ -607,23 +614,41 @@ function buildSearchQueryFromProfile(companyProfile: any): string {
     queryParts.push(companyProfile.companyDescription);
   }
   
-  // Add company activities
-  if (companyProfile.activities && companyProfile.activities.length > 0) {
+  // Add company activities from document extraction
+  if (companyProfile.companyActivities && Array.isArray(companyProfile.companyActivities) && companyProfile.companyActivities.length > 0) {
+    queryParts.push(companyProfile.companyActivities.join(' '));
+  } else if (companyProfile.activities && Array.isArray(companyProfile.activities) && companyProfile.activities.length > 0) {
     queryParts.push(companyProfile.activities.join(' '));
   }
   
-  // Add sectors
-  if (companyProfile.sectors && companyProfile.sectors.length > 0) {
+  // Add main industries or sectors from document extraction
+  if (companyProfile.mainIndustries && Array.isArray(companyProfile.mainIndustries) && companyProfile.mainIndustries.length > 0) {
+    queryParts.push(companyProfile.mainIndustries.join(' '));
+  } else if (companyProfile.sectors && Array.isArray(companyProfile.sectors) && companyProfile.sectors.length > 0) {
     queryParts.push(companyProfile.sectors.join(' '));
   }
   
-  // Add specialization
-  if (companyProfile.specialization) {
+  // Add specializations from document extraction
+  if (companyProfile.specializations && Array.isArray(companyProfile.specializations) && companyProfile.specializations.length > 0) {
+    queryParts.push(companyProfile.specializations.join(' '));
+  } else if (companyProfile.specialization) {
     queryParts.push(companyProfile.specialization);
   }
   
+  // Add business type for better matching
+  if (companyProfile.businessType) {
+    queryParts.push(companyProfile.businessType);
+  }
+  
+  // Add keywords if available
+  if (companyProfile.keywords && Array.isArray(companyProfile.keywords) && companyProfile.keywords.length > 0) {
+    queryParts.push(companyProfile.keywords.join(' '));
+  }
+  
   // Join all parts and return
-  return queryParts.join(' ').trim();
+  const query = queryParts.join(' ').trim();
+  log(`Generated search query from profile components: ${query.substring(0, 100)}...`, 'etimad-service');
+  return query;
 }
 
 /**

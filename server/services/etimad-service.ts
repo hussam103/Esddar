@@ -296,17 +296,12 @@ export async function searchTenders(
     };
     
     log(`Performing semantic search with query: "${searchQuery}"`, 'etimad-service');
-    // The API actually requires an API key, contrary to documentation
-    if (!process.env.UNSTRACT_API_KEY) {
-      log('Missing UNSTRACT_API_KEY environment variable - API calls will fail', 'etimad-service');
-    }
-
+    // The Simple Tender Search API is hosted on esddar-api.replit.app
     const response = await axios.get(`${SEARCH_API_BASE_URL}/api/v1/search`, { 
       params,
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Ocp-Apim-Subscription-Key': process.env.UNSTRACT_API_KEY || ''
+        'Accept': 'application/json'
       }
     });
     

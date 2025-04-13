@@ -388,104 +388,26 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
   
-  // Initialize sample data for demonstration purposes
+  // Initialize data if needed - NO MOCK TENDERS
   private async initializeData() {
     try {
-      // Check if tenders already exist
-      const existingTenders = await db.select().from(tenders).limit(1);
+      // In production mode, we don't initialize sample tenders since we're using the real API
+      // We'll let the API integration handle populating the database with real tenders
       
-      if (existingTenders.length === 0) {
-        const now = new Date();
-        
-        // Sample tenders for demonstration
-        const sampleTenders: InsertTender[] = [
-          {
-            title: "IT Infrastructure Upgrade",
-            agency: "Ministry of Technology",
-            description: "Comprehensive upgrade of IT infrastructure including servers, networking, and security systems.",
-            category: "IT Services",
-            location: "National",
-            valueMin: "250000",
-            valueMax: "300000",
-            deadline: new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000), // 15 days from now
-            status: "open",
-            requirements: "ISO 27001 certification, minimum 5 years experience",
-            bidNumber: "T-2023-001"
-          },
-          {
-            title: "Cloud Migration Services",
-            agency: "Department of Finance",
-            description: "Migration of legacy systems to cloud infrastructure with minimal downtime.",
-            category: "Cloud Services",
-            location: "Regional",
-            valueMin: "180000",
-            valueMax: "220000",
-            deadline: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
-            status: "open",
-            requirements: "AWS/Azure certification, prior government experience",
-            bidNumber: "T-2023-002"
-          },
-          {
-            title: "Cybersecurity Assessment",
-            agency: "National Security Agency",
-            description: "Comprehensive security assessment of government digital infrastructure.",
-            category: "Security",
-            location: "National",
-            valueMin: "120000",
-            valueMax: "150000",
-            deadline: new Date(now.getTime() + 28 * 24 * 60 * 60 * 1000), // 28 days from now
-            status: "open",
-            requirements: "Security clearance, CISSP certification",
-            bidNumber: "T-2023-003"
-          },
-          {
-            title: "Data Center Maintenance",
-            agency: "Ministry of Defense",
-            description: "Ongoing maintenance and support for mission-critical data centers.",
-            category: "IT Services",
-            location: "National",
-            valueMin: "300000",
-            valueMax: "350000",
-            deadline: new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000), // 10 days from now
-            status: "open",
-            requirements: "Security clearance, 24/7 support capability",
-            bidNumber: "T-2023-085"
-          },
-          {
-            title: "Network Infrastructure Upgrade",
-            agency: "Department of Education",
-            description: "Upgrade of network infrastructure across all educational institutions.",
-            category: "Networking",
-            location: "National",
-            valueMin: "400000",
-            valueMax: "450000",
-            deadline: new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000), // 20 days from now
-            status: "open",
-            requirements: "Education sector experience, Cisco certification",
-            bidNumber: "T-2023-079"
-          },
-          {
-            title: "Digital Transformation Consultancy",
-            agency: "Ministry of Health",
-            description: "Strategic consultancy for digital transformation of healthcare services.",
-            category: "Consulting",
-            location: "National",
-            valueMin: "200000",
-            valueMax: "250000",
-            deadline: new Date(now.getTime() + 21 * 24 * 60 * 60 * 1000), // 21 days from now
-            status: "open",
-            requirements: "Healthcare experience, digital strategy expertise",
-            bidNumber: "T-2023-100"
-          }
-        ];
-        
-        // Add tenders to database
-        for (const tender of sampleTenders) {
-          await this.createTender(tender);
-        }
+      console.log('[storage] Tender initialization skipped - using real API data only');
+      
+      // Check if we need to run data migration for existing users without QueryData
+      const usersWithProfiles = await db.select()
+        .from(users)
+        .innerJoin(userProfiles, eq(users.id, userProfiles.userId))
+        .where(sql`${userProfiles.queryData} IS NULL`);
+      
+      if (usersWithProfiles.length > 0) {
+        console.log(`[storage] Found ${usersWithProfiles.length} users with profiles that need queryData migration`);
+        // The update-user-profiles.ts script handles this migration
       }
     } catch (error) {
-      console.error('Error initializing data:', error);
+      console.error('Error during database initialization:', error);
     }
   }
 }

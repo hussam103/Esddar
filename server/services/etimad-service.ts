@@ -305,6 +305,117 @@ export async function getPaginatedTenders(
 }
 
 /**
+ * Gets tenders using the Simple Semantic Search API
+ * @param companyProfile User profile containing company information for matching
+ * @param limit Maximum number of results to return (default: 10, max: 50)
+ * @param activeOnly Filter to only active tenders (default: true)
+ * @returns Response with success status, tenders data, and matching information
+ */
+export async function searchTenders(
+  companyProfile: any,
+  limit: number = 10,
+  activeOnly: boolean = true
+): Promise<{
+  success: boolean,
+  message: string,
+  results?: any[],
+  count?: number,
+  errors?: string[]
+}> {
+  try {
+    log(`Searching tenders using company profile data`, 'etimad-service');
+    
+    // Check if limit exceeds maximum
+    if (limit > 50) {
+      limit = 50;
+      log(`Limiting tender search results to 50 items (maximum)`, 'etimad-service');
+    }
+
+    // Build a search query from company profile data
+    const searchQuery = buildSearchQueryFromProfile(companyProfile);
+    
+    // Check if we're in test mode
+    if (process.env.ETIMAD_API_MODE === 'test') {
+      log(`Using test mode for Etimad API search`, 'etimad-service');
+      // Return mock data for testing
+      const mockData = getMockSearchResults(searchQuery, limit, activeOnly);
+      
+      // Save the mock tenders to the database
+      if (mockData.results) {
+        await saveTendersFromSearchResults(mockData.results);
+      }
+      
+      return {
+        success: true,
+        message: `Successfully searched for tenders (test mode)`,
+        results: mockData.results,
+        count: mockData.results?.length || 0
+      };
+    }
+    
+    const params = {
+      q: searchQuery,
+      limit: limit,
+      active_only: activeOnly
+    };
+    
+    log(`Performing semantic search with query: "${searchQuery}"`, 'etimad-service');
+    const response = await axios.get(`${ETIMAD_API_BASE_URL}/api/v1/search`, { params });
+    
+    if (response.data && response.data.success) {
+      log(`Successfully retrieved ${response.data.count} tenders via semantic search`, 'etimad-service');
+      
+      // Save the matched tenders to the database
+      if (response.data.results) {
+        await saveTendersFromSearchResults(response.data.results);
+      }
+      
+      return {
+        success: true,
+        message: `Successfully searched for tenders`,
+        results: response.data.results || [],
+        count: response.data.count || 0
+      };
+    } else {
+      log(`Invalid response from semantic search: ${JSON.stringify(response.data)}`, 'etimad-service');
+      return {
+        success: false,
+        message: "Failed to search tenders: Invalid response format",
+        errors: ["Invalid API response format"]
+      };
+    }
+  } catch (error: any) {
+    const errorMessage = error?.message || 'Unknown error';
+    log(`Error searching tenders: ${errorMessage}`, 'etimad-service');
+    
+    // If in development or test mode, provide mock data
+    if (process.env.NODE_ENV === 'development' || process.env.ETIMAD_API_MODE === 'test') {
+      log(`Providing mock data for tender search`, 'etimad-service');
+      const searchQuery = buildSearchQueryFromProfile(companyProfile);
+      const mockData = getMockSearchResults(searchQuery, limit, activeOnly);
+      
+      // Save the mock tenders to the database
+      if (mockData.results) {
+        await saveTendersFromSearchResults(mockData.results);
+      }
+      
+      return {
+        success: true,
+        message: `Successfully searched for tenders (mock data)`,
+        results: mockData.results,
+        count: mockData.results?.length || 0
+      };
+    }
+    
+    return {
+      success: false,
+      message: `Failed to search tenders: ${errorMessage}`,
+      errors: [errorMessage]
+    };
+  }
+}
+
+/**
  * Gets a specific tender by ID
  * @param tenderId Tender ID
  * @returns Tender data
@@ -470,6 +581,167 @@ function getMockTenderDetails(tenderIdString: string): any {
     location: "Riyadh",
     industry: "Technology",
     keywords: ["software", "IT", "development"]
+  };
+}
+
+/**
+ * Gets mock paginated tenders for testing
+ * @param page Page number
+ * @param pageSize Number of items per page
+ * @param tenderType Optional tender type filter
+ * @param agencyName Optional agency name filter
+ * @returns Mock paginated tenders
+ */
+
+/**
+ * Builds a search query string from company profile data
+ * @param companyProfile User profile containing company information
+ * @returns Search query string for the API
+ */
+function buildSearchQueryFromProfile(companyProfile: any): string {
+  const queryParts = [];
+  
+  // Add company description
+  if (companyProfile.companyDescription) {
+    queryParts.push(companyProfile.companyDescription);
+  }
+  
+  // Add company activities
+  if (companyProfile.activities && companyProfile.activities.length > 0) {
+    queryParts.push(companyProfile.activities.join(' '));
+  }
+  
+  // Add sectors
+  if (companyProfile.sectors && companyProfile.sectors.length > 0) {
+    queryParts.push(companyProfile.sectors.join(' '));
+  }
+  
+  // Add specialization
+  if (companyProfile.specialization) {
+    queryParts.push(companyProfile.specialization);
+  }
+  
+  // Join all parts and return
+  return queryParts.join(' ').trim();
+}
+
+/**
+ * Saves tenders from search results to the database
+ * @param searchResults Search results array
+ */
+async function saveTendersFromSearchResults(searchResults: any[]): Promise<void> {
+  try {
+    log(`Saving ${searchResults.length} tenders from search results to database`, 'etimad-service');
+    
+    for (const result of searchResults) {
+      // Check if the tender already exists in the database by tender_id or reference_number
+      const existingTender = await db.select()
+        .from(tenders)
+        .where(sql`(${tenders.externalId} = ${result.tender_id} OR ${tenders.bidNumber} = ${result.reference_number})`)
+        .limit(1);
+      
+      if (existingTender.length === 0) {
+        // Convert the search result to match our database schema
+        const insertData = {
+          title: result.tender_name,
+          agency: result.agency_name,
+          bidNumber: result.reference_number,
+          description: result.tender_purpose || '',
+          category: result.tender_type || 'General',
+          status: 'Active',
+          releaseDate: new Date(),
+          deadline: result.submission_date ? new Date(result.submission_date) : null,
+          closingDate: result.submission_date ? new Date(result.submission_date) : null,
+          value: result.tender_value || null,
+          requirements: result.requirements || '',
+          externalId: String(result.tender_id),
+          externalSource: 'Etimad',
+          externalUrl: `https://tenders.etimad.sa/Tender/Details/${result.tender_id}`,
+          rawData: JSON.stringify({
+            ...result,
+            similarity_percentage: result.similarity_percentage,
+            match_rank: result.match_rank
+          }),
+          matchScore: result.similarity_percentage || null,
+        };
+        
+        // Validate the data with Zod schema
+        const validatedData = insertTenderSchema.parse(insertData);
+        
+        // Insert the tender into the database
+        await storage.createTender(validatedData);
+        log(`Created new tender from search: ${result.tender_name}`, 'etimad-service');
+      } else {
+        // Update the existing tender with match information
+        const existingTenderData = existingTender[0];
+        const rawData = JSON.parse(existingTenderData.rawData || '{}');
+        
+        // Update the raw data with match information
+        const updatedRawData = {
+          ...rawData,
+          similarity_percentage: result.similarity_percentage,
+          match_rank: result.match_rank
+        };
+        
+        // Update in the database
+        await db.update(tenders)
+          .set({
+            matchScore: result.similarity_percentage || null,
+            rawData: JSON.stringify(updatedRawData)
+          })
+          .where(eq(tenders.id, existingTenderData.id));
+        
+        log(`Updated existing tender ${result.tender_id} with match information`, 'etimad-service');
+      }
+    }
+    
+    log(`Completed saving search results to database`, 'etimad-service');
+  } catch (error: any) {
+    const errorMessage = error?.message || 'Unknown error';
+    log(`Error saving search results to database: ${errorMessage}`, 'etimad-service');
+    throw new Error(`Failed to save search results to database: ${errorMessage}`);
+  }
+}
+
+/**
+ * Gets mock search results for testing
+ * @param query Search query string
+ * @param limit Maximum number of results to return
+ * @param activeOnly Filter to only active tenders
+ * @returns Mock search results
+ */
+function getMockSearchResults(query: string, limit: number, activeOnly: boolean): any {
+  const mockResults = [];
+  
+  for (let i = 0; i < limit; i++) {
+    const similarity = Math.round((100 - (i * 5)) * 10) / 10; // Decreasing similarity
+    
+    mockResults.push({
+      id: i + 1,
+      tender_id: `tender_${i + 1}`,
+      tender_name: `Mock Tender ${i + 1} for "${query}"`,
+      agency_name: ['Ministry of Technology', 'Ministry of Health', 'Ministry of Education'][i % 3],
+      reference_number: `REF-${i + 1}-2025`,
+      tender_purpose: `This tender is related to ${query} and requires expertise in the field`,
+      submission_date: new Date(Date.now() + (14 + i) * 24 * 60 * 60 * 1000).toISOString(),
+      tender_value: Math.floor(Math.random() * 1000000) + 500000,
+      tender_type: ['Services', 'Supplies', 'Construction'][i % 3],
+      requirements: "Qualified vendor with experience in similar projects",
+      location: ["Riyadh", "Jeddah", "Dammam"][i % 3],
+      is_active: activeOnly ? true : (i % 5 !== 0), // Some inactive if not filtered
+      
+      // Search relevance information
+      similarity_percentage: similarity,
+      match_rank: i + 1
+    });
+  }
+  
+  return {
+    success: true,
+    query: query,
+    results: mockResults,
+    count: mockResults.length,
+    active_only: activeOnly
   };
 }
 

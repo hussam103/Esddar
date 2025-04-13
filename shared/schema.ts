@@ -47,16 +47,27 @@ export const tenders = pgTable("tenders", {
   description: text("description").notNull(),
   category: text("category").notNull(),
   location: text("location").notNull(),
+  value: numeric("value"), // Single value field
   valueMin: numeric("value_min"),
   valueMax: numeric("value_max"),
+  releaseDate: timestamp("release_date"),
+  enrollmentDeadline: timestamp("enrollment_deadline"),
+  closingDate: timestamp("closing_date"),
   deadline: timestamp("deadline").notNull(),
   status: text("status").notNull().default("open"),
   requirements: text("requirements"),
   bidNumber: text("bid_number").notNull(),
+  // Industry and keywords for better matching
+  industry: text("industry").default("General"),
+  keywords: text("keywords").array(),
   // External source identification
   externalId: text("external_id"),
-  // Source of the tender (etimad, local, etc)
-  source: text("source").default("local"),
+  externalSource: text("external_source").default("local"),
+  externalUrl: text("external_url"),
+  // Raw data storage for additional API response information
+  rawData: text("raw_data"),
+  // Match score from semantic search
+  matchScore: numeric("match_score"),
   // Vector embedding information for RAG
   vectorId: text("vector_id"),
   vectorStatus: text("vector_status").default("pending"), // 'pending', 'processed', 'failed'

@@ -64,6 +64,7 @@ export const tenders = pgTable("tenders", {
   externalId: text("external_id"),
   externalSource: text("external_source").default("local"),
   externalUrl: text("external_url"),
+  source: text("source").default("local"), // 'local', 'etimad', or other API sources
   // Raw data storage for additional API response information
   rawData: text("raw_data"),
   // Match score from semantic search

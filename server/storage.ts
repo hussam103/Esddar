@@ -125,16 +125,34 @@ export class DatabaseStorage implements IStorage {
   
   // Tender management
   async getTender(id: number): Promise<Tender | undefined> {
-    const result = await db.select().from(tenders).where(eq(tenders.id, id));
+    const result = await db.select()
+      .from(tenders)
+      .where(
+        and(
+          eq(tenders.id, id),
+          eq(tenders.source, 'etimad')
+        )
+      );
     return result[0];
   }
   
   async getTenders(): Promise<Tender[]> {
-    return await db.select().from(tenders);
+    // Only return tenders from the API (Etimad source)
+    return await db.select()
+      .from(tenders)
+      .where(eq(tenders.source, 'etimad'));
   }
   
   async getTendersByCategory(category: string): Promise<Tender[]> {
-    return await db.select().from(tenders).where(eq(tenders.category, category));
+    // Only return tenders from the API (Etimad source) in the specified category
+    return await db.select()
+      .from(tenders)
+      .where(
+        and(
+          eq(tenders.category, category),
+          eq(tenders.source, 'etimad')
+        )
+      );
   }
   
   async createTender(insertTender: InsertTender): Promise<Tender> {
@@ -156,11 +174,18 @@ export class DatabaseStorage implements IStorage {
       deadline: tenders.deadline,
       status: tenders.status,
       requirements: tenders.requirements,
-      bidNumber: tenders.bidNumber
+      bidNumber: tenders.bidNumber,
+      source: tenders.source,
+      matchScore: tenders.matchScore
     })
     .from(tenders)
     .innerJoin(savedTenders, eq(tenders.id, savedTenders.tenderId))
-    .where(eq(savedTenders.userId, userId));
+    .where(
+      and(
+        eq(savedTenders.userId, userId),
+        eq(tenders.source, 'etimad')
+      )
+    );
   }
   
   async saveTender(data: InsertSavedTender): Promise<SavedTender> {

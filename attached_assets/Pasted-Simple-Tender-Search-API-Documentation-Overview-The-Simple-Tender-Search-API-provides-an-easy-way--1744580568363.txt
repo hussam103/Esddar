@@ -1,0 +1,231 @@
+Simple Tender Search API Documentation
+Overview
+The Simple Tender Search API provides an easy way to search for tenders using natural language queries. This GET endpoint is designed for simplicity and ease of integration into any application, allowing you to quickly search the database of tenders using semantic search.
+
+Endpoint Details
+URL: /api/v1/search
+
+Method: GET
+
+Description: Search for tenders using semantic similarity with a natural language query. This endpoint uses vector search to find tenders that are semantically related to your query, not just exact text matches.
+
+Query Parameters
+Parameter	Type	Required	Default	Description
+q	string	Yes	-	The search query text (e.g., "medical equipment", "construction projects")
+limit	integer	No	10	Maximum number of results to return (max: 50)
+active_only	boolean	No	true	Filter to only include active tenders
+Response Format
+The API returns a JSON response with the following structure:
+
+{
+  "success": true,
+  "query": "your search query",
+  "results": [
+    {
+      "id": 123,                          // Database ID
+      "tender_id": 987654,                // Etimad tender ID
+      "tender_name": "Tender Name",       // Name of the tender
+      "agency_name": "Agency Name",       // Issuing agency name
+      "branch_name": "Branch Name",       // Agency branch name
+      "tender_type_name": "Tender Type",  // Type of tender
+      "tender_activity_name": "Activity", // Activity category
+      "tender_number": "2025/0123",       // Reference number
+      "submission_date": "2025-04-15T14:50:38.721646", // Submission date (ISO format)
+      "last_enquiries_date": "2025-04-20T14:50:38.721639", // Last date for enquiries
+      "last_offer_presentation_date": "2025-04-25T09:59:00", // Last date for offers
+      "offers_opening_date": "2025-04-25T10:00:00",          // Date for opening offers
+      "conditional_booklet_price": 500.0, // Booklet price (if applicable)
+      "financial_fees": 200.0,            // Financial fees (if applicable)
+      "buying_cost": 500.0,               // Buying cost (if applicable)
+      "tender_purpose": "Purpose",        // Purpose description (if available)
+      "tender_value": 1500000.0,          // Tender value (if available)
+      "execution_location": "Location",   // Execution location (if available)
+      "place_to_submit_offers": "Place",  // Where to submit offers (if available)
+      "tender_status_id": 2,              // Status ID (2 = active)
+      "created_at": "2025-04-12T20:20:11.098608", // When added to database
+      "is_active": true,                  // Whether tender is active
+      
+      // Search relevance information
+      "similarity_percentage": 89.5,     // Match confidence (0-100%)
+      "match_rank": 1                    // Position in results (1 is best match)
+    },
+    // Additional tenders...
+  ],
+  "count": 3,                           // Number of results returned
+  "message": "Search completed successfully",
+  "active_only": true                   // Filter that was applied
+}
+Error Responses
+If an error occurs, the API returns:
+
+{
+  "success": false,
+  "results": [],
+  "count": 0,
+  "message": "Error message explaining what went wrong"
+}
+Common error cases:
+
+Missing q parameter: 400 Bad Request
+Server errors: 500 Internal Server Error
+Usage Examples
+Basic Search
+To find tenders related to medical equipment:
+
+GET /api/v1/search?q=medical+equipment
+Limiting Results
+To get only 5 results:
+
+GET /api/v1/search?q=construction&limit=5
+Including Inactive Tenders
+To include both active and inactive tenders:
+
+GET /api/v1/search?q=software&active_only=false
+How to Use This Endpoint
+Web Browser
+You can directly enter the URL in your browser:
+
+https://your-deployment-url.replit.app/api/v1/search?q=medical+equipment
+cURL
+curl "https://your-deployment-url.replit.app/api/v1/search?q=medical+equipment&limit=5&active_only=true"
+Python
+import requests
+def search_tenders(query, limit=10, active_only=True):
+    """Search for tenders using the simple GET API"""
+    url = "https://your-deployment-url.replit.app/api/v1/search"
+    params = {
+        "q": query,
+        "limit": limit,
+        "active_only": "true" if active_only else "false"
+    }
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        print(f"Found {data['count']} results for '{query}'")
+        
+        # Display top matches
+        for i, tender in enumerate(data['results']):
+            print(f"{i+1}. {tender['tender_name']} ({tender['similarity_percentage']}% match)")
+            print(f"   Agency: {tender['agency_name']}")
+            print(f"   ID: {tender['tender_id']}")
+            print(f"   Submission Date: {tender['submission_date']}")
+            print()
+        
+        return data
+    else:
+        print(f"Error: {response.status_code}")
+        print(response.text)
+        return None
+# Example usage
+search_tenders("medical equipment", limit=3)
+JavaScript/Node.js
+const axios = require('axios');
+async function searchTenders(query, limit = 10, activeOnly = true) {
+  try {
+    const baseUrl = "https://your-deployment-url.replit.app";
+    const response = await axios.get(`${baseUrl}/api/v1/search`, {
+      params: {
+        q: query,
+        limit: limit,
+        active_only: activeOnly ? 'true' : 'false'
+      }
+    });
+    
+    const data = response.data;
+    console.log(`Found ${data.count} results for '${query}'`);
+    
+    // Display top matches
+    data.results.forEach((tender, index) => {
+      console.log(`${index+1}. ${tender.tender_name} (${tender.similarity_percentage}% match)`);
+      console.log(`   Agency: ${tender.agency_name}`);
+      console.log(`   ID: ${tender.tender_id}`);
+      console.log(`   Submission Date: ${tender.submission_date}`);
+      console.log();
+    });
+    
+    return data;
+  } catch (error) {
+    console.error(`Error searching tenders: ${error.message}`);
+    return null;
+  }
+}
+// Example usage
+searchTenders("construction projects", 3);
+HTML/JavaScript (Browser)
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Tender Search</title>
+  <script>
+    async function searchTenders() {
+      const query = document.getElementById('searchQuery').value;
+      const limit = document.getElementById('resultLimit').value;
+      const activeOnly = document.getElementById('activeOnly').checked;
+      
+      try {
+        const baseUrl = "https://your-deployment-url.replit.app";
+        const url = new URL(`${baseUrl}/api/v1/search`);
+        url.searchParams.append('q', query);
+        url.searchParams.append('limit', limit);
+        url.searchParams.append('active_only', activeOnly ? 'true' : 'false');
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        // Display results
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = `<h3>Found ${data.count} results for "${query}"</h3>`;
+        
+        data.results.forEach(tender => {
+          resultsDiv.innerHTML += `
+            <div class="tender-card">
+              <h4>${tender.tender_name}</h4>
+              <p><strong>Match:</strong> ${tender.similarity_percentage}%</p>
+              <p><strong>Agency:</strong> ${tender.agency_name}</p>
+              <p><strong>ID:</strong> ${tender.tender_id}</p>
+              <p><strong>Submission Date:</strong> ${tender.submission_date}</p>
+            </div>
+          `;
+        });
+      } catch (error) {
+        console.error(`Error searching tenders: ${error.message}`);
+        document.getElementById('results').innerHTML = `<p class="error">Error: ${error.message}</p>`;
+      }
+    }
+  </script>
+  <style>
+    .tender-card {
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 5px;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <h1>Tender Search</h1>
+  <div>
+    <input type="text" id="searchQuery" placeholder="Enter search query">
+    <input type="number" id="resultLimit" value="5" min="1" max="50">
+    <label>
+      <input type="checkbox" id="activeOnly" checked> Active Only
+    </label>
+    <button onclick="searchTenders()">Search</button>
+  </div>
+  <div id="results"></div>
+</body>
+</html>
+Important Notes
+Semantic Search: This API uses vector embeddings to find semantically similar tenders, not just exact keyword matches. This means it can understand the meaning behind your query and return relevant results even if they don't contain the exact words.
+
+Similarity Percentage: The similarity_percentage field indicates how closely each result matches your query semantically. Higher percentages indicate better matches.
+
+Active Tenders: By default, the API only returns active tenders. Set active_only=false to include inactive tenders.
+
+Rate Limiting: Please use the API responsibly. Consider implementing caching if you need to make frequent requests.
+
+Cross-Origin Access: The API supports CORS (Cross-Origin Resource Sharing), so you can call it directly from browser-based applications.

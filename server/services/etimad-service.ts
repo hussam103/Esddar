@@ -18,6 +18,9 @@ import { eq, sql } from 'drizzle-orm';
 // The API runs on port 5000 according to documentation
 const ETIMAD_API_BASE_URL = process.env.ETIMAD_API_URL || 'http://localhost:5000';
 
+// Base URL for the Simple Tender Search API
+const SEARCH_API_BASE_URL = process.env.SIMPLE_TENDER_SEARCH_API_URL || 'https://your-deployment-url.replit.app';
+
 interface EtimadTender {
   id?: number;
   entityName: string;
@@ -378,12 +381,11 @@ export async function searchTenders(
     };
     
     log(`Performing semantic search with query: "${searchQuery}"`, 'etimad-service');
-    const response = await axios.get(`${ETIMAD_API_BASE_URL}/api/v1/search`, { 
+    const response = await axios.get(`${SEARCH_API_BASE_URL}/api/v1/search`, { 
       params,
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-API-Key': process.env.ETIMAD_API_KEY || ''
+        'Accept': 'application/json'
       }
     });
     
@@ -691,10 +693,14 @@ async function saveTendersFromSearchResults(searchResults: any[]): Promise<void>
     log(`Saving ${searchResults.length} tenders from search results to database`, 'etimad-service');
     
     for (const result of searchResults) {
+      // Map API field names to our expected field names
+      const tenderId = String(result.tender_id || result.id);
+      const tenderNumber = result.tender_number || result.reference_number;
+      
       // Check if the tender already exists in the database by tender_id or reference_number
       const existingTender = await db.select()
         .from(tenders)
-        .where(sql`(${tenders.externalId} = ${result.tender_id} OR ${tenders.bidNumber} = ${result.reference_number})`)
+        .where(sql`(${tenders.externalId} = ${tenderId} OR ${tenders.bidNumber} = ${tenderNumber})`)
         .limit(1);
       
       if (existingTender.length === 0) {
@@ -702,19 +708,19 @@ async function saveTendersFromSearchResults(searchResults: any[]): Promise<void>
         const insertData = {
           title: result.tender_name,
           agency: result.agency_name,
-          bidNumber: result.reference_number,
+          bidNumber: tenderNumber,
           description: result.tender_purpose || '',
-          category: result.tender_type || 'General',
+          category: result.tender_type_name || result.tender_type || 'General',
           status: 'Active',
           releaseDate: new Date(),
           deadline: result.submission_date ? new Date(result.submission_date) : null,
           closingDate: result.submission_date ? new Date(result.submission_date) : null,
           value: result.tender_value || null,
           requirements: result.requirements || '',
-          externalId: String(result.tender_id),
+          externalId: tenderId,
           externalSource: 'Etimad',
           source: 'etimad',
-          externalUrl: `https://tenders.etimad.sa/Tender/Details/${result.tender_id}`,
+          externalUrl: `https://tenders.etimad.sa/Tender/Details/${tenderId}`,
           rawData: JSON.stringify({
             ...result,
             similarity_percentage: result.similarity_percentage,

@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useLocation } from "wouter";
-import { Tender, Application } from "@shared/schema";
+import { Tender } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/hooks/use-language";
@@ -19,9 +19,26 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+// Define custom application type for component
+type CustomApplication = {
+  id: number;
+  tenderId: number;
+  status: string;
+  submittedAt: Date | null;
+  userId: number;
+  proposalContent: string | null;
+  documents: unknown;
+  matchScore: number | null;
+  tender?: {
+    title: string;
+    agency: string;
+    bidNumber: string;
+  };
+};
+
 type UpcomingDeadlinesProps = {
   loading: boolean;
-  applications: Application[];
+  applications: CustomApplication[];
   tenders: Tender[];
   className?: string;
 };

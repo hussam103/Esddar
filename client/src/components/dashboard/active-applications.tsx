@@ -4,11 +4,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/hooks/use-language";
 
-type Application = {
+type CustomApplication = {
   id: number;
   tenderId: number;
   status: string;
-  submittedAt?: Date;
+  submittedAt: Date | null;
+  userId: number;
+  proposalContent: string | null;
+  documents: unknown;
+  matchScore: number | null;
   tender?: {
     title: string;
     agency: string;
@@ -18,7 +22,7 @@ type Application = {
 
 type ActiveApplicationsProps = {
   loading: boolean;
-  applications: Application[];
+  applications: CustomApplication[];
   className?: string;
 };
 

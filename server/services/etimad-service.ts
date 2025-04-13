@@ -74,6 +74,11 @@ export async function scrapeTenders(page: number = 1, pageSize: number = 10): Pr
       params: {
         page,
         page_size: pageSize,
+      },
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-API-Key': process.env.ETIMAD_API_KEY || ''
       }
     });
     
@@ -151,7 +156,13 @@ export async function getTenderDetails(tenderIdString: string): Promise<{
       };
     }
     
-    const response = await axios.get(`${ETIMAD_API_BASE_URL}/api/tender-details/${tenderIdString}`);
+    const response = await axios.get(`${ETIMAD_API_BASE_URL}/api/tender-details/${tenderIdString}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-API-Key': process.env.ETIMAD_API_KEY || ''
+      }
+    });
     
     if (response.data && response.data.success) {
       log(`Successfully fetched details for tender ${tenderIdString}`, 'etimad-service');
@@ -256,7 +267,14 @@ export async function getPaginatedTenders(
     if (tenderType) params.tender_type = tenderType;
     if (agencyName) params.agency_name = agencyName;
     
-    const response = await axios.get(`${ETIMAD_API_BASE_URL}/api/tenders`, { params });
+    const response = await axios.get(`${ETIMAD_API_BASE_URL}/api/tenders`, { 
+      params,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-API-Key': process.env.ETIMAD_API_KEY || ''
+      }
+    });
     
     if (response.data && response.data.success) {
       log(`Successfully fetched paginated tenders`, 'etimad-service');
@@ -360,7 +378,14 @@ export async function searchTenders(
     };
     
     log(`Performing semantic search with query: "${searchQuery}"`, 'etimad-service');
-    const response = await axios.get(`${ETIMAD_API_BASE_URL}/api/v1/search`, { params });
+    const response = await axios.get(`${ETIMAD_API_BASE_URL}/api/v1/search`, { 
+      params,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-API-Key': process.env.ETIMAD_API_KEY || ''
+      }
+    });
     
     if (response.data && response.data.success) {
       log(`Successfully retrieved ${response.data.count} tenders via semantic search`, 'etimad-service');
@@ -429,7 +454,13 @@ export async function getTenderById(tenderId: number): Promise<{
   try {
     log(`Fetching tender by ID ${tenderId}`, 'etimad-service');
     
-    const response = await axios.get(`${ETIMAD_API_BASE_URL}/api/tenders/${tenderId}`);
+    const response = await axios.get(`${ETIMAD_API_BASE_URL}/api/tenders/${tenderId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-API-Key': process.env.ETIMAD_API_KEY || ''
+      }
+    });
     
     if (response.data && response.data.success) {
       log(`Successfully fetched tender ${tenderId}`, 'etimad-service');

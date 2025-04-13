@@ -1677,6 +1677,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (existingSource.length > 0) {
           sourceId = existingSource[0].id;
         } else {
+          // Find an admin user to use as the creator
+          const adminUser = await db.select()
+            .from(users)
+            .where(eq(users.role, 'admin'))
+            .limit(1);
+            
+          if (adminUser.length === 0) {
+            // If we can't find an admin user, skip creating the source
+            // and simply log the information
+            log("No admin users found to create semantic-search source", 'search-scheduler');
+            return res.json(results);
+          }
+            
           // Create a new source for semantic search
           const newSource = await db.insert(externalSources)
             .values({
@@ -1685,7 +1698,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               type: 'api',
               apiEndpoint: '/api/v2/search',
               active: true,
-              createdBy: (req.user as any)?.id || 0
+              createdBy: adminUser[0].id // We've already checked that adminUser has at least one entry
             })
             .returning();
           
@@ -1918,11 +1931,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Unauthorized" });
       }
       
-      const source = await db.insert(externalSources).values({
-        ...req.body,
-        createdBy: req.user.id,
-        createdAt: new Date()
-      }).returning();
+      // Extract only the valid fields from req.body that match the schema
+      const sourceData = {
+        name: req.body.name,
+        url: req.body.url,
+        type: req.body.type || 'api',
+        apiEndpoint: req.body.apiEndpoint,
+        credentials: req.body.credentials,
+        active: req.body.active !== undefined ? req.body.active : true,
+        scrapingFrequency: req.body.scrapingFrequency,
+        createdBy: req.user.id
+      };
+      
+      const source = await db.insert(externalSources)
+        .values(sourceData)
+        .returning();
       
       res.status(201).json(source[0]);
     } catch (error) {
@@ -1938,9 +1961,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Unauthorized" });
       }
       
+      // Extract only the valid fields from req.body that match the schema
+      const sourceData = {
+        name: req.body.name,
+        url: req.body.url,
+        type: req.body.type,
+        apiEndpoint: req.body.apiEndpoint,
+        credentials: req.body.credentials,
+        active: req.body.active,
+        scrapingFrequency: req.body.scrapingFrequency
+      };
+      
+      // Remove undefined properties
+      Object.keys(sourceData).forEach(key => {
+        if (sourceData[key] === undefined) {
+          delete sourceData[key];
+        }
+      });
+      
       const id = parseInt(req.params.id);
       const source = await db.update(externalSources)
-        .set(req.body)
+        .set(sourceData)
         .where(eq(externalSources.id, id))
         .returning();
       

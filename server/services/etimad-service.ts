@@ -521,7 +521,7 @@ async function updateTenderDetails(tenderIdString: string, details: any): Promis
  * @param companyProfile User profile containing company information
  * @returns Search query string for the API
  */
-function buildSearchQueryFromProfile(companyProfile: any): string {
+export function buildSearchQueryFromProfile(companyProfile: any): string {
   // If we have a pre-processed query data field from OCR extraction, use it first
   if (companyProfile.queryData && typeof companyProfile.queryData === 'string' && companyProfile.queryData.length > 0) {
     log(`Using pre-processed queryData for tender matching: ${companyProfile.queryData.substring(0, 100)}...`, 'etimad-service');

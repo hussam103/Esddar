@@ -504,7 +504,7 @@ async function updateUserProfileWithExtractedData(userId: number, extractedData:
         // Add scores for each filled field
         if (normalizedData.companyDescription) completeness += 15;
         if (normalizedData.businessType) completeness += 10;
-        if (normalizedData.companyActivities.length > 0) completeness += 15;
+        if (normalizedData.companyActivities.length > 0) completeness += 10;
         if (normalizedData.mainIndustries.length > 0) completeness += 10;
         if (normalizedData.specializations.length > 0) completeness += 10;
         if (normalizedData.keywords.length > 0) completeness += 10; // Add score for having AI-generated keywords
@@ -543,7 +543,7 @@ async function updateUserProfileWithExtractedData(userId: number, extractedData:
         if (normalizedData.companyDescription) completeness += 15;
         if (normalizedData.businessType) completeness += 10;
         if (normalizedData.companyActivities.length > 0) completeness += 10;
-        if (normalizedData.mainIndustries.length > 0) completeness += 15;
+        if (normalizedData.mainIndustries.length > 0) completeness += 10;
         if (normalizedData.keywords.length > 0) completeness += 10; // Add score for having AI-generated keywords
         if (normalizedData.specializations.length > 0) completeness += 10;
         

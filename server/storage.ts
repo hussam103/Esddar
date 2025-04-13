@@ -21,7 +21,7 @@ import {
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { db } from "./db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql, desc } from "drizzle-orm";
 import { pool } from "./db";
 
 const PostgresSessionStore = connectPg(session);
@@ -301,7 +301,7 @@ export class DatabaseStorage implements IStorage {
         .where(
           sql`${tenders.status} = 'open' AND ${tenders.matchScore} IS NOT NULL`
         )
-        .orderBy(tenders.matchScore, 'desc')
+        .orderBy(desc(tenders.matchScore))
         .limit(limit);
       
       // If we have matched tenders from the API, return them
@@ -409,7 +409,7 @@ export class DatabaseStorage implements IStorage {
     return await db.select()
       .from(companyDocuments)
       .where(eq(companyDocuments.userId, userId))
-      .orderBy(companyDocuments.uploadedAt, 'desc');
+      .orderBy(desc(companyDocuments.uploadedAt));
   }
   
   async createCompanyDocument(document: InsertCompanyDocument): Promise<CompanyDocument> {

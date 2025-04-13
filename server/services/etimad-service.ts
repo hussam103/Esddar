@@ -19,7 +19,7 @@ import { eq, sql } from 'drizzle-orm';
 const ETIMAD_API_BASE_URL = process.env.ETIMAD_API_URL || 'http://localhost:5000';
 
 // Base URL for the Simple Tender Search API
-const SEARCH_API_BASE_URL = process.env.SIMPLE_TENDER_SEARCH_API_URL || 'https://your-deployment-url.replit.app';
+const SEARCH_API_BASE_URL = process.env.SIMPLE_TENDER_SEARCH_API_URL || 'https://esddar-api.replit.app';
 
 interface EtimadTender {
   id?: number;
@@ -713,20 +713,21 @@ async function saveTendersFromSearchResults(searchResults: any[]): Promise<void>
           category: result.tender_type_name || result.tender_type || 'General',
           status: 'Active',
           releaseDate: new Date(),
-          deadline: result.submission_date ? new Date(result.submission_date) : null,
+          deadline: result.submission_date ? new Date(result.submission_date) : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
           closingDate: result.submission_date ? new Date(result.submission_date) : null,
-          value: result.tender_value || null,
+          value: result.tender_value ? String(result.tender_value) : null,
           requirements: result.requirements || '',
           externalId: tenderId,
           externalSource: 'Etimad',
           source: 'etimad',
+          location: result.execution_location || result.location || 'Saudi Arabia',
           externalUrl: `https://tenders.etimad.sa/Tender/Details/${tenderId}`,
           rawData: JSON.stringify({
             ...result,
             similarity_percentage: result.similarity_percentage,
             match_rank: result.match_rank
           }),
-          matchScore: result.similarity_percentage || null,
+          matchScore: result.similarity_percentage ? String(result.similarity_percentage) : null,
         };
         
         // Validate the data with Zod schema
@@ -750,7 +751,7 @@ async function saveTendersFromSearchResults(searchResults: any[]): Promise<void>
         // Update in the database
         await db.update(tenders)
           .set({
-            matchScore: result.similarity_percentage || null,
+            matchScore: result.similarity_percentage ? String(result.similarity_percentage) : null,
             rawData: JSON.stringify(updatedRawData),
             source: 'etimad' // Ensure source field is set to etimad
           })
@@ -789,14 +790,15 @@ function getMockSearchResults(query: string, limit: number, activeOnly: boolean)
       reference_number: `REF-${i + 1}-2025`,
       tender_purpose: `This tender is related to ${query} and requires expertise in the field`,
       submission_date: new Date(Date.now() + (14 + i) * 24 * 60 * 60 * 1000).toISOString(),
-      tender_value: Math.floor(Math.random() * 1000000) + 500000,
+      tender_value: String(Math.floor(Math.random() * 1000000) + 500000),
       tender_type: ['Services', 'Supplies', 'Construction'][i % 3],
       requirements: "Qualified vendor with experience in similar projects",
       location: ["Riyadh", "Jeddah", "Dammam"][i % 3],
+      execution_location: ["Riyadh", "Jeddah", "Dammam"][i % 3],
       is_active: activeOnly ? true : (i % 5 !== 0), // Some inactive if not filtered
       
       // Search relevance information
-      similarity_percentage: similarity,
+      similarity_percentage: String(similarity),
       match_rank: i + 1
     });
   }

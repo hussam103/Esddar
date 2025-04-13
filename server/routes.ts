@@ -52,13 +52,36 @@ import {
 } from './services/etimad-service';
 
 // Middleware to check if user is authenticated and has admin role
-const isAdmin = (req: Request, res: Response, next: NextFunction) => {
+const isAdmin = async (req: Request, res: Response, next: NextFunction) => {
   // Allow scheduled tasks with API key to bypass authentication
   const apiKey = req.headers['x-api-key'];
   if (apiKey === 'internal-scheduler' || apiKey === process.env.ETIMAD_SCRAPER_API_KEY) {
     console.log('Admin access granted via API key for scheduled task');
-    // Add artificial user data for logging purposes
-    (req as any).user = { id: 0, username: 'system', role: 'admin' };
+    
+    // Find an admin user from the database to use for system operations
+    try {
+      const adminUser = await db.select()
+        .from(users)
+        .where(eq(users.role, 'admin'))
+        .limit(1);
+        
+      if (adminUser.length > 0) {
+        // Use a real admin user's ID instead of 0 to avoid foreign key issues
+        (req as any).user = { 
+          id: adminUser[0].id, 
+          username: 'system', 
+          role: 'admin'
+        };
+      } else {
+        // If no admin users exist in the database, create one temporarily
+        console.warn('No admin users found in the database for API operations');
+        return res.status(500).json({ error: "No admin users found in the system" });
+      }
+    } catch (error) {
+      console.error('Error finding admin user:', error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+    
     return next();
   }
   

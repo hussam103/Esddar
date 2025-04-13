@@ -14,6 +14,7 @@ import SettingsPage from "@/pages/settings";
 import ProfilePage from "@/pages/profile-page";
 import LandingPage from "@/pages/landing-page";
 import SubscriptionPage from "@/pages/subscription-page";
+import SearchPage from "@/pages/search-page";
 import AdminPage from "@/pages/admin";
 import AdminDashboard from "@/pages/admin-dashboard";
 import ConfirmEmail from "@/pages/confirm-email";
@@ -38,6 +39,7 @@ function Router() {
       <ProtectedRoute path="/analytics" component={AnalyticsPage}/>
       <ProtectedRoute path="/settings" component={SettingsPage}/>
       <ProtectedRoute path="/profile" component={ProfilePage}/>
+      <ProtectedRoute path="/search" component={SearchPage}/>
       <ProtectedRoute path="/subscribe/:plan" component={SubscriptionPage}/>
       <AdminRoute path="/admin" component={AdminPage}/>
       <AdminRoute path="/admin/dashboard" component={AdminDashboard}/>

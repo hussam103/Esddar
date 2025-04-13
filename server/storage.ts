@@ -180,30 +180,17 @@ export class DatabaseStorage implements IStorage {
   
   // Saved tenders
   async getSavedTenders(userId: number): Promise<Tender[]> {
-    return await db.select({
-      id: tenders.id,
-      title: tenders.title,
-      agency: tenders.agency,
-      description: tenders.description,
-      category: tenders.category,
-      location: tenders.location,
-      valueMin: tenders.valueMin,
-      valueMax: tenders.valueMax,
-      deadline: tenders.deadline,
-      status: tenders.status,
-      requirements: tenders.requirements,
-      bidNumber: tenders.bidNumber,
-      source: tenders.source,
-      matchScore: tenders.matchScore
-    })
-    .from(tenders)
-    .innerJoin(savedTenders, eq(tenders.id, savedTenders.tenderId))
-    .where(
-      and(
-        eq(savedTenders.userId, userId),
-        eq(tenders.source, 'etimad')
+    // Select all tender columns to avoid TypeScript errors
+    return await db.select()
+      .from(tenders)
+      .innerJoin(savedTenders, eq(tenders.id, savedTenders.tenderId))
+      .where(
+        and(
+          eq(savedTenders.userId, userId),
+          eq(tenders.source, 'etimad')
+        )
       )
-    );
+      .orderBy(desc(tenders.matchScore));
   }
   
   async saveTender(data: InsertSavedTender): Promise<SavedTender> {

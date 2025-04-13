@@ -76,7 +76,10 @@ export default function TendersPage() {
   const getMatchScore = (tender: Tender): number => {
     // First check if the tender has a matchScore property
     if (tender.matchScore !== undefined && tender.matchScore !== null) {
-      return Math.round(parseFloat(tender.matchScore));
+      // If matchScore is a string, parse it to a number
+      return typeof tender.matchScore === 'string' 
+        ? Math.round(parseFloat(tender.matchScore)) 
+        : Number(tender.matchScore);
     }
     
     // If not, try to extract from rawData
@@ -84,7 +87,7 @@ export default function TendersPage() {
       try {
         const rawData = JSON.parse(tender.rawData);
         if (rawData.similarity_percentage) {
-          return Math.round(parseFloat(rawData.similarity_percentage));
+          return Math.round(parseFloat(String(rawData.similarity_percentage)));
         }
       } catch (e) {
         console.error('Error parsing tender rawData:', e);

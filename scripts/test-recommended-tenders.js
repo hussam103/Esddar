@@ -5,8 +5,8 @@
  * Run with: node scripts/test-recommended-tenders.js
  */
 
-const axios = require('axios');
-const dotenv = require('dotenv');
+import axios from 'axios';
+import * as dotenv from 'dotenv';
 dotenv.config();
 
 const API_BASE_URL = 'http://localhost:5000';

@@ -16,11 +16,11 @@ type CustomApplication = {
   id: number;
   tenderId: number;
   status: string;
-  submittedAt?: Date;
+  submittedAt: Date | null;
   userId: number;
-  proposalContent?: string;
-  documents?: unknown;
-  matchScore?: number;
+  proposalContent: string | null;
+  documents: unknown;
+  matchScore: number | null;
   tender?: {
     title: string;
     agency: string;
@@ -58,10 +58,10 @@ export default function Dashboard() {
   // Transform application data to include tender info
   const applications: CustomApplication[] = fetchedApplications.map(app => ({
     ...app,
-    submittedAt: app.submittedAt || undefined,
-    proposalContent: app.proposalContent || undefined,
-    documents: app.documents || undefined,
-    matchScore: app.matchScore || undefined,
+    submittedAt: app.submittedAt || null,
+    proposalContent: app.proposalContent || null,
+    documents: app.documents || null,
+    matchScore: app.matchScore || null,
     tender: app.tender
   }));
 
@@ -111,18 +111,6 @@ export default function Dashboard() {
               className="lg:col-span-1"
             />
           </div>
-          
-          {/* Profile completion card */}
-          {!profileLoading && userProfile && (
-            <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800 profile-completion">
-              <h3 className="text-lg font-medium text-blue-800 dark:text-blue-300">
-                {t("Complete your profile for better matches")}
-              </h3>
-              <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
-                {t("A complete profile helps us match you with the most relevant tenders")}
-              </p>
-            </div>
-          )}
         </div>
       </main>
     </div>

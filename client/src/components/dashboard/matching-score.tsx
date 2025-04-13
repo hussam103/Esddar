@@ -23,10 +23,7 @@ export default function MatchingScore({ loading, userProfile, profileCompletenes
             <Skeleton className="h-6 w-48 mb-2" />
             <Skeleton className="h-4 w-64" />
           </div>
-          <div className="flex items-center space-x-3 space-x-reverse">
-            <Skeleton className="h-10 w-40" />
-            <Skeleton className="h-10 w-32" />
-          </div>
+          {/* Profile completion UI removed from loading state */}
         </div>
         
         <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -54,18 +51,7 @@ export default function MatchingScore({ loading, userProfile, profileCompletenes
               : "Based on your company profile and previous activity"}
           </p>
         </div>
-        <div className={`flex items-center ${language === "ar" ? "space-x-3 space-x-reverse" : "space-x-3"}`}>
-          <div className="bg-primary-50 px-3 py-1.5 rounded-full">
-            <span className="text-sm font-medium text-primary-700">
-              {language === "ar" 
-                ? `اكتمال الملف: ${profileCompleteness}%` 
-                : `Profile completion: ${profileCompleteness}%`}
-            </span>
-          </div>
-          <Button onClick={() => setLocation("/settings")}>
-            {language === "ar" ? "إكمال الملف" : "Complete Profile"}
-          </Button>
-        </div>
+        {/* Profile completion UI removed */}
       </div>
       
       <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">

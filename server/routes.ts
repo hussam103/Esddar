@@ -194,6 +194,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to fetch recommended tenders" });
     }
   });
+  
+  /**
+   * POST /api/refresh-recommended-tenders
+   * Force-refreshes tender recommendations by performing a new search with the user's profile data
+   */
+  app.post("/api/refresh-recommended-tenders", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
+    
+    try {
+      log(`Manual refresh of tender recommendations requested for user ${req.user.id}`, 'recommendations');
+      
+      // Get the user profile for search query construction
+      const userProfile = await storage.getUserProfile(req.user.id);
+      if (!userProfile) {
+        return res.status(404).json({ 
+          error: "Profile not found",
+          message: "Complete your company profile to get tender recommendations"
+        });
+      }
+      
+      // Get the limit from request body or use default
+      const limit = req.body.limit || 15;
+      
+      // Trigger a new API search to refresh recommendations
+      log(`Executing search API call with profile data for user ${req.user.id}`, 'recommendations');
+      try {
+        // Check if the profile has query data for better matching
+        if (!userProfile.queryData) {
+          log(`User ${req.user.id} profile is missing queryData for optimal matching`, 'recommendations');
+        } else {
+          log(`Using pre-processed queryData for tender matching: ${userProfile.queryData.substring(0, 50)}...`, 'recommendations');
+        }
+        
+        // Execute the search
+        const searchResponse = await searchTenders(userProfile, limit, true);
+        log(`Search API response: ${searchResponse.success}, found ${searchResponse.results?.length || 0} results`, 'recommendations');
+        
+        if (!searchResponse.success) {
+          return res.status(200).json({ 
+            refreshed: true, 
+            message: "Search completed but no new results found",
+            results: await storage.getRecommendedTenders(req.user.id, limit)
+          });
+        }
+        
+        // Return the refreshed results
+        const tenders = await storage.getRecommendedTenders(req.user.id, limit);
+        return res.status(200).json({ 
+          refreshed: true, 
+          message: `Successfully refreshed, found ${tenders.length} recommendations`,
+          results: tenders
+        });
+      } catch (searchError: any) {
+        log(`Error during API search: ${searchError.message}`, 'recommendations');
+        return res.status(500).json({ 
+          error: "Search API error", 
+          message: "Failed to refresh tender recommendations" 
+        });
+      }
+    } catch (error: any) {
+      log(`Error in refresh-recommended-tenders: ${error.message}`, 'recommendations');
+      return res.status(500).json({ error: "Server error", message: error.message });
+    }
+  });
 
   // Saved tenders
   app.get("/api/saved-tenders", async (req, res) => {

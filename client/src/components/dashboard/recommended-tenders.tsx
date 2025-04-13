@@ -28,13 +28,18 @@ export default function RecommendedTenders({ loading, tenders, className = '' }:
   const refreshRecommendations = async () => {
     setIsRefreshing(true);
     try {
-      await apiRequest("GET", "/api/recommended-tenders?refresh=true");
+      // Use the new dedicated endpoint for refreshing recommendations
+      const response = await apiRequest("POST", "/api/refresh-recommended-tenders");
+      const data = await response.json();
+      
+      // Invalidate query cache to show updated data
       queryClient.invalidateQueries({ queryKey: ["/api/recommended-tenders"] });
+      
       toast({
         title: language === "ar" ? "تم تحديث المناقصات الموصى بها" : "Recommendations Refreshed",
         description: language === "ar" 
           ? "تم تحديث المناقصات الموصى بها بنجاح من خلال البحث الدلالي" 
-          : "Successfully refreshed recommended tenders via semantic search",
+          : data.message || "Successfully refreshed recommended tenders via semantic search",
       });
     } catch (error: any) {
       toast({

@@ -547,6 +547,37 @@ async function updateUserProfileWithExtractedData(userId: number, extractedData:
         });
         
         console.log(`Set initial user profile completeness to ${completeness}%`);
+        
+        // Check if user is in the 'upload_document' onboarding step and advance them
+        if (user.onboardingStep === 'upload_document') {
+          await storage.updateUser(userId, { 
+            onboardingStep: 'subscription_selection'
+          });
+          
+          console.log(`Advanced user ${userId} to subscription_selection onboarding step`);
+          
+          // Now trigger an initial tender search with the extracted profile data
+          try {
+            console.log(`Triggering initial tender search for user ${userId} using new profile data`);
+            
+            // Import the searchTenders function
+            const { searchTenders } = await import('./etimad-service');
+            
+            // Get the updated profile with combined query data
+            const updatedProfile = await storage.getUserProfile(userId);
+            
+            if (updatedProfile) {
+              console.log(`Starting tender search with query data: ${updatedProfile.queryData?.substring(0, 100)}...`);
+              
+              // Call the API to search for tenders using the updated profile
+              const searchResponse = await searchTenders(updatedProfile, 10, true);
+              console.log(`Initial tender search completed for user ${userId}: ${searchResponse.success ? 'success' : 'failed'}, found ${searchResponse.results?.length || 0} results`);
+            }
+          } catch (searchError) {
+            console.error(`Error during initial tender search for user ${userId}:`, searchError);
+            // Do not throw error here to avoid failing the entire profile update
+          }
+        }
       }
     }
   } catch (error) {

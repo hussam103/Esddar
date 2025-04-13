@@ -287,51 +287,72 @@ export async function searchTenders(
     // Build a search query from company profile data
     const searchQuery = buildSearchQueryFromProfile(companyProfile);
     
-    // No test mode - only use real API data
-    
     const params = {
       q: searchQuery,
       limit: limit,
       active_only: activeOnly
     };
     
-    log(`Performing semantic search with query: "${searchQuery}"`, 'etimad-service');
-    // The Simple Tender Search API is hosted on the Replit.dev server
-    const response = await axios.get(`${SEARCH_API_BASE_URL}/api/v1/search`, { 
-      params,
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      }
-    });
+    const searchUrl = `${SEARCH_API_BASE_URL}/api/v1/search`;
+    log(`Performing semantic search with URL: ${searchUrl}?q=${encodeURIComponent(searchQuery)}&limit=${limit}&active_only=${activeOnly}`, 'etimad-service');
     
-    if (response.data && response.data.success) {
-      log(`Successfully retrieved ${response.data.count} tenders via semantic search`, 'etimad-service');
+    try {
+      // Make the API request
+      const response = await axios.get(searchUrl, { 
+        params,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
       
-      // Save the matched tenders to the database
-      if (response.data.results) {
-        await saveTendersFromSearchResults(response.data.results);
+      // Handle successful response
+      if (response.data && response.data.success) {
+        log(`Successfully retrieved ${response.data.count} tenders via semantic search`, 'etimad-service');
+        
+        // Save the matched tenders to the database
+        if (response.data.results && response.data.results.length > 0) {
+          await saveTendersFromSearchResults(response.data.results);
+        }
+        
+        return {
+          success: true,
+          message: `Successfully searched for tenders`,
+          results: response.data.results || [],
+          count: response.data.count || 0
+        };
+      } 
+      // Handle invalid response format
+      else {
+        log(`Invalid response from semantic search: ${JSON.stringify(response.data)}`, 'etimad-service');
+        return {
+          success: false,
+          message: "Failed to search tenders: Invalid response format",
+          errors: ["Invalid API response format"]
+        };
+      }
+    } 
+    // Handle HTTP errors
+    catch (error: any) {
+      if (error.response) {
+        // The request was made and the server responded with a status code outside 2xx range
+        log(`Search API error response: ${error.response.status} ${JSON.stringify(error.response.data || {})}`, 'etimad-service');
+      } else if (error.request) {
+        // The request was made but no response was received
+        log(`Search API no response received: ${error.message}`, 'etimad-service');
+      } else {
+        // Something happened in setting up the request
+        log(`Search API request setup error: ${error.message}`, 'etimad-service');
       }
       
-      return {
-        success: true,
-        message: `Successfully searched for tenders`,
-        results: response.data.results || [],
-        count: response.data.count || 0
-      };
-    } else {
-      log(`Invalid response from semantic search: ${JSON.stringify(response.data)}`, 'etimad-service');
-      return {
-        success: false,
-        message: "Failed to search tenders: Invalid response format",
-        errors: ["Invalid API response format"]
-      };
+      // Let the outer catch block handle this
+      throw error;
     }
-  } catch (error: any) {
+  } 
+  // Catch-all error handler
+  catch (error: any) {
     const errorMessage = error?.message || 'Unknown error';
     log(`Error searching tenders: ${errorMessage}`, 'etimad-service');
-    
-    // No more mock data, if the API fails we report the failure
     log(`Unable to connect to the tender search API: ${errorMessage}`, 'etimad-service');
     
     return {

@@ -72,20 +72,27 @@ export default function TendersPage() {
     ? tenders
     : tenders.filter(tender => tender.category === category);
 
-  // Get match scores for tenders
-  const getMatchScore = (tenderId: number) => {
-    // Base match score between 70-95
-    const baseScore = 70 + Math.floor(Math.random() * 25);
-    
-    // If we have real user profile data, use that to influence the match score 
-    // This is a simple simulation - in a real app this would be calculated by AI
-    if (userProfile) {
-      // Assign higher scores to lower ID tenders to simulate "better matches"
-      // In a real app, this would be based on actual matching algorithms
-      return Math.min(100, baseScore - (tenderId % 5));
+  // Get match scores for tenders using actual similarity percentages from the API
+  const getMatchScore = (tender: Tender): number => {
+    // First check if the tender has a matchScore property
+    if (tender.matchScore !== undefined && tender.matchScore !== null) {
+      return Math.round(parseFloat(tender.matchScore));
     }
     
-    return baseScore;
+    // If not, try to extract from rawData
+    if (tender.rawData) {
+      try {
+        const rawData = JSON.parse(tender.rawData);
+        if (rawData.similarity_percentage) {
+          return Math.round(parseFloat(rawData.similarity_percentage));
+        }
+      } catch (e) {
+        console.error('Error parsing tender rawData:', e);
+      }
+    }
+    
+    // Default fallback for tenders without match scores
+    return 70; // Base relevance score
   };
 
   // Define sort options based on current language
@@ -109,7 +116,7 @@ export default function TendersPage() {
         return b.id - a.id;
       default: // Match percentage is the default
         // Sort by match score (higher scores first)
-        return getMatchScore(b.id) - getMatchScore(a.id);
+        return getMatchScore(b) - getMatchScore(a);
     }
   });
 

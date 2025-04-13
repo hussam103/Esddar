@@ -21,7 +21,7 @@ import {
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { db } from "./db";
-import { eq, and, sql, desc } from "drizzle-orm";
+import { eq, and, sql, desc, isNotNull, isNull } from "drizzle-orm";
 import { pool } from "./db";
 
 const PostgresSessionStore = connectPg(session);
@@ -137,10 +137,28 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getTenders(): Promise<Tender[]> {
-    // Only return tenders from the API (Etimad source)
-    return await db.select()
+    // Get all tenders from the API (Etimad source), ordered by match score (if available)
+    const tendersWithScore = await db.select()
       .from(tenders)
-      .where(eq(tenders.source, 'etimad'));
+      .where(
+        and(
+          eq(tenders.source, 'etimad'),
+          isNotNull(tenders.matchScore)
+        )
+      )
+      .orderBy(desc(tenders.matchScore));
+      
+    const tendersWithoutScore = await db.select()
+      .from(tenders)
+      .where(
+        and(
+          eq(tenders.source, 'etimad'),
+          isNull(tenders.matchScore)
+        )
+      );
+      
+    // Return tenders with match scores first, then the rest
+    return [...tendersWithScore, ...tendersWithoutScore];
   }
   
   async getTendersByCategory(category: string): Promise<Tender[]> {

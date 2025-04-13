@@ -64,7 +64,13 @@ async function testQueryBuilder(userId) {
     const response = await axios.post(
       `${BASE_URL}/api/test/build-search-query`,
       {},
-      { headers: { Cookie: authToken } }
+      { 
+        headers: { 
+          Cookie: authToken,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      }
     );
     
     if (response.data && response.data.query) {

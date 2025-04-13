@@ -2554,10 +2554,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
    */
   app.post("/api/test/build-search-query", isAuthenticated, async (req, res) => {
     try {
-      log(`Testing search query builder for user ${req.user.id}`, 'test');
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized: Please log in" });
+      }
+      
+      log(`Testing search query builder for user ${req.user?.id}`, 'test');
       
       // Get the profile from the request body or use the user's profile
-      const profile = req.body.profile || await storage.getUserProfile(req.user.id);
+      const profile = req.body.profile || await storage.getUserProfile(req.user?.id);
       if (!profile) {
         return res.status(404).json({ 
           error: "Profile not found",

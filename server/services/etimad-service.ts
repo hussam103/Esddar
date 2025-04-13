@@ -619,7 +619,7 @@ async function saveTendersFromSearchResults(searchResults: any[]): Promise<void>
             similarity_percentage: result.similarity_percentage,
             match_rank: result.match_rank
           }),
-          matchScore: result.similarity_percentage ? String(result.similarity_percentage) : null,
+          matchScore: result.similarity_percentage ? String(Math.round(parseFloat(String(result.similarity_percentage)))) : null,
         };
         
         // Validate the data with Zod schema
@@ -643,7 +643,7 @@ async function saveTendersFromSearchResults(searchResults: any[]): Promise<void>
         // Update in the database
         await db.update(tenders)
           .set({
-            matchScore: result.similarity_percentage ? String(result.similarity_percentage) : null,
+            matchScore: result.similarity_percentage ? String(Math.round(parseFloat(String(result.similarity_percentage)))) : null,
             rawData: JSON.stringify(updatedRawData),
             source: 'etimad' // Ensure source field is set to etimad
           })

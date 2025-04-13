@@ -201,7 +201,7 @@ export default function TendersPage() {
                   <TenderCard 
                     key={tender.id} 
                     tender={tender} 
-                    matchScore={getMatchScore(tender.id)}
+                    matchScore={getMatchScore(tender)}
                   />
                 ))}
               </div>

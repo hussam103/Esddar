@@ -7,12 +7,12 @@
  * Run with: node scripts/test-keywords-search.js
  */
 
-const axios = require('axios');
-const colors = require('colors/safe');
-const { pool } = require('../server/db');
-const { eq } = require('drizzle-orm');
-const { drizzle } = require('drizzle-orm/neon-serverless');
-const schema = require('../shared/schema');
+import axios from 'axios';
+import colors from 'colors/safe';
+import { pool } from '../server/db.js';
+import { eq } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/neon-serverless';
+import * as schema from '../shared/schema.js';
 
 const db = drizzle({ client: pool, schema });
 const { userProfiles } = schema;
@@ -208,9 +208,9 @@ async function testQueryBuilder(profile) {
   }
   
   try {
-    // Get the search query that would be built (we'll need to query the API for this)
+    // Get the search query that would be built using our new test endpoint
     const response = await axios.post(
-      `${BASE_URL}/api/test-search-query`,
+      `${BASE_URL}/api/test/build-search-query`,
       {},
       { headers: { Cookie: authToken } }
     );
@@ -247,32 +247,11 @@ async function testQueryBuilder(profile) {
       log(`❌ Could not get search query: ${response.data.message || 'Unknown error'}`, colors.red);
     }
   } catch (error) {
-    // If the test-search-query endpoint doesn't exist, we'll suggest adding it
+    // If the test endpoint doesn't exist, we'll inform the user
     if (error.response && error.response.status === 404) {
-      log(`❌ The /api/test-search-query endpoint doesn't exist.`, colors.red);
-      log(`To enable this test, add the following to server/routes.ts:`, colors.yellow);
-      log(`
-app.post('/api/test-search-query', isAuthenticated, async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const profile = await storage.getUserProfile(userId);
-    
-    if (!profile) {
-      return res.status(404).json({ success: false, message: 'User profile not found' });
-    }
-    
-    // Import the buildSearchQueryFromProfile function from the etimad-service
-    const { buildSearchQueryFromProfile } = require('./services/etimad-service');
-    
-    // Build the search query
-    const query = buildSearchQueryFromProfile(profile);
-    
-    return res.json({ success: true, query });
-  } catch (error) {
-    console.error('Error in test-search-query:', error);
-    return res.status(500).json({ success: false, message: error.message });
-  }
-});`, colors.gray);
+      log(`❌ The /api/test/build-search-query endpoint doesn't exist.`, colors.red);
+      log(`This endpoint should already be added to server/routes.ts`, colors.yellow);
+      log(`Make sure the endpoint exists and is accessible.`, colors.yellow);
     } else {
       log(`❌ Error testing query builder: ${error.message}`, colors.red);
       console.error(error.response?.data || error);

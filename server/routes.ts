@@ -2547,6 +2547,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // API endpoint for testing a specific Etimad tender ID
+  /**
+   * POST /api/test/build-search-query
+   * Test endpoint for the query builder function
+   * Used to verify how a company profile is transformed into a search query
+   */
+  app.post("/api/test/build-search-query", isAuthenticated, async (req, res) => {
+    try {
+      log(`Testing search query builder for user ${req.user.id}`, 'test');
+      
+      // Get the profile from the request body or use the user's profile
+      const profile = req.body.profile || await storage.getUserProfile(req.user.id);
+      if (!profile) {
+        return res.status(404).json({ 
+          error: "Profile not found",
+          message: "Provide a profile in the request body or complete your company profile"
+        });
+      }
+      
+      // Build the search query
+      const query = buildSearchQueryFromProfile(profile);
+      
+      // Return the query and profile information
+      return res.status(200).json({
+        success: true,
+        query,
+        hasKeywords: profile.keywords && Array.isArray(profile.keywords) && profile.keywords.length > 0,
+        keywords: profile.keywords || [],
+        hasQueryData: !!profile.queryData,
+        profileData: {
+          companyName: profile.companyName,
+          companyDescription: profile.companyDescription,
+          businessType: profile.businessType,
+          activities: profile.activities || profile.companyActivities,
+          industries: profile.mainIndustries || profile.sectors,
+          specializations: profile.specializations || profile.specialization
+        }
+      });
+    } catch (error: any) {
+      log(`Error in test/build-search-query: ${error.message}`, 'test');
+      return res.status(500).json({ error: "Server error", message: error.message });
+    }
+  });
+
   app.post("/api/test-etimad-tender", isAdmin, async (req, res) => {
     
     const { tenderId } = req.body;

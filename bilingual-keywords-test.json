@@ -1,0 +1,12 @@
+[
+  {
+    "company": "Tech Solutions Company",
+    "keywords": [],
+    "error": "400 'messages' must contain the word 'json' in some form, to use 'response_format' of type 'json_object'."
+  },
+  {
+    "company": "Construction Excellence Corp",
+    "keywords": [],
+    "error": "400 'messages' must contain the word 'json' in some form, to use 'response_format' of type 'json_object'."
+  }
+]

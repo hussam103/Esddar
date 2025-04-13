@@ -383,7 +383,7 @@ Extract the following information in JSON format:
 3. companyActivities: An array of primary business activities or services (provide at least 3-5 if possible)
 4. mainIndustries: An array of the main industries the company operates in (provide at least 2-3 if possible)
 5. specializations: An array of specialized areas or expertise (provide at least 2-3 if possible)
-6. keywords: An array of 10-15 relevant keywords that best describe the company's services, technologies, expertise, and the types of government tenders or projects they would be qualified for. These keywords will be used for matching the company with relevant government tenders.
+6. keywords: An array of 20-30 relevant keywords in BOTH Arabic and English that best describe the company's services, technologies, expertise, and the types of government tenders or projects they would be qualified for. For each concept, provide both the English keyword and its Arabic equivalent. These keywords will be used for matching the company with relevant government tenders in Saudi Arabia, which are often published in both languages.
 
 If you cannot find specific information for a field, use null for singular values or an empty array [] for array values.
 IMPORTANT: Always return a valid JSON object with all the requested fields, even if some values are null or empty arrays.
@@ -397,12 +397,12 @@ ${truncatedText}
     const completion = await openai.chat.completions.create({
       model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [
-        { role: "system", content: "You are an AI that extracts structured company information from documents." },
+        { role: "system", content: "You are an AI that extracts structured company information from documents. Generate keywords in both Arabic and English to match companies with government tenders in Saudi Arabia." },
         { role: "user", content: prompt }
       ],
       temperature: 0.2,
       response_format: { type: "json_object" },
-      max_tokens: 1000
+      max_tokens: 1500
     });
 
     const content = completion.choices[0].message.content || "{}";

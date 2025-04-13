@@ -39,7 +39,8 @@ import {
   scrapeTenders, 
   getTenderDetails, 
   getPaginatedTenders, 
-  getTenderById 
+  getTenderById,
+  searchTenders
 } from './services/etimad-service';
 
 // Middleware to check if user is authenticated and has admin role
@@ -101,15 +102,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Get recommended tenders based on user profile
+  // Get recommended tenders based on user profile using Simple Semantic Search
   app.get("/api/recommended-tenders", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
     
     try {
-      const limit = req.query.limit ? parseInt(req.query.limit as string) : 3;
+      // Get the user profile for search query construction
+      const userProfile = await storage.getUserProfile(req.user.id);
+      if (!userProfile) {
+        return res.status(404).json({ 
+          error: "Profile not found",
+          message: "Complete your company profile to get tender recommendations"
+        });
+      }
+      
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+      
+      // First, try to fetch recommendations using the Semantic Search API
+      try {
+        const searchResponse = await searchTenders(userProfile, limit, true);
+        
+        if (searchResponse.success && searchResponse.results && searchResponse.results.length > 0) {
+          // Return the newly matched tenders
+          const tenders = await storage.getRecommendedTenders(req.user.id, limit);
+          return res.json(tenders);
+        }
+      } catch (searchError) {
+        console.error('Error using semantic search API:', searchError);
+        // If API search fails, we'll fall back to database recommendations
+      }
+      
+      // Fallback to existing recommendations if the API request fails
       const recommendedTenders = await storage.getRecommendedTenders(req.user.id, limit);
       res.json(recommendedTenders);
     } catch (error) {
+      console.error('Error fetching recommended tenders:', error);
       res.status(500).json({ error: "Failed to fetch recommended tenders" });
     }
   });

@@ -148,11 +148,11 @@ export default function TenderCard({ tender, matchScore, saved = false }: Tender
     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col h-full">
       <div className="relative flex-1 flex flex-col">
         {/* Match Score Badge */}
-        <div className={`absolute top-0 ${isRTL ? 'right-0 rounded-bl-md' : 'left-0 rounded-br-md'} bg-gradient-to-r from-green-600 to-green-500 text-white text-xs font-bold px-3 py-1.5 z-10 shadow`}>
-          <span className="flex items-center">
+        {matchScore > 0 && (
+          <div className={`absolute top-0 ${isRTL ? 'right-0 rounded-bl-md' : 'left-0 rounded-br-md'} bg-primary-600 text-white text-xs font-bold px-2 py-1 z-10`}>
             {matchScore}% {t("tenders.matchRate")}
-          </span>
-        </div>
+          </div>
+        )}
         
         {/* Tender Header - Fixed height for title */}
         <div className="p-4 pb-2 flex-shrink-0">

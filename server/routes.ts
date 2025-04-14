@@ -290,9 +290,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Get general tenders as fallback
           try {
             const fallbackTenders = await db.select()
-              .from(schema.tenders)
-              .where(sql`${schema.tenders.status} = 'open'`)
-              .orderBy(desc(schema.tenders.createdAt))
+              .from(tenders)
+              .where(sql`${tenders.status} = 'open'`)
+              .orderBy(desc(tenders.createdAt))
               .limit(limit);
               
             return res.status(200).json({ 
@@ -318,9 +318,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Try to get general tenders as fallback
         try {
           const fallbackTenders = await db.select()
-            .from(schema.tenders)
-            .where(sql`${schema.tenders.status} = 'open'`)
-            .orderBy(desc(schema.tenders.createdAt))
+            .from(tenders)
+            .where(sql`${tenders.status} = 'open'`)
+            .orderBy(desc(tenders.createdAt))
             .limit(limit);
             
           return res.status(200).json({ 

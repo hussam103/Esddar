@@ -182,9 +182,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           log(`No recommendations found after API search, fetching general tenders`, 'recommendations');
           // Get the most recent tenders from the database as a fallback
           const fallbackTenders = await db.select()
-            .from(schema.tenders)
-            .where(sql`${schema.tenders.status} = 'open'`)
-            .orderBy(desc(schema.tenders.createdAt))
+            .from(tenders)
+            .where(sql`${tenders.status} = 'open'`)
+            .orderBy(desc(tenders.createdAt))
             .limit(limit);
             
           return res.json(fallbackTenders);
@@ -226,9 +226,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Get general tenders as a fallback
           log(`Fetching general tenders as fallback after API error`, 'recommendations');
           const fallbackTenders = await db.select()
-            .from(schema.tenders)
-            .where(sql`${schema.tenders.status} = 'open'`)
-            .orderBy(desc(schema.tenders.createdAt))
+            .from(tenders)
+            .where(sql`${tenders.status} = 'open'`)
+            .orderBy(desc(tenders.createdAt))
             .limit(limit);
             
           return res.json(fallbackTenders);

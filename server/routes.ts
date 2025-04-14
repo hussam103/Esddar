@@ -211,9 +211,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             log(`Still no recommendations found, fetching general tenders`, 'recommendations');
             // Get the most recent tenders from the database as a fallback
             const fallbackTenders = await db.select()
-              .from(schema.tenders)
-              .where(sql`${schema.tenders.status} = 'open'`)
-              .orderBy(desc(schema.tenders.createdAt))
+              .from(tenders)
+              .where(sql`${tenders.status} = 'open'`)
+              .orderBy(desc(tenders.createdAt))
               .limit(limit);
               
             return res.json(fallbackTenders);

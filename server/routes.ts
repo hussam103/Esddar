@@ -159,7 +159,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
       const forceRefresh = req.query.refresh === 'true';
       
-      // Check if a new API search should be performed (forced or no matches in database)
+      // Check if a new API search should be performed (forced refresh requested)
       if (forceRefresh) {
         log(`Force refreshing recommendations for user ${req.user.id}`, 'recommendations');
         
@@ -167,15 +167,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Trigger a new API search to refresh recommendations
           const searchResponse = await searchTenders(userProfile, limit, true);
           log(`Search API response: ${searchResponse.success}, found ${searchResponse.results?.length || 0} results`, 'recommendations');
-          
-          // Whether search succeeded or not, return what we have in the database
-          // The API search function saves results to the database automatically
-          const tenders = await storage.getRecommendedTenders(req.user.id, limit);
-          log(`Returning ${tenders.length} recommended tenders after API refresh`, 'recommendations');
-          return res.json(tenders);
         } catch (searchError) {
-          console.error('Error using semantic search API:', searchError);
+          log(`Error during API search for recommendations: ${searchError.message}`, 'recommendations');
+          // Continue execution to return what we have in the database
         }
+        
+        // Whether search succeeded or not, return what we have in the database
+        // The API search function saves results to the database automatically
+        const tenders = await storage.getRecommendedTenders(req.user.id, limit);
+        log(`Returning ${tenders.length} recommended tenders after API refresh`, 'recommendations');
+        
+        // Get general tenders if no recommended tenders are found
+        if (tenders.length === 0) {
+          log(`No recommendations found after API search, fetching general tenders`, 'recommendations');
+          // Get the most recent tenders from the database as a fallback
+          const fallbackTenders = await db.select()
+            .from(schema.tenders)
+            .where(sql`${schema.tenders.status} = 'open'`)
+            .orderBy(desc(schema.tenders.createdAt))
+            .limit(limit);
+            
+          return res.json(fallbackTenders);
+        }
+        
+        return res.json(tenders);
       }
       
       // Get recommended tenders from storage (which will prioritize API-matched tenders)
@@ -191,16 +206,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Get the recommendations again after the search
           const updatedTenders = await storage.getRecommendedTenders(req.user.id, limit);
           log(`Found ${updatedTenders.length} tenders after API search`, 'recommendations');
+          
+          if (updatedTenders.length === 0) {
+            log(`Still no recommendations found, fetching general tenders`, 'recommendations');
+            // Get the most recent tenders from the database as a fallback
+            const fallbackTenders = await db.select()
+              .from(schema.tenders)
+              .where(sql`${schema.tenders.status} = 'open'`)
+              .orderBy(desc(schema.tenders.createdAt))
+              .limit(limit);
+              
+            return res.json(fallbackTenders);
+          }
+          
           return res.json(updatedTenders);
         } catch (apiError) {
-          console.error('Error using semantic search API:', apiError);
+          log(`Error using semantic search API: ${apiError.message}`, 'recommendations');
+          
+          // Get general tenders as a fallback
+          log(`Fetching general tenders as fallback after API error`, 'recommendations');
+          const fallbackTenders = await db.select()
+            .from(schema.tenders)
+            .where(sql`${schema.tenders.status} = 'open'`)
+            .orderBy(desc(schema.tenders.createdAt))
+            .limit(limit);
+            
+          return res.json(fallbackTenders);
         }
       }
       
       return res.json(recommendedTenders);
     } catch (error) {
       console.error('Error fetching recommended tenders:', error);
-      res.status(500).json({ error: "Failed to fetch recommended tenders" });
+      
+      // Return empty array instead of error to prevent UI from breaking
+      return res.json([]);
     }
   });
   
@@ -240,16 +280,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const searchResponse = await searchTenders(userProfile, limit, true);
         log(`Search API response: ${searchResponse.success}, found ${searchResponse.results?.length || 0} results`, 'recommendations');
         
-        if (!searchResponse.success) {
-          return res.status(200).json({ 
-            refreshed: true, 
-            message: "Search completed but no new results found",
-            results: await storage.getRecommendedTenders(req.user.id, limit)
-          });
+        // Get tenders from database (whether API call worked or not)
+        const tenders = await storage.getRecommendedTenders(req.user.id, limit);
+        
+        // Check if we have any recommended tenders - if not, get some general tenders
+        if (tenders.length === 0) {
+          log(`No recommendations found after search API call, getting fallback tenders`, 'recommendations');
+          
+          // Get general tenders as fallback
+          try {
+            const fallbackTenders = await db.select()
+              .from(schema.tenders)
+              .where(sql`${schema.tenders.status} = 'open'`)
+              .orderBy(desc(schema.tenders.createdAt))
+              .limit(limit);
+              
+            return res.status(200).json({ 
+              refreshed: true, 
+              message: "Successfully retrieved general tenders as recommendations",
+              results: fallbackTenders
+            });
+          } catch (dbError) {
+            log(`Error getting fallback tenders: ${dbError.message}`, 'recommendations');
+            // Continue to return empty results
+          }
         }
         
-        // Return the refreshed results
-        const tenders = await storage.getRecommendedTenders(req.user.id, limit);
+        // Return the results (empty array if nothing found)
         return res.status(200).json({ 
           refreshed: true, 
           message: `Successfully refreshed, found ${tenders.length} recommendations`,
@@ -257,14 +314,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } catch (searchError: any) {
         log(`Error during API search: ${searchError.message}`, 'recommendations');
-        return res.status(500).json({ 
-          error: "Search API error", 
-          message: "Failed to refresh tender recommendations" 
+        
+        // Try to get general tenders as fallback
+        try {
+          const fallbackTenders = await db.select()
+            .from(schema.tenders)
+            .where(sql`${schema.tenders.status} = 'open'`)
+            .orderBy(desc(schema.tenders.createdAt))
+            .limit(limit);
+            
+          return res.status(200).json({ 
+            refreshed: true, 
+            message: "Error with search API, showing general tenders instead",
+            results: fallbackTenders
+          });
+        } catch (dbError) {
+          log(`Error getting fallback tenders: ${dbError.message}`, 'recommendations');
+          // Continue to error response
+        }
+        
+        // If we can't get fallback tenders, return error
+        return res.status(200).json({ 
+          refreshed: false, 
+          message: "Unable to refresh recommendations at this time. Please try again later.",
+          results: []
         });
       }
     } catch (error: any) {
       log(`Error in refresh-recommended-tenders: ${error.message}`, 'recommendations');
-      return res.status(500).json({ error: "Server error", message: error.message });
+      
+      // Return empty array to avoid UI breakage
+      return res.status(200).json({ 
+        refreshed: false, 
+        message: "An error occurred while refreshing recommendations",
+        results: []
+      });
     }
   });
 

@@ -2,6 +2,12 @@
 
 Hams Trac (Esddar) is an AI-powered government tender matching platform designed to help businesses discover and win relevant contracts more efficiently, with full Arabic language support and responsive design.
 
+## Recent Updates (April 2025)
+- Fixed recommended tenders widget on dashboard
+- Enhanced search algorithm with keyword weighting
+- Improved UI/UX with new dashboard layout
+- Added profile completeness tracker
+
 ## Features
 
 - **AI-Driven Recommendations**: Smart matching of tenders to company profiles
